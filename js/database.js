@@ -237,6 +237,55 @@ export const updateCategoryOrder = async (categoryId, newOrder) => {
   }
 };
 
+// Modyfikacja liczby kryształków (plus/minus) - funkcja administracyjna
+export const modifyCrystalCount = async (categoryId, delta) => {
+  const user = getCurrentUser();
+  const countRef = ref(db, `users/${user}/categories/${categoryId}/count`);
+  
+  try {
+    const snapshot = await get(countRef);
+    const currentCount = snapshot.exists() ? snapshot.val() : 0;
+    const newCount = Math.max(0, currentCount + delta);
+    
+    await set(countRef, newCount);
+    return true;
+  } catch (error) {
+    console.error('Błąd modyfikacji kryształków:', error);
+    return false;
+  }
+};
+
+// Reset wszystkich rankingów
+export const resetAllRankings = async () => {
+  try {
+    // Reset dla obu użytkowników
+    const users = ['maks', 'nina'];
+    
+    for (const user of users) {
+      const categoriesRef = ref(db, `users/${user}/categories`);
+      const snapshot = await get(categoriesRef);
+      
+      if (snapshot.exists()) {
+        const categories = snapshot.val();
+        const updates = {};
+        
+        for (const catId in categories) {
+          updates[`users/${user}/categories/${catId}/wins`] = null;
+        }
+        
+        if (Object.keys(updates).length > 0) {
+          await update(ref(db), updates);
+        }
+      }
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Błąd resetowania rankingów:', error);
+    return false;
+  }
+};
+
 // Dodawanie nagrody
 export const addReward = async (name, image = '') => {
   const user = getCurrentUser();

@@ -8,7 +8,9 @@ import {
   addReward,
   deleteReward,
   updateReward,
-  setAvatar
+  setAvatar,
+  modifyCrystalCount,
+  resetAllRankings
 } from './database.js';
 
 // Elementy DOM
@@ -55,12 +57,29 @@ export const renderAdminCategories = () => {
         <span class="drag-handle">☰</span>
         <span class="name">${cat.name}</span>
       </div>
-      <div class="action-buttons">
-        <button onclick="window.editCategoryHandler('${cat.id}')">✏️</button>
-        <button onclick="window.deleteCategoryHandler('${cat.id}')">🗑️</button>
+      <div style="display:flex;gap:0.5rem;align-items:center;">
+        <div class="crystal-controls">
+          <button onclick="window.modifyCrystalsHandler('${cat.id}', -1)" title="Odejmij kryształek">−</button>
+          <span class="count">${cat.count || 0}</span>
+          <button onclick="window.modifyCrystalsHandler('${cat.id}', 1)" title="Dodaj kryształek">+</button>
+        </div>
+        <div class="action-buttons">
+          <button onclick="window.editCategoryHandler('${cat.id}')">✏️</button>
+          <button onclick="window.deleteCategoryHandler('${cat.id}')">🗑️</button>
+        </div>
       </div>
     </li>
   `).join('');
+};
+
+// Modyfikacja liczby kryształków
+export const handleModifyCrystals = async (categoryId, delta) => {
+  const success = await modifyCrystalCount(categoryId, delta);
+  
+  if (success) {
+    renderAdminCategories();
+    initializeSortable();
+  }
 };
 
 // Renderowanie listy nagród w adminie
@@ -251,6 +270,25 @@ export const handleEditReward = async (rewardId) => {
   }
 };
 
+// Reset rankingu
+export const handleResetRanking = async () => {
+  const sure = confirm('⚠️ UWAGA!\n\nCzy na pewno zresetować CAŁY ranking?\n\nSpowoduje to usunięcie wszystkich zwycięstw dla obu dzieci we wszystkich kategoriach.\n\nTej operacji nie można cofnąć!');
+  
+  if (!sure) return;
+  
+  const doubleSure = confirm('Czy jesteś ABSOLUTNIE pewien?\n\nWszystkie osiągnięcia zostaną utracone!');
+  
+  if (!doubleSure) return;
+  
+  const success = await resetAllRankings();
+  
+  if (success) {
+    alert('✅ Ranking został zresetowany!');
+  } else {
+    alert('❌ Błąd podczas resetowania rankingu!');
+  }
+};
+
 // Ustawienie UI zalogowania
 export const setLoggedInUi = (isLoggedIn) => {
   const adminBtn = document.getElementById('adminBtn');
@@ -289,4 +327,5 @@ if (typeof window !== 'undefined') {
   window.selectImageHandler = handleSelectImage;
   window.editRewardHandler = handleEditReward;
   window.deleteRewardHandler = handleDeleteReward;
+  window.modifyCrystalsHandler = handleModifyCrystals;
 }

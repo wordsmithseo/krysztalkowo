@@ -25,6 +25,9 @@ export const openRewardModal = (categoryId) => {
   rewardReveal.innerHTML = '';
   rewardModal.style.display = 'flex';
   
+  // Blokada zamykania modala
+  blockModalClosing();
+  
   // Reset skrzynek
   const chests = rewardModal.querySelectorAll('#chestsRow .reward-chest');
   chests.forEach(chest => {
@@ -40,6 +43,36 @@ export const openRewardModal = (categoryId) => {
   
   // Ustawienie obsługi kliknięć
   setupChestHandlers(chests, rewards);
+};
+
+// Blokada zamykania modala
+const blockModalClosing = () => {
+  // Usuń przyciski zamykania
+  const closeBtn = rewardModal.querySelector('.close-btn');
+  if (closeBtn) {
+    closeBtn.style.display = 'none';
+  }
+  
+  // Zablokuj kliknięcie poza modalem
+  rewardModal.onclick = (e) => {
+    e.stopPropagation();
+  };
+};
+
+// Odblokowanie zamykania modala
+const unblockModalClosing = () => {
+  // Przywróć przycisk zamykania
+  const closeBtn = rewardModal.querySelector('.close-btn');
+  if (closeBtn) {
+    closeBtn.style.display = 'block';
+  }
+  
+  // Przywróć możliwość zamknięcia kliknięciem poza modalem
+  rewardModal.onclick = (e) => {
+    if (e.target === rewardModal) {
+      closeRewardModal();
+    }
+  };
 };
 
 // Konfiguracja obsługi skrzynek
@@ -86,6 +119,14 @@ const setupChestHandlers = (chests, rewards) => {
     setTimeout(async () => {
       await finalizeReward(state.pendingCategoryId, reward.name);
       setPendingCategoryId(null);
+      
+      // Odblokuj zamykanie modala
+      unblockModalClosing();
+      
+      // Automatycznie zamknij modal po 2 sekundach
+      setTimeout(() => {
+        closeRewardModal();
+      }, 2000);
     }, 900);
   };
   
@@ -104,4 +145,10 @@ const setupChestHandlers = (chests, rewards) => {
 // Zamykanie modala nagród
 export const closeRewardModal = () => {
   rewardModal.style.display = 'none';
+  
+  // Przywróć normalny stan modala
+  const closeBtn = rewardModal.querySelector('.close-btn');
+  if (closeBtn) {
+    closeBtn.style.display = 'block';
+  }
 };

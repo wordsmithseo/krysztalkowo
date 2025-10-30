@@ -20,7 +20,8 @@ import {
   handleSaveEdit,
   setLoggedInUi,
   handleAddReward,
-  handleSetAvatar
+  handleSetAvatar,
+  handleResetRanking
 } from './admin.js';
 import { getAvatar } from './database.js';
 
@@ -42,6 +43,7 @@ const changePasswordBtn = document.getElementById('changePasswordBtn');
 const addRewardBtn = document.getElementById('addRewardBtn');
 const setAvatarMaksBtn = document.getElementById('setAvatarMaksBtn');
 const setAvatarNinaBtn = document.getElementById('setAvatarNinaBtn');
+const resetRankingBtn = document.getElementById('resetRankingBtn');
 
 // ===== OBSŁUGA PRZYCISKÓW UŻYTKOWNIKA =====
 elements.maksBtn.addEventListener('click', () => {
@@ -131,7 +133,16 @@ closeButtons.forEach(btn => {
     adminModal.style.display = 'none';
     editModal.style.display = 'none';
     rankingModal.style.display = 'none';
-    document.getElementById('rewardModal').style.display = 'none';
+    
+    // Modal nagród ma własną logikę zamykania
+    const rewardModal = document.getElementById('rewardModal');
+    if (rewardModal && rewardModal.style.display === 'flex') {
+      // Sprawdź czy można zamknąć (czy skrzynka została wybrana)
+      const closeBtn = rewardModal.querySelector('.close-btn');
+      if (closeBtn && closeBtn.style.display !== 'none') {
+        rewardModal.style.display = 'none';
+      }
+    }
   });
 });
 
@@ -141,12 +152,20 @@ document.addEventListener('click', (e) => {
     passwordModal, 
     adminModal, 
     editModal, 
-    rankingModal,
-    document.getElementById('rewardModal')
+    rankingModal
   ];
   
   if (modals.includes(e.target)) {
     e.target.style.display = 'none';
+  }
+  
+  // Modal nagród ma własną logikę
+  const rewardModal = document.getElementById('rewardModal');
+  if (e.target === rewardModal) {
+    const closeBtn = rewardModal.querySelector('.close-btn');
+    if (closeBtn && closeBtn.style.display !== 'none') {
+      rewardModal.style.display = 'none';
+    }
   }
 });
 
@@ -191,6 +210,11 @@ changePasswordBtn.addEventListener('click', async () => {
 // ===== USTAWIENIE AVATARA =====
 setAvatarMaksBtn.addEventListener('click', () => handleSetAvatar('maks'));
 setAvatarNinaBtn.addEventListener('click', () => handleSetAvatar('nina'));
+
+// ===== RESET RANKINGU =====
+if (resetRankingBtn) {
+  resetRankingBtn.addEventListener('click', handleResetRanking);
+}
 
 // ===== RANKING =====
 elements.rankingBtn.addEventListener('click', () => {

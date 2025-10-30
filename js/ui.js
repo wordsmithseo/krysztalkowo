@@ -42,8 +42,14 @@ const createCategoryCard = (cat, user) => {
   const isCrown = wins >= 3;
   
   // Ustawianie kolorów i klas
-  if (pendingReset) {
-    // Złota karta po wygranej - pulsuje
+  if (isReady && !pendingReset) {
+    // Złota karta - cel osiągnięty, czeka na otwarcie modala
+    card.classList.add('reward-ready');
+    if (isCrown) {
+      card.classList.add('reward-crown');
+    }
+  } else if (pendingReset) {
+    // Złota karta po wygranej - pulsuje, czeka na reset
     card.classList.add('reward-won');
     if (isCrown) {
       card.classList.add('reward-crown');
@@ -129,7 +135,7 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
   let touchStartY = 0;
   let touchStartTime = 0;
   let isHolding = false;
-  const SCROLL_THRESHOLD = 10; // piksele tolerancji na przewijanie
+  const SCROLL_THRESHOLD = 10;
   
   const vibrate = (pattern) => {
     if ('vibrate' in navigator) {
@@ -139,6 +145,12 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
   
   const startHold = () => {
     if (isHolding) return;
+    
+    // Jeśli jest już gotowe (osiągnięto cel) ale jeszcze nie pokazano modala - nie pozwalaj trzymać
+    if (isReady && !pendingReset) {
+      return;
+    }
+    
     isHolding = true;
     
     card.classList.add('active-hold');
@@ -172,7 +184,12 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
         const willComplete = newCount >= goal;
         
         // Dodaj kryształek
-        await addCrystal(categoryId);
+        const success = await addCrystal(categoryId);
+        
+        if (!success) {
+          // Cooldown aktywny - nie rób nic więcej
+          return;
+        }
         
         // Jeśli to był ostatni kryształek
         if (willComplete) {
@@ -180,10 +197,10 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
           vibrate([200, 100, 200, 100, 200]);
           
           // Daj czas na wizualizację złotej karty (Firebase update + rerender)
-          // Modal otworzy się po ~600ms gdy karta już będzie złota
+          // Modal otworzy się po ~1000ms gdy karta już będzie złota
           setTimeout(() => {
             openRewardModal(categoryId);
-          }, 600);
+          }, 1000);
         }
       }
     }, 500);
@@ -203,7 +220,7 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
   card.addEventListener('mouseup', cancelHold);
   card.addEventListener('mouseleave', cancelHold);
   
-  // Touch events (mobile) - NAPRAWIONA LOGIKA
+  // Touch events (mobile)
   card.addEventListener('touchstart', (e) => {
     isTouchMoved = false;
     touchStartY = e.touches[0].clientY;
@@ -239,7 +256,6 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
     if (holdDuration < 500) {
       cancelHold();
     }
-    // W przeciwnym razie timer holdTimer sam się zajmie akcją
     
     isTouchMoved = false;
   });
@@ -285,12 +301,10 @@ export const loadAvatar = (user, imgElement, getAvatar) => {
         imgElement.src = url;
         imgElement.style.display = 'block';
         imgElement.onerror = () => {
-          // Jeśli obrazek się nie załaduje, użyj placeholdera
           imgElement.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"%3E%3Ccircle cx="50" cy="50" r="50" fill="%23' + (user === 'maks' ? 'a0c4ff' : 'ffc2d1') + '"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="40" font-weight="bold" fill="%23fff"%3E' + user.charAt(0).toUpperCase() + '%3C/text%3E%3C/svg%3E';
           imgElement.onerror = null;
         };
       } else {
-        // Brak URL - użyj domyślnego placeholdera
         imgElement.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"%3E%3Ccircle cx="50" cy="50" r="50" fill="%23' + (user === 'maks' ? 'a0c4ff' : 'ffc2d1') + '"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="40" font-weight="bold" fill="%23fff"%3E' + user.charAt(0).toUpperCase() + '%3C/text%3E%3C/svg%3E';
         imgElement.style.display = 'block';
       }
@@ -308,7 +322,6 @@ export const displayRanking = () => {
   
   // Przygotuj statystyki dla każdej nazwy kategorii
   const categoryStats = categoryNames.map(name => {
-    // Znajdź kategorie o tej nazwie
     const catsWithName = categories.filter(cat => cat.name === name);
     
     let maksWins = 0;
@@ -349,6 +362,19 @@ export const displayRanking = () => {
   
   let html = '';
   
+  // Ogólny wynik
+  const totalMaks = categoryStats.reduce((sum, cat) => sum + cat.maksWins, 0);
+  const totalNina = categoryStats.reduce((sum, cat) => sum + cat.ninaWins, 0);
+  
+  let overallHtml = '';
+  if (totalMaks > totalNina) {
+    overallHtml = `<div class="overall-winner maks-overall">🏆 Maks prowadzi!<br><span style="font-size:2.5rem;font-weight:900;">${totalMaks}</span> zwycięstw<br><small style="font-size:0.9em;opacity:0.9;margin-top:0.5rem;display:block;">Nina ma ${totalNina}</small></div>`;
+  } else if (totalNina > totalMaks) {
+    overallHtml = `<div class="overall-winner nina-overall">🏆 Nina prowadzi!<br><span style="font-size:2.5rem;font-weight:900;">${totalNina}</span> zwycięstw<br><small style="font-size:0.9em;opacity:0.9;margin-top:0.5rem;display:block;">Maks ma ${totalMaks}</small></div>`;
+  } else if (totalMaks > 0) {
+    overallHtml = `<div class="overall-winner tie-overall">🤝 Remis!<br><span style="font-size:2.5rem;font-weight:900;">${totalMaks}</span> zwycięstw każde!</div>`;
+  }
+  
   // Sekcja rywalizacji
   if (competitiveCategories.length > 0) {
     html += '<div class="ranking-section"><h3>🏆 Rywalizacja</h3>';
@@ -358,11 +384,11 @@ export const displayRanking = () => {
       
       let winnerBadge = '';
       if (cat.maksWins > cat.ninaWins) {
-        winnerBadge = '<span class="winner-badge maks-winner">👑 Maks wygrywa!</span>';
+        winnerBadge = '<span class="winner-badge maks-winner">👑 Maks!</span>';
       } else if (cat.ninaWins > cat.maksWins) {
-        winnerBadge = '<span class="winner-badge nina-winner">👑 Nina wygrywa!</span>';
+        winnerBadge = '<span class="winner-badge nina-winner">👑 Nina!</span>';
       } else {
-        winnerBadge = '<span class="winner-badge tie">🤝 Remis!</span>';
+        winnerBadge = '<span class="winner-badge tie">🤝 Remis</span>';
       }
       
       html += `
@@ -398,7 +424,7 @@ export const displayRanking = () => {
     html += '<div class="ranking-section"><h3>🔵 Osiągnięcia Maksa</h3>';
     maksOnlyCategories.forEach(cat => {
       html += `
-        <div class="category-ranking-item solo-category">
+        <div class="category-ranking-item solo-category maks-category">
           <div class="solo-category-row">
             <span class="solo-category-name">${cat.name}</span>
             <span class="solo-category-score maks-score">${cat.maksWins} 🏆</span>
@@ -414,7 +440,7 @@ export const displayRanking = () => {
     html += '<div class="ranking-section"><h3>🔴 Osiągnięcia Niny</h3>';
     ninaOnlyCategories.forEach(cat => {
       html += `
-        <div class="category-ranking-item solo-category">
+        <div class="category-ranking-item solo-category nina-category">
           <div class="solo-category-row">
             <span class="solo-category-name">${cat.name}</span>
             <span class="solo-category-score nina-score">${cat.ninaWins} 🏆</span>
@@ -423,19 +449,6 @@ export const displayRanking = () => {
       `;
     });
     html += '</div>';
-  }
-  
-  // Ogólny wynik
-  const totalMaks = categoryStats.reduce((sum, cat) => sum + cat.maksWins, 0);
-  const totalNina = categoryStats.reduce((sum, cat) => sum + cat.ninaWins, 0);
-  
-  let overallHtml = '';
-  if (totalMaks > totalNina) {
-    overallHtml = `<div class="overall-winner maks-overall">🏆 Maks prowadzi z ${totalMaks} zwycięstwami! 🎉<br><small style="font-size:0.8em;opacity:0.9;">Nina ma ${totalNina}</small></div>`;
-  } else if (totalNina > totalMaks) {
-    overallHtml = `<div class="overall-winner nina-overall">🏆 Nina prowadzi z ${totalNina} zwycięstwami! 🎉<br><small style="font-size:0.8em;opacity:0.9;">Maks ma ${totalMaks}</small></div>`;
-  } else if (totalMaks > 0) {
-    overallHtml = `<div class="overall-winner tie-overall">🤝 Remis! Oboje mają po ${totalMaks} zwycięstw! 🌟</div>`;
   }
   
   if (html === '') {
