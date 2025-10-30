@@ -133,8 +133,6 @@ export const handleEditCategory = (categoryId) => {
   document.getElementById('editCategoryName').value = cat.name || '';
   document.getElementById('editCategoryGoal').value = cat.goal || 10;
   document.getElementById('editCategoryImage').value = cat.image || '';
-  document.getElementById('editCategoryColor').value = cat.color || '#FFB6C1';
-  document.getElementById('editCategoryBorder').value = cat.borderColor || '#FF69B4';
   
   editModal.dataset.editingId = categoryId;
   
@@ -152,9 +150,7 @@ export const handleSaveEdit = async () => {
   const data = {
     name: document.getElementById('editCategoryName').value.trim(),
     goal: parseInt(document.getElementById('editCategoryGoal').value) || 10,
-    image: document.getElementById('editCategoryImage').value.trim(),
-    color: document.getElementById('editCategoryColor').value.trim(),
-    borderColor: document.getElementById('editCategoryBorder').value.trim()
+    image: document.getElementById('editCategoryImage').value.trim()
   };
   
   if (!data.name) {

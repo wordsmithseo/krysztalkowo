@@ -47,10 +47,16 @@ export const resetCategory = async (categoryId) => {
   const user = getCurrentUser();
   
   try {
+    // Import funkcji generowania kolorów
+    const { generateCategoryColors } = await import('./state.js');
+    const colors = generateCategoryColors();
+    
     const updates = {};
     updates[`users/${user}/categories/${categoryId}/count`] = 0;
     updates[`users/${user}/categories/${categoryId}/pendingReset`] = null;
     updates[`users/${user}/categories/${categoryId}/lastReward`] = null; // Usuń informację o nagrodzie
+    updates[`users/${user}/categories/${categoryId}/color`] = colors.color; // Nowy kolor tła
+    updates[`users/${user}/categories/${categoryId}/borderColor`] = colors.borderColor; // Nowy kolor obramowania
     await update(ref(db), updates);
   } catch (error) {
     console.error('Błąd resetowania kategorii:', error);
@@ -69,12 +75,17 @@ export const addCategory = async (name) => {
       Math.max(max, cat.order || 0), 0);
     
     const newId = Date.now().toString();
+    
+    // Import funkcji generowania kolorów
+    const { generateCategoryColors } = await import('./state.js');
+    const colors = generateCategoryColors();
+    
     const newCategory = {
       name,
       goal: 10,
       count: 0,
-      color: '#FFB6C1',
-      borderColor: '#FF69B4',
+      color: colors.color,
+      borderColor: colors.borderColor,
       image: '',
       order: maxOrder + 1
     };

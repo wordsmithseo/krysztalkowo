@@ -31,8 +31,6 @@ export const renderCategories = () => {
 const createCategoryCard = (cat, user) => {
   const card = document.createElement('div');
   card.className = 'category-card';
-  card.style.backgroundColor = cat.color || '#FFB6C1';
-  card.style.borderColor = cat.borderColor || '#FF69B4';
   
   const count = cat.count || 0;
   const goal = cat.goal || 10;
@@ -43,11 +41,17 @@ const createCategoryCard = (cat, user) => {
   const wins = cat.wins?.[user] || 0;
   const isCrown = wins >= 3;
   
-  if (isReady && !pendingReset) {
-    card.classList.add('reward-ready');
+  // Ustawianie kolorów i klas
+  if (pendingReset) {
+    // Złota karta po wygranej - pulsuje
+    card.classList.add('reward-won');
     if (isCrown) {
       card.classList.add('reward-crown');
     }
+  } else {
+    // Normalne kolory
+    card.style.backgroundColor = cat.color || '#FFB6C1';
+    card.style.borderColor = cat.borderColor || '#FF69B4';
   }
   
   // Obrazek
@@ -60,13 +64,11 @@ const createCategoryCard = (cat, user) => {
     img.src = cat.image;
     img.alt = cat.name;
     img.onerror = () => { 
-      // Jeśli obrazek się nie załaduje, pokaż placeholder
       img.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"%3E%3Crect width="200" height="200" fill="%23e0e5ec"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="80" fill="%23999"%3E' + encodeURIComponent(cat.name.charAt(0).toUpperCase()) + '%3C/text%3E%3C/svg%3E';
-      img.onerror = null; // Zapobiegaj nieskończonej pętli
+      img.onerror = null;
     };
     imgWrap.appendChild(img);
   } else {
-    // Brak obrazka - pokaż placeholder z pierwszą literą
     const placeholder = document.createElement('div');
     placeholder.style.cssText = 'width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:4rem;font-weight:700;color:#999;background:#f0f0f0;';
     placeholder.textContent = cat.name.charAt(0).toUpperCase();
@@ -105,61 +107,70 @@ const createCategoryCard = (cat, user) => {
   
   card.appendChild(crystalsDisplay);
   
-  // Ostatnia nagroda
-  if (cat.lastReward) {
+  // Ostatnia nagroda (tylko na złotej karcie po wygranej)
+  if (pendingReset && cat.lastReward) {
     const lastReward = document.createElement('div');
     lastReward.className = 'last-reward';
     lastReward.textContent = `🎁 ${cat.lastReward}`;
     card.appendChild(lastReward);
   }
   
-  // Obsługa kliknięcia
-  setupCardInteraction(card, cat.id, isReady, pendingReset);
+  // Obsługa interakcji
+  setupCardInteraction(card, cat.id, isReady, pendingReset, count, goal);
   
   return card;
 };
 
 // Konfiguracja interakcji z kartą
-const setupCardInteraction = (card, categoryId, isReady, pendingReset) => {
+const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCount, goal) => {
   let holdTimer = null;
   let fillAnimTimeout = null;
   
   const startHold = () => {
-    if (isReady && !pendingReset) return;
-    if (pendingReset) return;
-    
     card.classList.add('active-hold');
-    card.classList.add('filling');
+    
+    if (pendingReset) {
+      // Złota animacja dla resetu
+      card.classList.add('reset-filling');
+    } else {
+      // Normalna animacja dodawania
+      card.classList.add('filling');
+    }
     
     fillAnimTimeout = setTimeout(() => {
-      card.classList.remove('filling');
+      card.classList.remove('filling', 'reset-filling');
       card.classList.add('filling-complete');
     }, 500);
     
     holdTimer = setTimeout(async () => {
-      await addCrystal(categoryId);
+      if (pendingReset) {
+        // Reset kategorii
+        await resetCategory(categoryId);
+      } else {
+        // Dodaj kryształek
+        const newCount = currentCount + 1;
+        await addCrystal(categoryId);
+        
+        // Jeśli to był ostatni kryształek - otwórz modal natychmiast
+        if (newCount >= goal) {
+          setTimeout(() => {
+            openRewardModal(categoryId);
+          }, 600); // Krótkie opóźnienie dla animacji
+        }
+      }
     }, 500);
   };
   
   const cancelHold = () => {
     clearTimeout(holdTimer);
     clearTimeout(fillAnimTimeout);
-    card.classList.remove('active-hold', 'filling', 'filling-complete');
-  };
-  
-  const handleClick = () => {
-    if (isReady && !pendingReset) {
-      openRewardModal(categoryId);
-    } else if (pendingReset) {
-      handlePendingReset(card, categoryId);
-    }
+    card.classList.remove('active-hold', 'filling', 'filling-complete', 'reset-filling');
   };
   
   // Mouse events
   card.addEventListener('mousedown', startHold);
   card.addEventListener('mouseup', cancelHold);
   card.addEventListener('mouseleave', cancelHold);
-  card.addEventListener('click', handleClick);
   
   // Touch events
   card.addEventListener('touchstart', (e) => {
@@ -170,23 +181,9 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset) => {
   card.addEventListener('touchend', (e) => {
     e.preventDefault();
     cancelHold();
-    handleClick();
   });
   
   card.addEventListener('touchcancel', cancelHold);
-};
-
-// Obsługa pending reset
-const handlePendingReset = (card, categoryId) => {
-  card.classList.add('reset-filling');
-  
-  setTimeout(() => {
-    card.classList.remove('reset-filling');
-  }, 500);
-  
-  setTimeout(async () => {
-    await resetCategory(categoryId);
-  }, 500);
 };
 
 // Wyświetlanie confetti
@@ -245,87 +242,144 @@ export const displayRanking = () => {
   const categories = getCategories();
   const rankingContent = document.getElementById('rankingContent');
   
-  // Przygotuj dane dla każdej kategorii
-  const categoryStats = categories.map(cat => ({
-    name: cat.name,
-    maksWins: cat.wins?.maks || 0,
-    ninaWins: cat.wins?.nina || 0,
-    color: cat.color || '#FFB6C1'
-  }));
+  // Zbierz wszystkie unikalne nazwy kategorii
+  const categoryNames = [...new Set(categories.map(cat => cat.name))];
   
-  // Sortuj według sumy zwycięstw (najbardziej aktywne kategorie)
-  categoryStats.sort((a, b) => {
-    const totalA = a.maksWins + a.ninaWins;
-    const totalB = b.maksWins + b.ninaWins;
-    return totalB - totalA;
+  // Przygotuj statystyki dla każdej nazwy kategorii
+  const categoryStats = categoryNames.map(name => {
+    // Znajdź kategorie o tej nazwie
+    const catsWithName = categories.filter(cat => cat.name === name);
+    
+    let maksWins = 0;
+    let ninaWins = 0;
+    
+    catsWithName.forEach(cat => {
+      maksWins += cat.wins?.maks || 0;
+      ninaWins += cat.wins?.nina || 0;
+    });
+    
+    const total = maksWins + ninaWins;
+    const hasBothPlayers = maksWins > 0 && ninaWins > 0;
+    const isMaksOnly = maksWins > 0 && ninaWins === 0;
+    const isNinaOnly = ninaWins > 0 && maksWins === 0;
+    
+    return {
+      name,
+      maksWins,
+      ninaWins,
+      total,
+      hasBothPlayers,
+      isMaksOnly,
+      isNinaOnly
+    };
   });
   
-  // Generuj HTML dla każdej kategorii
-  const categoriesHtml = categoryStats.map(cat => {
-    const maksWins = cat.maksWins;
-    const ninaWins = cat.ninaWins;
-    const total = maksWins + ninaWins;
-    
-    // Jeśli brak zwycięstw w tej kategorii, pomiń
-    if (total === 0) return '';
-    
-    // Określ zwycięzcę
-    let winnerBadge = '';
-    if (maksWins > ninaWins) {
-      winnerBadge = '<span class="winner-badge maks-winner">👑</span>';
-    } else if (ninaWins > maksWins) {
-      winnerBadge = '<span class="winner-badge nina-winner">👑</span>';
-    } else if (maksWins === ninaWins && maksWins > 0) {
-      winnerBadge = '<span class="winner-badge tie">🤝</span>';
-    }
-    
-    // Szerokość paska postępu
-    const maksWidth = total > 0 ? (maksWins / total) * 100 : 0;
-    const ninaWidth = total > 0 ? (ninaWins / total) * 100 : 0;
-    
-    return `
-      <div class="category-ranking-item">
-        <div class="category-ranking-header">
-          <span class="category-ranking-name">${cat.name}</span>
-          ${winnerBadge}
-        </div>
-        <div class="category-ranking-bars">
-          <div class="ranking-bar-row">
-            <span class="ranking-label maks-label">Maks</span>
-            <div class="ranking-bar">
-              <div class="ranking-bar-fill maks-bar" style="width: ${maksWidth}%"></div>
-            </div>
-            <span class="ranking-score">${maksWins}</span>
-          </div>
-          <div class="ranking-bar-row">
-            <span class="ranking-label nina-label">Nina</span>
-            <div class="ranking-bar">
-              <div class="ranking-bar-fill nina-bar" style="width: ${ninaWidth}%"></div>
-            </div>
-            <span class="ranking-score">${ninaWins}</span>
-          </div>
-        </div>
-      </div>
-    `;
-  }).join('');
+  // Sortuj: najpierw kategorie z rywalizacją, potem osobne, wszystko według aktywności
+  categoryStats.sort((a, b) => {
+    if (a.hasBothPlayers && !b.hasBothPlayers) return -1;
+    if (!a.hasBothPlayers && b.hasBothPlayers) return 1;
+    return b.total - a.total;
+  });
   
-  // Oblicz całkowite statystyki
-  const totalMaksWins = categoryStats.reduce((sum, cat) => sum + cat.maksWins, 0);
-  const totalNinaWins = categoryStats.reduce((sum, cat) => sum + cat.ninaWins, 0);
+  // Generuj HTML
+  const competitiveCategories = categoryStats.filter(cat => cat.hasBothPlayers);
+  const maksOnlyCategories = categoryStats.filter(cat => cat.isMaksOnly);
+  const ninaOnlyCategories = categoryStats.filter(cat => cat.isNinaOnly);
   
-  let overallWinner = '';
-  if (totalMaksWins > totalNinaWins) {
-    overallWinner = '<div class="overall-winner maks-overall">🏆 Maks prowadzi z ' + totalMaksWins + ' zwycięstwami!</div>';
-  } else if (totalNinaWins > totalMaksWins) {
-    overallWinner = '<div class="overall-winner nina-overall">🏆 Nina prowadzi z ' + totalNinaWins + ' zwycięstwami!</div>';
-  } else if (totalMaksWins > 0 && totalNinaWins > 0) {
-    overallWinner = '<div class="overall-winner tie-overall">🤝 Remis! Oboje mają po ' + totalMaksWins + ' zwycięstw!</div>';
+  let html = '';
+  
+  // Sekcja rywalizacji
+  if (competitiveCategories.length > 0) {
+    html += '<div class="ranking-section"><h3>🏆 Rywalizacja (kategorie wspólne)</h3>';
+    competitiveCategories.forEach(cat => {
+      const maksWidth = (cat.maksWins / cat.total) * 100;
+      const ninaWidth = (cat.ninaWins / cat.total) * 100;
+      
+      let winnerBadge = '';
+      if (cat.maksWins > cat.ninaWins) {
+        winnerBadge = '<span class="winner-badge maks-winner">👑 Maks</span>';
+      } else if (cat.ninaWins > cat.maksWins) {
+        winnerBadge = '<span class="winner-badge nina-winner">👑 Nina</span>';
+      } else {
+        winnerBadge = '<span class="winner-badge tie">🤝 Remis</span>';
+      }
+      
+      html += `
+        <div class="category-ranking-item">
+          <div class="category-ranking-header">
+            <span class="category-ranking-name">${cat.name}</span>
+            ${winnerBadge}
+          </div>
+          <div class="category-ranking-bars">
+            <div class="ranking-bar-row">
+              <span class="ranking-label maks-label">Maks</span>
+              <div class="ranking-bar">
+                <div class="ranking-bar-fill maks-bar" style="width: ${maksWidth}%"></div>
+              </div>
+              <span class="ranking-score">${cat.maksWins}</span>
+            </div>
+            <div class="ranking-bar-row">
+              <span class="ranking-label nina-label">Nina</span>
+              <div class="ranking-bar">
+                <div class="ranking-bar-fill nina-bar" style="width: ${ninaWidth}%"></div>
+              </div>
+              <span class="ranking-score">${cat.ninaWins}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    html += '</div>';
   }
   
-  rankingContent.innerHTML = `
-    ${overallWinner}
-    <div class="ranking-categories">
-      ${categoriesHtml || '<div style="text-align:center;padding:2rem;color:#999;">Brak jeszcze zwycięstw. Czas zdobyć pierwsze nagrody! 🎯</div>'}
-    </div>
-  `;
+  // Kategorie tylko Maksa
+  if (maksOnlyCategories.length > 0) {
+    html += '<div class="ranking-section"><h3>🔵 Kategorie Maksa</h3>';
+    maksOnlyCategories.forEach(cat => {
+      html += `
+        <div class="category-ranking-item solo-category">
+          <div class="solo-category-row">
+            <span class="solo-category-name">${cat.name}</span>
+            <span class="solo-category-score maks-score">${cat.maksWins} 🏆</span>
+          </div>
+        </div>
+      `;
+    });
+    html += '</div>';
+  }
+  
+  // Kategorie tylko Niny
+  if (ninaOnlyCategories.length > 0) {
+    html += '<div class="ranking-section"><h3>🔴 Kategorie Niny</h3>';
+    ninaOnlyCategories.forEach(cat => {
+      html += `
+        <div class="category-ranking-item solo-category">
+          <div class="solo-category-row">
+            <span class="solo-category-name">${cat.name}</span>
+            <span class="solo-category-score nina-score">${cat.ninaWins} 🏆</span>
+          </div>
+        </div>
+      `;
+    });
+    html += '</div>';
+  }
+  
+  // Ogólny wynik
+  const totalMaks = categoryStats.reduce((sum, cat) => sum + cat.maksWins, 0);
+  const totalNina = categoryStats.reduce((sum, cat) => sum + cat.ninaWins, 0);
+  
+  let overallHtml = '';
+  if (totalMaks > totalNina) {
+    overallHtml = `<div class="overall-winner maks-overall">🏆 Maks prowadzi: ${totalMaks} zwycięstw (Nina: ${totalNina})</div>`;
+  } else if (totalNina > totalMaks) {
+    overallHtml = `<div class="overall-winner nina-overall">🏆 Nina prowadzi: ${totalNina} zwycięstw (Maks: ${totalMaks})</div>`;
+  } else if (totalMaks > 0) {
+    overallHtml = `<div class="overall-winner tie-overall">🤝 Remis! Oboje po ${totalMaks} zwycięstw!</div>`;
+  }
+  
+  if (html === '') {
+    html = '<div style="text-align:center;padding:2rem;color:#999;">Brak jeszcze zwycięstw. Czas zdobyć pierwsze nagrody! 🎯</div>';
+  }
+  
+  rankingContent.innerHTML = overallHtml + html;
 };

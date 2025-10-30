@@ -340,7 +340,7 @@
   font-weight: 700;
   padding: 1rem;
   border-radius: 0.75rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 1rem;
 }
 
 .maks-overall {
@@ -358,6 +358,17 @@
   color: #5b3b00;
 }
 
+/* Sekcje rankingu */
+.ranking-section {
+  margin-bottom: 1.5rem;
+}
+
+.ranking-section h3 {
+  font-size: 1.2rem;
+  margin: 0 0 0.75rem 0;
+  color: #333;
+}
+
 /* Kontener kategorii */
 .ranking-categories {
   display: flex;
@@ -372,6 +383,36 @@
   padding: 1rem;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
   border: 2px solid #eee;
+}
+
+/* Solo kategorie (tylko jeden gracz) */
+.category-ranking-item.solo-category {
+  padding: 0.75rem 1rem;
+}
+
+.solo-category-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.solo-category-name {
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: #333;
+}
+
+.solo-category-score {
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+
+.maks-score {
+  color: #163771;
+}
+
+.nina-score {
+  color: #a01347;
 }
 
 .category-ranking-header {

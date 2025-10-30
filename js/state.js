@@ -59,3 +59,34 @@ export const sha256 = async (str) => {
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 };
+
+// Generowanie losowych pastelowych kolorów
+export const generatePastelColor = () => {
+  // Generuj odcień (hue) od 0 do 360
+  const hue = Math.floor(Math.random() * 360);
+  // Pastelowe kolory mają wysoką jasność (lightness) i niską saturację
+  const saturation = 60 + Math.random() * 20; // 60-80%
+  const lightness = 75 + Math.random() * 10; // 75-85%
+  
+  return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+};
+
+// Generuj ciemniejszy kolor do obramowania (o 15% ciemniejszy)
+export const generateBorderColor = (backgroundColor) => {
+  // Wyciągnij wartości HSL z koloru tła
+  const match = backgroundColor.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
+  if (!match) return backgroundColor;
+  
+  const hue = parseInt(match[1]);
+  const saturation = parseInt(match[2]);
+  const lightness = Math.max(0, parseInt(match[3]) - 15); // Ciemniejszy o 15%
+  
+  return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+};
+
+// Generuj parę kolorów (tło i obramowanie)
+export const generateCategoryColors = () => {
+  const bgColor = generatePastelColor();
+  const borderColor = generateBorderColor(bgColor);
+  return { color: bgColor, borderColor };
+};
