@@ -47,7 +47,7 @@ body.maks-bg::before {
   top: -20%;
   left: -20%;
   width: 140%;
-  height: 140%;
+  bottom: 0;
   font-size: 3rem;
   opacity: 0.15;
   pointer-events: none;
@@ -71,7 +71,7 @@ body.nina-bg::before {
   top: -20%;
   left: -20%;
   width: 140%;
-  height: 140%;
+  bottom: 0;
   font-size: 3rem;
   opacity: 0.15;
   pointer-events: none;
