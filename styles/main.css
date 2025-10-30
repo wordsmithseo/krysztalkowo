@@ -38,7 +38,7 @@ body {
 body.maks-bg {
   background-color: #c9e4ff;
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
 body.maks-bg::before {
@@ -62,7 +62,7 @@ body.maks-bg::before {
 body.nina-bg {
   background-color: #ffe0e6;
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
 body.nina-bg::before {
