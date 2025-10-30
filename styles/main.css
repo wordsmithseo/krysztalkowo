@@ -36,10 +36,62 @@ body {
 
 body.maks-bg {
   background-color: #c9e4ff;
+  background-image: 
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 50px,
+      rgba(0, 0, 0, 0.03) 50px,
+      rgba(0, 0, 0, 0.03) 100px
+    );
+}
+
+body.maks-bg::before {
+  content: '🚀 ⚽ 🎮 🏀 🎸 ⚡ 🦖 🤖 🚀 ⚽ 🎮 🏀 🎸 ⚡ 🦖 🤖 🚀 ⚽ 🎮 🏀 🎸 ⚡ 🦖 🤖 🚀 ⚽ 🎮 🏀 🎸 ⚡ 🦖 🤖';
+  position: fixed;
+  top: -10%;
+  left: -10%;
+  width: 220%;
+  height: 220%;
+  font-size: 3rem;
+  opacity: 0.08;
+  pointer-events: none;
+  z-index: 0;
+  word-spacing: 4rem;
+  line-height: 8rem;
+  transform: rotate(-45deg);
+  white-space: pre-wrap;
+  overflow: hidden;
 }
 
 body.nina-bg {
   background-color: #ffe0e6;
+  background-image: 
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 50px,
+      rgba(0, 0, 0, 0.03) 50px,
+      rgba(0, 0, 0, 0.03) 100px
+    );
+}
+
+body.nina-bg::before {
+  content: '🦄 🌸 🎀 ⭐ 🌈 🍓 🦋 🎨 🦄 🌸 🎀 ⭐ 🌈 🍓 🦋 🎨 🦄 🌸 🎀 ⭐ 🌈 🍓 🦋 🎨 🦄 🌸 🎀 ⭐ 🌈 🍓 🦋 🎨';
+  position: fixed;
+  top: -10%;
+  left: -10%;
+  width: 220%;
+  height: 220%;
+  font-size: 3rem;
+  opacity: 0.08;
+  pointer-events: none;
+  z-index: 0;
+  word-spacing: 4rem;
+  line-height: 8rem;
+  transform: rotate(-45deg);
+  white-space: pre-wrap;
+  overflow: hidden;
 }
 
 /* ===== IZOLACJA KOLORÓW TEKSTU ===== */
@@ -61,6 +113,8 @@ body.nina-bg {
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: relative;
+  z-index: 1;
 }
 
 .crystal-app .header {

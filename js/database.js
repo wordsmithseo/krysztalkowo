@@ -28,17 +28,115 @@ export const listenRewardsForUser = (user) => {
   });
 };
 
+// Modal informacyjny o limicie
+const showCooldownModal = (remainingSeconds) => {
+  // Sprawdź czy modal już istnieje
+  let modal = document.getElementById('cooldownModal');
+  
+  if (!modal) {
+    // Utwórz modal
+    modal = document.createElement('div');
+    modal.id = 'cooldownModal';
+    modal.className = 'modal';
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+      <div class="modal-content" style="max-width: 24rem; text-align: center; padding: 2rem;">
+        <h2 style="margin-top: 0; font-size: 1.5rem;">⏳ Poczekaj chwilę!</h2>
+        <p style="font-size: 1.1rem; margin: 1.5rem 0;">
+          Możesz dodać kryształek dopiero za <strong id="cooldownSeconds">${remainingSeconds}</strong> sekund.
+        </p>
+        <button id="cooldownOkBtn" class="submit-btn" style="margin-top: 1rem;">OK, rozumiem</button>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    
+    // Obsługa zamykania
+    const okBtn = modal.querySelector('#cooldownOkBtn');
+    okBtn.addEventListener('click', () => {
+      modal.style.display = 'none';
+      setTimeout(() => modal.remove(), 300);
+    });
+    
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.style.display = 'none';
+        setTimeout(() => modal.remove(), 300);
+      }
+    });
+  } else {
+    // Aktualizuj istniejący modal
+    modal.style.display = 'flex';
+    const secondsSpan = modal.querySelector('#cooldownSeconds');
+    if (secondsSpan) {
+      secondsSpan.textContent = remainingSeconds;
+    }
+  }
+  
+  // Odliczanie
+  const interval = setInterval(() => {
+    remainingSeconds--;
+    const secondsSpan = modal.querySelector('#cooldownSeconds');
+    if (secondsSpan) {
+      secondsSpan.textContent = remainingSeconds;
+    }
+    
+    if (remainingSeconds <= 0) {
+      clearInterval(interval);
+      modal.style.display = 'none';
+      setTimeout(() => modal.remove(), 300);
+    }
+  }, 1000);
+};
+
+// Sprawdzenie limitu czasowego (30 sekund)
+const checkCooldown = async (categoryId) => {
+  const user = getCurrentUser();
+  const lastAddRef = ref(db, `users/${user}/categories/${categoryId}/lastAddTimestamp`);
+  
+  try {
+    const snapshot = await get(lastAddRef);
+    const lastAddTime = snapshot.exists() ? snapshot.val() : 0;
+    const now = Date.now();
+    const timeDiff = now - lastAddTime;
+    const cooldownMs = 30000; // 30 sekund
+    
+    if (timeDiff < cooldownMs) {
+      const remainingSeconds = Math.ceil((cooldownMs - timeDiff) / 1000);
+      showCooldownModal(remainingSeconds);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Błąd sprawdzania cooldown:', error);
+    return true; // W razie błędu pozwól na dodanie
+  }
+};
+
 // Dodawanie kryształka
 export const addCrystal = async (categoryId) => {
+  // Sprawdź cooldown
+  const canAdd = await checkCooldown(categoryId);
+  if (!canAdd) {
+    return false;
+  }
+  
   const user = getCurrentUser();
   const countRef = ref(db, `users/${user}/categories/${categoryId}/count`);
   
   try {
     const snapshot = await get(countRef);
     const currentCount = snapshot.exists() ? snapshot.val() : 0;
-    await set(countRef, currentCount + 1);
+    
+    const updates = {};
+    updates[`users/${user}/categories/${categoryId}/count`] = currentCount + 1;
+    updates[`users/${user}/categories/${categoryId}/lastAddTimestamp`] = Date.now();
+    
+    await update(ref(db), updates);
+    return true;
   } catch (error) {
     console.error('Błąd dodawania kryształka:', error);
+    return false;
   }
 };
 
@@ -55,6 +153,7 @@ export const resetCategory = async (categoryId) => {
     updates[`users/${user}/categories/${categoryId}/count`] = 0;
     updates[`users/${user}/categories/${categoryId}/pendingReset`] = null;
     updates[`users/${user}/categories/${categoryId}/lastReward`] = null; // Usuń informację o nagrodzie
+    updates[`users/${user}/categories/${categoryId}/lastAddTimestamp`] = null; // Resetuj cooldown
     updates[`users/${user}/categories/${categoryId}/color`] = colors.color; // Nowy kolor tła
     updates[`users/${user}/categories/${categoryId}/borderColor`] = colors.borderColor; // Nowy kolor obramowania
     await update(ref(db), updates);
@@ -87,7 +186,8 @@ export const addCategory = async (name) => {
       color: colors.color,
       borderColor: colors.borderColor,
       image: '',
-      order: maxOrder + 1
+      order: maxOrder + 1,
+      lastAddTimestamp: 0
     };
     
     await set(ref(db, `users/${user}/categories/${newId}`), newCategory);

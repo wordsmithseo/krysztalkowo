@@ -125,9 +125,21 @@ const createCategoryCard = (cat, user) => {
 const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCount, goal) => {
   let holdTimer = null;
   let fillAnimTimeout = null;
+  let isTouchMoved = false;
+  let touchStartY = 0;
+  const SCROLL_THRESHOLD = 10; // piksele tolerancji na przewijanie
+  
+  const vibrate = (pattern) => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(pattern);
+    }
+  };
   
   const startHold = () => {
     card.classList.add('active-hold');
+    
+    // Wibracja na starcie
+    vibrate(50);
     
     if (pendingReset) {
       // Złota animacja dla resetu
@@ -143,6 +155,9 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
     }, 500);
     
     holdTimer = setTimeout(async () => {
+      // Wibracja sukcesu
+      vibrate([100, 50, 100]);
+      
       if (pendingReset) {
         // Reset kategorii
         await resetCategory(categoryId);
@@ -151,11 +166,15 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
         const newCount = currentCount + 1;
         await addCrystal(categoryId);
         
-        // Jeśli to był ostatni kryształek - otwórz modal natychmiast
+        // Jeśli to był ostatni kryształek - natychmiast zmień na złoty i otwórz modal
         if (newCount >= goal) {
+          // Wibracja specjalna dla ukończenia
+          vibrate([200, 100, 200, 100, 200]);
+          
+          // Daj chwilę na wizualizację, potem otwórz modal
           setTimeout(() => {
             openRewardModal(categoryId);
-          }, 600); // Krótkie opóźnienie dla animacji
+          }, 400);
         }
       }
     }, 500);
@@ -167,20 +186,38 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
     card.classList.remove('active-hold', 'filling', 'filling-complete', 'reset-filling');
   };
   
-  // Mouse events
+  // Mouse events (desktop)
   card.addEventListener('mousedown', startHold);
   card.addEventListener('mouseup', cancelHold);
   card.addEventListener('mouseleave', cancelHold);
   
-  // Touch events
+  // Touch events (mobile) - z detekcją przewijania
   card.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    startHold();
-  });
+    isTouchMoved = false;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+  
+  card.addEventListener('touchmove', (e) => {
+    const touchCurrentY = e.touches[0].clientY;
+    const deltaY = Math.abs(touchCurrentY - touchStartY);
+    
+    if (deltaY > SCROLL_THRESHOLD) {
+      isTouchMoved = true;
+      cancelHold();
+    }
+  }, { passive: true });
   
   card.addEventListener('touchend', (e) => {
-    e.preventDefault();
-    cancelHold();
+    if (!isTouchMoved) {
+      e.preventDefault();
+      startHold();
+      
+      // Automatycznie anuluj po 500ms (czas trwania animacji)
+      setTimeout(() => {
+        cancelHold();
+      }, 550);
+    }
+    isTouchMoved = false;
   });
   
   card.addEventListener('touchcancel', cancelHold);

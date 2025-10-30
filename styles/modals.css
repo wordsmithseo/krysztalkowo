@@ -243,6 +243,12 @@
 .reward-modal .modal-content {
   max-width: 56rem;
   text-align: center;
+  padding: 2rem 1rem 1.5rem;
+}
+
+.reward-modal h2 {
+  margin-top: 0;
+  margin-bottom: 2rem;
 }
 
 .chests-row {
@@ -251,6 +257,7 @@
   gap: 1.5rem;
   flex-wrap: wrap;
   margin-bottom: 1.5rem;
+  padding: 1rem 0;
 }
 
 .reward-chest {
@@ -554,6 +561,25 @@
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
+  .reward-modal .modal-content {
+    padding: 1.5rem 0.75rem 1.25rem;
+  }
+
+  .reward-modal h2 {
+    font-size: 1.4rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .reward-chest {
+    width: 8rem;
+    height: 7rem;
+  }
+
+  .chests-row {
+    gap: 1rem;
+    padding: 0.5rem 0;
+  }
+
   .ranking-bar-row {
     grid-template-columns: 3.5rem 1fr 2.5rem;
     gap: 0.5rem;
@@ -565,17 +591,5 @@
 
   .category-ranking-name {
     font-size: 1rem;
-  }
-}
-
-/* ===== RESPONSIVE ===== */
-@media (max-width: 768px) {
-  .reward-chest {
-    width: 8rem;
-    height: 7rem;
-  }
-
-  .chests-row {
-    gap: 1rem;
   }
 }
