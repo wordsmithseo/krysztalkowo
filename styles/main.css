@@ -34,62 +34,88 @@ body {
   user-select: none;
 }
 
+/* ===== TŁO DLA MAKSA - EMOTKI PO UKOSIE ===== */
 body.maks-bg {
   background-color: #c9e4ff;
-  background-image: 
-    repeating-linear-gradient(
-      45deg,
-      transparent,
-      transparent 50px,
-      rgba(0, 0, 0, 0.03) 50px,
-      rgba(0, 0, 0, 0.03) 100px
-    );
+  position: relative;
 }
 
 body.maks-bg::before {
-  content: '🚀 ⚽ 🎮 🏀 🎸 ⚡ 🦖 🤖 🚀 ⚽ 🎮 🏀 🎸 ⚡ 🦖 🤖 🚀 ⚽ 🎮 🏀 🎸 ⚡ 🦖 🤖 🚀 ⚽ 🎮 🏀 🎸 ⚡ 🦖 🤖';
+  content: '';
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  pointer-events: none;
+  z-index: 0;
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 80px,
+    rgba(0,0,0,0) 80px,
+    rgba(0,0,0,0) 160px
+  );
+  background-size: 160px 160px;
+}
+
+body.maks-bg::after {
+  content: '🚀 ⚽ 🎮 🏀 🎸 ⚡ 🦖 🤖 🚀 ⚽ 🎮 🏀 🎸 ⚡ 🦖 🤖 🚀 ⚽ 🎮 🏀 🎸 ⚡ 🦖 🤖';
   position: fixed;
   top: -10%;
   left: -10%;
   width: 220%;
   height: 220%;
-  font-size: 3rem;
-  opacity: 0.08;
+  font-size: 2.5rem;
+  opacity: 0.12;
   pointer-events: none;
   z-index: 0;
-  word-spacing: 4rem;
-  line-height: 8rem;
-  transform: rotate(-45deg);
+  word-spacing: 3rem;
+  line-height: 6rem;
+  transform: rotate(-30deg);
   white-space: pre-wrap;
   overflow: hidden;
 }
 
+/* ===== TŁO DLA NINY - EMOTKI PO UKOSIE ===== */
 body.nina-bg {
   background-color: #ffe0e6;
-  background-image: 
-    repeating-linear-gradient(
-      45deg,
-      transparent,
-      transparent 50px,
-      rgba(0, 0, 0, 0.03) 50px,
-      rgba(0, 0, 0, 0.03) 100px
-    );
+  position: relative;
 }
 
 body.nina-bg::before {
-  content: '🦄 🌸 🎀 ⭐ 🌈 🍓 🦋 🎨 🦄 🌸 🎀 ⭐ 🌈 🍓 🦋 🎨 🦄 🌸 🎀 ⭐ 🌈 🍓 🦋 🎨 🦄 🌸 🎀 ⭐ 🌈 🍓 🦋 🎨';
+  content: '';
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  pointer-events: none;
+  z-index: 0;
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 80px,
+    rgba(0,0,0,0) 80px,
+    rgba(0,0,0,0) 160px
+  );
+  background-size: 160px 160px;
+}
+
+body.nina-bg::after {
+  content: '🦄 🌸 🎀 ⭐ 🌈 🍓 🦋 🎨 🦄 🌸 🎀 ⭐ 🌈 🍓 🦋 🎨 🦄 🌸 🎀 ⭐ 🌈 🍓 🦋 🎨';
   position: fixed;
   top: -10%;
   left: -10%;
   width: 220%;
   height: 220%;
-  font-size: 3rem;
-  opacity: 0.08;
+  font-size: 2.5rem;
+  opacity: 0.12;
   pointer-events: none;
   z-index: 0;
-  word-spacing: 4rem;
-  line-height: 8rem;
-  transform: rotate(-45deg);
+  word-spacing: 3rem;
+  line-height: 6rem;
+  transform: rotate(-30deg);
   white-space: pre-wrap;
   overflow: hidden;
 }
@@ -128,11 +154,7 @@ body.nina-bg::before {
 }
 
 .crystal-app h1 {
-  font-size: 2.5rem;
-  color: #6a11cb;
-  text-align: center;
-  margin: 0;
-  width: 100%;
+  display: none;
 }
 
 /* ===== WYBÓR UŻYTKOWNIKA ===== */
@@ -324,17 +346,9 @@ body.nina-bg::before {
   .cat-img-wrap {
     height: var(--cat-img-h-desktop);
   }
-
-  .crystal-app h1 {
-    font-size: 3rem;
-  }
 }
 
 @media (max-width: 768px) {
-  .crystal-app h1 {
-    font-size: 2rem;
-  }
-
   .user-btn {
     font-size: 1.1rem;
     padding: 0.85rem 1.5rem;

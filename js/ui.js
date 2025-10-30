@@ -127,6 +127,8 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
   let fillAnimTimeout = null;
   let isTouchMoved = false;
   let touchStartY = 0;
+  let touchStartTime = 0;
+  let isHolding = false;
   const SCROLL_THRESHOLD = 10; // piksele tolerancji na przewijanie
   
   const vibrate = (pattern) => {
@@ -136,6 +138,9 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
   };
   
   const startHold = () => {
+    if (isHolding) return;
+    isHolding = true;
+    
     card.classList.add('active-hold');
     
     // Wibracja na starcie
@@ -162,28 +167,35 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
         // Reset kategorii
         await resetCategory(categoryId);
       } else {
-        // Dodaj kryształek
+        // Sprawdź czy to będzie ostatni kryształek
         const newCount = currentCount + 1;
+        const willComplete = newCount >= goal;
+        
+        // Dodaj kryształek
         await addCrystal(categoryId);
         
-        // Jeśli to był ostatni kryształek - natychmiast zmień na złoty i otwórz modal
-        if (newCount >= goal) {
+        // Jeśli to był ostatni kryształek
+        if (willComplete) {
           // Wibracja specjalna dla ukończenia
           vibrate([200, 100, 200, 100, 200]);
           
-          // Daj chwilę na wizualizację, potem otwórz modal
+          // Daj czas na wizualizację złotej karty (Firebase update + rerender)
+          // Modal otworzy się po ~600ms gdy karta już będzie złota
           setTimeout(() => {
             openRewardModal(categoryId);
-          }, 400);
+          }, 600);
         }
       }
     }, 500);
   };
   
   const cancelHold = () => {
+    if (!isHolding) return;
+    
     clearTimeout(holdTimer);
     clearTimeout(fillAnimTimeout);
     card.classList.remove('active-hold', 'filling', 'filling-complete', 'reset-filling');
+    isHolding = false;
   };
   
   // Mouse events (desktop)
@@ -191,16 +203,21 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
   card.addEventListener('mouseup', cancelHold);
   card.addEventListener('mouseleave', cancelHold);
   
-  // Touch events (mobile) - z detekcją przewijania
+  // Touch events (mobile) - NAPRAWIONA LOGIKA
   card.addEventListener('touchstart', (e) => {
     isTouchMoved = false;
     touchStartY = e.touches[0].clientY;
+    touchStartTime = Date.now();
+    
+    // Rozpocznij przytrzymywanie natychmiast
+    startHold();
   }, { passive: true });
   
   card.addEventListener('touchmove', (e) => {
     const touchCurrentY = e.touches[0].clientY;
     const deltaY = Math.abs(touchCurrentY - touchStartY);
     
+    // Jeśli użytkownik przewija, anuluj przytrzymywanie
     if (deltaY > SCROLL_THRESHOLD) {
       isTouchMoved = true;
       cancelHold();
@@ -208,15 +225,22 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
   }, { passive: true });
   
   card.addEventListener('touchend', (e) => {
-    if (!isTouchMoved) {
-      e.preventDefault();
-      startHold();
-      
-      // Automatycznie anuluj po 500ms (czas trwania animacji)
-      setTimeout(() => {
-        cancelHold();
-      }, 550);
+    // Jeśli był ruch (przewijanie), nie rób nic
+    if (isTouchMoved) {
+      cancelHold();
+      isTouchMoved = false;
+      return;
     }
+    
+    // Sprawdź ile czasu minęło od rozpoczęcia dotyku
+    const holdDuration = Date.now() - touchStartTime;
+    
+    // Jeśli puszczono przed zakończeniem animacji (500ms), anuluj
+    if (holdDuration < 500) {
+      cancelHold();
+    }
+    // W przeciwnym razie timer holdTimer sam się zajmie akcją
+    
     isTouchMoved = false;
   });
   
@@ -327,18 +351,18 @@ export const displayRanking = () => {
   
   // Sekcja rywalizacji
   if (competitiveCategories.length > 0) {
-    html += '<div class="ranking-section"><h3>🏆 Rywalizacja (kategorie wspólne)</h3>';
+    html += '<div class="ranking-section"><h3>🏆 Rywalizacja</h3>';
     competitiveCategories.forEach(cat => {
       const maksWidth = (cat.maksWins / cat.total) * 100;
       const ninaWidth = (cat.ninaWins / cat.total) * 100;
       
       let winnerBadge = '';
       if (cat.maksWins > cat.ninaWins) {
-        winnerBadge = '<span class="winner-badge maks-winner">👑 Maks</span>';
+        winnerBadge = '<span class="winner-badge maks-winner">👑 Maks wygrywa!</span>';
       } else if (cat.ninaWins > cat.maksWins) {
-        winnerBadge = '<span class="winner-badge nina-winner">👑 Nina</span>';
+        winnerBadge = '<span class="winner-badge nina-winner">👑 Nina wygrywa!</span>';
       } else {
-        winnerBadge = '<span class="winner-badge tie">🤝 Remis</span>';
+        winnerBadge = '<span class="winner-badge tie">🤝 Remis!</span>';
       }
       
       html += `
@@ -371,7 +395,7 @@ export const displayRanking = () => {
   
   // Kategorie tylko Maksa
   if (maksOnlyCategories.length > 0) {
-    html += '<div class="ranking-section"><h3>🔵 Kategorie Maksa</h3>';
+    html += '<div class="ranking-section"><h3>🔵 Osiągnięcia Maksa</h3>';
     maksOnlyCategories.forEach(cat => {
       html += `
         <div class="category-ranking-item solo-category">
@@ -387,7 +411,7 @@ export const displayRanking = () => {
   
   // Kategorie tylko Niny
   if (ninaOnlyCategories.length > 0) {
-    html += '<div class="ranking-section"><h3>🔴 Kategorie Niny</h3>';
+    html += '<div class="ranking-section"><h3>🔴 Osiągnięcia Niny</h3>';
     ninaOnlyCategories.forEach(cat => {
       html += `
         <div class="category-ranking-item solo-category">
@@ -407,15 +431,15 @@ export const displayRanking = () => {
   
   let overallHtml = '';
   if (totalMaks > totalNina) {
-    overallHtml = `<div class="overall-winner maks-overall">🏆 Maks prowadzi: ${totalMaks} zwycięstw (Nina: ${totalNina})</div>`;
+    overallHtml = `<div class="overall-winner maks-overall">🏆 Maks prowadzi z ${totalMaks} zwycięstwami! 🎉<br><small style="font-size:0.8em;opacity:0.9;">Nina ma ${totalNina}</small></div>`;
   } else if (totalNina > totalMaks) {
-    overallHtml = `<div class="overall-winner nina-overall">🏆 Nina prowadzi: ${totalNina} zwycięstw (Maks: ${totalMaks})</div>`;
+    overallHtml = `<div class="overall-winner nina-overall">🏆 Nina prowadzi z ${totalNina} zwycięstwami! 🎉<br><small style="font-size:0.8em;opacity:0.9;">Maks ma ${totalMaks}</small></div>`;
   } else if (totalMaks > 0) {
-    overallHtml = `<div class="overall-winner tie-overall">🤝 Remis! Oboje po ${totalMaks} zwycięstw!</div>`;
+    overallHtml = `<div class="overall-winner tie-overall">🤝 Remis! Oboje mają po ${totalMaks} zwycięstw! 🌟</div>`;
   }
   
   if (html === '') {
-    html = '<div style="text-align:center;padding:2rem;color:#999;">Brak jeszcze zwycięstw. Czas zdobyć pierwsze nagrody! 🎯</div>';
+    html = '<div style="text-align:center;padding:3rem 2rem;color:#999;font-size:1.2rem;"><div style="font-size:4rem;margin-bottom:1rem;">🎯</div><div style="font-weight:700;margin-bottom:0.5rem;">Brak jeszcze zwycięstw</div><div>Czas zdobyć pierwsze nagrody!</div></div>';
   }
   
   rankingContent.innerHTML = overallHtml + html;
