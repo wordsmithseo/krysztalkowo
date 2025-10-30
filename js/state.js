@@ -11,7 +11,7 @@ export const state = {
   ADMIN_FLAG: 'adminLoggedIn',
   // Hash SHA-256 dla hasła: "admin123"
   // Aby zmienić hasło, użyj panelu admina lub wygeneruj nowy hash
-  ADMIN_HASH: '1640c2fddf7f9dc5e1e06ae9df01879e4f6faf8b84a8ecf696f07cdcac000c66'
+  ADMIN_HASH: '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9'
 };
 
 // Gettery
