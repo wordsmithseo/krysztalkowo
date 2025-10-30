@@ -245,49 +245,87 @@ export const displayRanking = () => {
   const categories = getCategories();
   const rankingContent = document.getElementById('rankingContent');
   
-  // Ranking Maksa
-  const maksCategories = categories.map(cat => ({
+  // Przygotuj dane dla każdej kategorii
+  const categoryStats = categories.map(cat => ({
     name: cat.name,
-    wins: cat.wins?.maks || 0
-  })).sort((a, b) => b.wins - a.wins);
+    maksWins: cat.wins?.maks || 0,
+    ninaWins: cat.wins?.nina || 0,
+    color: cat.color || '#FFB6C1'
+  }));
   
-  // Ranking Niny
-  const ninaCategories = categories.map(cat => ({
-    name: cat.name,
-    wins: cat.wins?.nina || 0
-  })).sort((a, b) => b.wins - a.wins);
+  // Sortuj według sumy zwycięstw (najbardziej aktywne kategorie)
+  categoryStats.sort((a, b) => {
+    const totalA = a.maksWins + a.ninaWins;
+    const totalB = b.maksWins + b.ninaWins;
+    return totalB - totalA;
+  });
   
-  const getMedal = (index) => {
-    if (index === 0) return '🥇';
-    if (index === 1) return '🥈';
-    if (index === 2) return '🥉';
-    return `${index + 1}.`;
-  };
+  // Generuj HTML dla każdej kategorii
+  const categoriesHtml = categoryStats.map(cat => {
+    const maksWins = cat.maksWins;
+    const ninaWins = cat.ninaWins;
+    const total = maksWins + ninaWins;
+    
+    // Jeśli brak zwycięstw w tej kategorii, pomiń
+    if (total === 0) return '';
+    
+    // Określ zwycięzcę
+    let winnerBadge = '';
+    if (maksWins > ninaWins) {
+      winnerBadge = '<span class="winner-badge maks-winner">👑</span>';
+    } else if (ninaWins > maksWins) {
+      winnerBadge = '<span class="winner-badge nina-winner">👑</span>';
+    } else if (maksWins === ninaWins && maksWins > 0) {
+      winnerBadge = '<span class="winner-badge tie">🤝</span>';
+    }
+    
+    // Szerokość paska postępu
+    const maksWidth = total > 0 ? (maksWins / total) * 100 : 0;
+    const ninaWidth = total > 0 ? (ninaWins / total) * 100 : 0;
+    
+    return `
+      <div class="category-ranking-item">
+        <div class="category-ranking-header">
+          <span class="category-ranking-name">${cat.name}</span>
+          ${winnerBadge}
+        </div>
+        <div class="category-ranking-bars">
+          <div class="ranking-bar-row">
+            <span class="ranking-label maks-label">Maks</span>
+            <div class="ranking-bar">
+              <div class="ranking-bar-fill maks-bar" style="width: ${maksWidth}%"></div>
+            </div>
+            <span class="ranking-score">${maksWins}</span>
+          </div>
+          <div class="ranking-bar-row">
+            <span class="ranking-label nina-label">Nina</span>
+            <div class="ranking-bar">
+              <div class="ranking-bar-fill nina-bar" style="width: ${ninaWidth}%"></div>
+            </div>
+            <span class="ranking-score">${ninaWins}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+  
+  // Oblicz całkowite statystyki
+  const totalMaksWins = categoryStats.reduce((sum, cat) => sum + cat.maksWins, 0);
+  const totalNinaWins = categoryStats.reduce((sum, cat) => sum + cat.ninaWins, 0);
+  
+  let overallWinner = '';
+  if (totalMaksWins > totalNinaWins) {
+    overallWinner = '<div class="overall-winner maks-overall">🏆 Maks prowadzi z ' + totalMaksWins + ' zwycięstwami!</div>';
+  } else if (totalNinaWins > totalMaksWins) {
+    overallWinner = '<div class="overall-winner nina-overall">🏆 Nina prowadzi z ' + totalNinaWins + ' zwycięstwami!</div>';
+  } else if (totalMaksWins > 0 && totalNinaWins > 0) {
+    overallWinner = '<div class="overall-winner tie-overall">🤝 Remis! Oboje mają po ' + totalMaksWins + ' zwycięstw!</div>';
+  }
   
   rankingContent.innerHTML = `
-    <div class="user-ranking-section">
-      <h3>🔵 Ranking Maksa</h3>
-      <ul class="ranking-list">
-        ${maksCategories.map((cat, i) => `
-          <li>
-            <span class="medal">${getMedal(i)}</span>
-            <span class="category-name-rank">${cat.name}</span>
-            <span class="wins-count">${cat.wins}</span>
-          </li>
-        `).join('')}
-      </ul>
-    </div>
-    <div class="user-ranking-section">
-      <h3>🔴 Ranking Niny</h3>
-      <ul class="ranking-list">
-        ${ninaCategories.map((cat, i) => `
-          <li>
-            <span class="medal">${getMedal(i)}</span>
-            <span class="category-name-rank">${cat.name}</span>
-            <span class="wins-count">${cat.wins}</span>
-          </li>
-        `).join('')}
-      </ul>
+    ${overallWinner}
+    <div class="ranking-categories">
+      ${categoriesHtml || '<div style="text-align:center;padding:2rem;color:#999;">Brak jeszcze zwycięstw. Czas zdobyć pierwsze nagrody! 🎯</div>'}
     </div>
   `;
 };

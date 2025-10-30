@@ -50,6 +50,7 @@ export const resetCategory = async (categoryId) => {
     const updates = {};
     updates[`users/${user}/categories/${categoryId}/count`] = 0;
     updates[`users/${user}/categories/${categoryId}/pendingReset`] = null;
+    updates[`users/${user}/categories/${categoryId}/lastReward`] = null; // Usuń informację o nagrodzie
     await update(ref(db), updates);
   } catch (error) {
     console.error('Błąd resetowania kategorii:', error);
