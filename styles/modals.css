@@ -1,0 +1,395 @@
+/* ===== MODALE - PODSTAWY ===== */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+}
+
+.modal-content {
+  position: relative;
+  background: rgba(255, 255, 255, 0.74);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  padding: 1rem 1rem 1.2rem;
+  border-radius: 1.25rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  text-align: left;
+  max-width: 48rem;
+  width: 100%;
+  max-height: 85vh;
+  overflow: auto;
+}
+
+/* ===== PRZYCISK ZAMYKANIA ===== */
+.close-btn {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.9rem;
+  color: #666;
+  font-size: 1.6rem;
+  font-weight: 700;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.close-btn:hover {
+  color: #222;
+}
+
+/* ===== PRZYCISK WYLOGOWANIA W ADMINIE ===== */
+.admin-logout-btn {
+  position: absolute;
+  top: 0.6rem;
+  right: 3.25rem;
+  background: #e0e7ff;
+  color: #1f2a5a;
+  border: none;
+  border-radius: 0.6rem;
+  padding: 0.4rem 0.7rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.admin-logout-btn:hover {
+  filter: brightness(1.05);
+}
+
+/* ===== SEKCJE PANELU ADMINA ===== */
+.admin-section {
+  background: #fff;
+  border: 1px solid #eaeaea;
+  border-radius: 1rem;
+  padding: 1rem;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
+  margin: 1rem 0;
+}
+
+.admin-section h3 {
+  margin: 0.2rem 0 0.75rem 0;
+}
+
+/* ===== SIATKA FORMULARZY ===== */
+.admin-section .form-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.admin-section .form-grid input,
+.admin-section .form-grid button {
+  flex: 1 1 100%;
+}
+
+@media (min-width: 769px) {
+  .modal-content {
+    padding: 1.25rem 1.5rem 1.6rem;
+  }
+
+  .admin-section .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 12rem;
+    gap: 0.5rem 1rem;
+  }
+
+  .admin-section .form-grid input,
+  .admin-section .form-grid button {
+    flex: initial;
+  }
+}
+
+/* ===== PODGLĄD OBRAZKÓW ===== */
+.image-previews {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.25rem;
+}
+
+.image-previews .image-preview {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 0.5rem;
+  border: 1px solid #eee;
+  cursor: pointer;
+  transition: 0.15s;
+}
+
+.image-previews .image-preview:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
+}
+
+/* ===== LISTA KATEGORII W ADMINIE ===== */
+#categoryList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+#categoryList li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  background: #fafafa;
+  border: 1px solid #eee;
+  border-radius: 0.75rem;
+  padding: 0.55rem 0.75rem;
+}
+
+#categoryList li > .left {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.drag-handle {
+  cursor: grab;
+  font-size: 1.2rem;
+  line-height: 1;
+  user-select: none;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+#categoryList li > .left .name {
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 52vw;
+}
+
+/* ===== PRZYCISKI AKCJI ===== */
+.action-buttons {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.crystal-app .action-buttons button {
+  padding: 0.55rem 0.7rem;
+  border: none;
+  border-radius: 0.6rem;
+  background: #f0f0f5;
+  cursor: pointer;
+  font-size: 1rem;
+  min-width: 2.2rem;
+}
+
+.crystal-app .action-buttons button:hover {
+  background: #e7e7f3;
+}
+
+/* ===== LISTA NAGRÓD ===== */
+#rewardList {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+#rewardList li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  background: #fafafa;
+  border: 1px solid #eee;
+  border-radius: 0.75rem;
+  padding: 0.55rem 0.75rem;
+}
+
+#rewardList li .reward-left {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: 1;
+  min-width: 0;
+}
+
+#rewardList li .reward-left .reward-name {
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#rewardList li .reward-left .reward-img {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 0.5rem;
+  border: 1px solid #ddd;
+}
+
+/* ===== MODAL NAGRÓD (SKRZYNKI) ===== */
+.reward-modal .modal-content {
+  max-width: 56rem;
+  text-align: center;
+}
+
+.chests-row {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.reward-chest {
+  width: 10rem;
+  height: 8.75rem;
+  background-image: var(--chest-closed);
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  cursor: pointer;
+  transition: transform 0.2s ease, filter 0.3s ease;
+}
+
+.reward-chest:hover {
+  transform: scale(1.05);
+  filter: brightness(1.1);
+}
+
+.reward-chest.opening {
+  animation: chest-shake 0.6s ease-in-out;
+}
+
+@keyframes chest-shake {
+  0%, 100% {
+    transform: translateX(0) rotate(0deg);
+  }
+  25% {
+    transform: translateX(-5px) rotate(-3deg);
+  }
+  50% {
+    transform: translateX(5px) rotate(3deg);
+  }
+  75% {
+    transform: translateX(-5px) rotate(-3deg);
+  }
+}
+
+.reward-chest.opened {
+  background-image: var(--chest-open);
+  animation: chest-open 0.4s ease-out;
+}
+
+@keyframes chest-open {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ===== WYŚWIETLANIE NAGRODY ===== */
+.reward-reveal {
+  min-height: 6rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 1rem;
+  font-size: 1.25rem;
+}
+
+.reward-reveal img {
+  max-width: 12rem;
+  max-height: 12rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* ===== RANKING ===== */
+#rankingContent {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.user-ranking-section {
+  background: #f9f9f9;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  border: 2px solid #e0e0e0;
+}
+
+.user-ranking-section h3 {
+  margin: 0 0 0.75rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ranking-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ranking-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.ranking-list li .medal {
+  font-size: 1.5rem;
+  margin-right: 0.5rem;
+}
+
+.ranking-list li .category-name-rank {
+  font-weight: 600;
+  flex: 1;
+}
+
+.ranking-list li .wins-count {
+  font-weight: 700;
+  color: #6a11cb;
+  font-size: 1.1rem;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .reward-chest {
+    width: 8rem;
+    height: 7rem;
+  }
+
+  .chests-row {
+    gap: 1rem;
+  }
+}

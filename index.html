@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>Kryształki Maksa i Niny</title>
+  
+  <!-- Fonty -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Balsamiq+Sans:wght@700&display=swap" rel="stylesheet">
+  
+  <!-- Style -->
+  <link rel="stylesheet" href="styles/main.css">
+  <link rel="stylesheet" href="styles/categories.css">
+  <link rel="stylesheet" href="styles/modals.css">
+  
+  <!-- Biblioteki zewnętrzne -->
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  
+  <!-- Firebase -->
+  <script type="module" src="js/config.js"></script>
+  <script type="module" src="js/state.js"></script>
+  <script type="module" src="js/database.js"></script>
+  <script type="module" src="js/ui.js"></script>
+  <script type="module" src="js/admin.js"></script>
+  <script type="module" src="js/rewards.js"></script>
+  <script type="module" src="js/main.js"></script>
+</head>
+<body>
+  <div class="crystal-app">
+    <!-- Nagłówek -->
+    <div class="header">
+      <h1>✨ Kryształki ✨</h1>
+      
+      <!-- Wybór użytkownika -->
+      <div class="user-selector">
+        <div class="user-buttons-row">
+          <button id="maksBtn" class="user-btn active-user">
+            <span class="avatar-wrap">
+              <img id="maksAvatar" class="avatar-img" alt="Maks">
+            </span>
+            Maks
+          </button>
+          <button id="ninaBtn" class="user-btn">
+            <span class="avatar-wrap">
+              <img id="ninaAvatar" class="avatar-img" alt="Nina">
+            </span>
+            Nina
+          </button>
+        </div>
+      </div>
+
+      <!-- Przyciski akcji -->
+      <div style="display:flex;gap:.75rem;flex-wrap:wrap;justify-content:center">
+        <button id="adminBtn" class="admin-button">⚙️ Panel admina</button>
+        <button id="rankingBtn" class="ranking-button">🏆 Ranking</button>
+      </div>
+    </div>
+
+    <!-- Główna zawartość - kategorie -->
+    <div class="main-content">
+      <div id="container" class="container"></div>
+    </div>
+  </div>
+
+  <!-- Modal: Hasło do panelu admina -->
+  <div id="passwordModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn">&times;</span>
+      <h2>Podaj hasło do panelu admina</h2>
+      <input type="password" id="adminPasswordInput" placeholder="Hasło">
+      <button id="submitPassword" class="submit-btn">Zatwierdź</button>
+    </div>
+  </div>
+
+  <!-- Modal: Panel admina -->
+  <div id="adminModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn">&times;</span>
+      <button id="logoutBtn" class="admin-logout-btn">Wyloguj</button>
+      <h2>Panel administracyjny</h2>
+
+      <!-- Dodaj kategorię -->
+      <div class="admin-section">
+        <h3>Dodaj kategorię</h3>
+        <div class="form-grid">
+          <input type="text" id="categoryNameInput" placeholder="Nazwa kategorii">
+          <button id="addCategoryBtn" class="add-btn">Dodaj</button>
+        </div>
+      </div>
+
+      <!-- Zarządzaj kategoriami -->
+      <div class="admin-section">
+        <h3>Zarządzaj kategoriami</h3>
+        <ul id="categoryList"></ul>
+      </div>
+
+      <!-- Zarządzaj nagrodami -->
+      <div class="admin-section">
+        <h3>Zarządzaj nagrodami</h3>
+        <div class="form-grid">
+          <input type="text" id="rewardNameInput" placeholder="Nazwa nagrody">
+          <button id="addRewardBtn" class="add-btn">Dodaj</button>
+        </div>
+        <ul id="rewardList"></ul>
+      </div>
+
+      <!-- Zmień hasło -->
+      <div class="admin-section">
+        <h3>Zmień hasło admina</h3>
+        <div class="form-grid">
+          <input type="password" id="newPasswordInput" placeholder="Nowe hasło">
+          <button id="changePasswordBtn" class="change-btn">Zmień</button>
+        </div>
+      </div>
+
+      <!-- Zmień avatara -->
+      <div class="admin-section">
+        <h3>Zmień avatara</h3>
+        <div class="form-grid" style="grid-template-columns:1fr">
+          <input type="url" id="avatarUrlInput" placeholder="URL avatara (Maks lub Nina)">
+          <div style="display:flex;gap:.5rem">
+            <button id="setAvatarMaksBtn" class="set-avatar-btn">Avatar Maksa</button>
+            <button id="setAvatarNinaBtn" class="set-avatar-btn">Avatar Niny</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Edycja kategorii -->
+  <div id="editModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn">&times;</span>
+      <h2>Edytuj kategorię</h2>
+      
+      <label>Nazwa:</label>
+      <input type="text" id="editCategoryName">
+      
+      <label>Cel (liczba kryształków):</label>
+      <input type="number" id="editCategoryGoal" min="1">
+      
+      <label>Obrazek (URL):</label>
+      <input type="url" id="editCategoryImage" placeholder="https://...">
+      <div id="imagePreviewsEdit" class="image-previews"></div>
+      
+      <label>Kolor tła:</label>
+      <input type="text" id="editCategoryColor" placeholder="np. #FFB6C1">
+      
+      <label>Kolor obramowania:</label>
+      <input type="text" id="editCategoryBorder" placeholder="np. #FF69B4">
+      
+      <div style="margin-top:1rem;display:flex;gap:.5rem">
+        <button id="saveEditBtn" class="submit-btn">Zapisz</button>
+        <button id="backToAdminBtn" class="cancel-btn">Anuluj</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Ranking -->
+  <div id="rankingModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn">&times;</span>
+      <h2>🏆 Ranking</h2>
+      <div id="rankingContent"></div>
+    </div>
+  </div>
+
+  <!-- Modal: Nagroda (skrzynki) -->
+  <div id="rewardModal" class="modal reward-modal">
+    <div class="modal-content reward-modal-content">
+      <h2 style="text-align:center;margin-bottom:1.5rem;font-size:1.75rem">🎉 Wybierz swoją nagrodę! 🎉</h2>
+      <div id="chestsRow" class="chests-row">
+        <div class="reward-chest" tabindex="0" role="button" aria-label="Skrzynka 1"></div>
+        <div class="reward-chest" tabindex="0" role="button" aria-label="Skrzynka 2"></div>
+        <div class="reward-chest" tabindex="0" role="button" aria-label="Skrzynka 3"></div>
+      </div>
+      <div id="rewardReveal" class="reward-reveal"></div>
+    </div>
+  </div>
+</body>
+</html>
