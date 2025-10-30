@@ -43,7 +43,7 @@ body.maks-bg {
 
 body.maks-bg::before {
   content: '🚀 ⚽ 🎮 🏀 🎸 ⚡ 🦖 🤖 🚀 ⚽ 🎮 🏀 🎸 ⚡ 🦖 🤖 🚀 ⚽ 🎮 🏀 🎸 ⚡ 🦖 🤖 🚀 ⚽ 🎮 🏀 🎸 ⚡ 🦖 🤖 🚀 ⚽ 🎮 🏀 🎸 ⚡ 🦖 🤖 🚀 ⚽ 🎮 🏀 🎸 ⚡ 🦖 🤖 🚀 ⚽ 🎮 🏀 🎸 ⚡ 🦖 🤖 🚀 ⚽ 🎮 🏀 🎸 ⚡ 🦖 🤖 🚀 ⚽ 🎮 🏀 🎸 ⚡ 🦖 🤖 🚀 ⚽ 🎮 🏀 🎸 ⚡ 🦖 🤖 🚀 ⚽ 🎮 🏀 🎸 ⚡ 🦖 🤖 🚀 ⚽ 🎮 🏀 🎸 ⚡ 🦖 🤖';
-  position: fixed;
+  position: absolute;
   top: -20%;
   left: -20%;
   width: 140%;
@@ -67,7 +67,7 @@ body.nina-bg {
 
 body.nina-bg::before {
   content: '🦄 🌸 🎀 ⭐ 🌈 🍓 🦋 🎨 🦄 🌸 🎀 ⭐ 🌈 🍓 🦋 🎨 🦄 🌸 🎀 ⭐ 🌈 🍓 🦋 🎨 🦄 🌸 🎀 ⭐ 🌈 🍓 🦋 🎨 🦄 🌸 🎀 ⭐ 🌈 🍓 🦋 🎨 🦄 🌸 🎀 ⭐ 🌈 🍓 🦋 🎨 🦄 🌸 🎀 ⭐ 🌈 🍓 🦋 🎨 🦄 🌸 🎀 ⭐ 🌈 🍓 🦋 🎨 🦄 🌸 🎀 ⭐ 🌈 🍓 🦋 🎨 🦄 🌸 🎀 ⭐ 🌈 🍓 🦋 🎨 🦄 🌸 🎀 ⭐ 🌈 🍓 🦋 🎨 🦄 🌸 🎀 ⭐ 🌈 🍓 🦋 🎨';
-  position: fixed;
+  position: absolute;
   top: -20%;
   left: -20%;
   width: 140%;
