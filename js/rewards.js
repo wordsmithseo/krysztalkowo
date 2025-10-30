@@ -71,9 +71,14 @@ const setupChestHandlers = (chests, rewards) => {
     
     // Wyświetlenie nagrody po 420ms
     setTimeout(() => {
+      let imageHtml = '';
+      if (reward.image) {
+        imageHtml = `<img src="${reward.image}" alt="Nagroda" style="max-width:12rem;max-height:12rem;border-radius:0.75rem;box-shadow:0 6px 12px rgba(0,0,0,0.15);" onerror="this.style.display='none'">`;
+      }
+      
       rewardReveal.innerHTML = `
-        ${reward.image ? `<img src="${reward.image}" alt="Nagroda" onerror="this.style.display='none'">` : ''}
-        <div style="font-weight:800">Nagroda: ${reward.name}</div>
+        ${imageHtml}
+        <div style="font-weight:800;font-size:1.5rem;margin-top:1rem">🎁 ${reward.name}</div>
       `;
     }, 420);
     

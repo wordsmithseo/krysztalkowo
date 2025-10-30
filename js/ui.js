@@ -59,8 +59,18 @@ const createCategoryCard = (cat, user) => {
     img.className = 'cat-img';
     img.src = cat.image;
     img.alt = cat.name;
-    img.onerror = () => { img.style.display = 'none'; };
+    img.onerror = () => { 
+      // Jeśli obrazek się nie załaduje, pokaż placeholder
+      img.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"%3E%3Crect width="200" height="200" fill="%23e0e5ec"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="80" fill="%23999"%3E' + encodeURIComponent(cat.name.charAt(0).toUpperCase()) + '%3C/text%3E%3C/svg%3E';
+      img.onerror = null; // Zapobiegaj nieskończonej pętli
+    };
     imgWrap.appendChild(img);
+  } else {
+    // Brak obrazka - pokaż placeholder z pierwszą literą
+    const placeholder = document.createElement('div');
+    placeholder.style.cssText = 'width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:4rem;font-weight:700;color:#999;background:#f0f0f0;';
+    placeholder.textContent = cat.name.charAt(0).toUpperCase();
+    imgWrap.appendChild(placeholder);
   }
   
   card.appendChild(imgWrap);
@@ -216,8 +226,14 @@ export const loadAvatar = (user, imgElement, getAvatar) => {
       if (url) {
         imgElement.src = url;
         imgElement.style.display = 'block';
+        imgElement.onerror = () => {
+          // Jeśli obrazek się nie załaduje, użyj placeholdera
+          imgElement.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"%3E%3Ccircle cx="50" cy="50" r="50" fill="%23' + (user === 'maks' ? 'a0c4ff' : 'ffc2d1') + '"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="40" font-weight="bold" fill="%23fff"%3E' + user.charAt(0).toUpperCase() + '%3C/text%3E%3C/svg%3E';
+          imgElement.onerror = null;
+        };
       } else {
-        imgElement.removeAttribute('src');
+        // Brak URL - użyj domyślnego placeholdera
+        imgElement.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"%3E%3Ccircle cx="50" cy="50" r="50" fill="%23' + (user === 'maks' ? 'a0c4ff' : 'ffc2d1') + '"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="40" font-weight="bold" fill="%23fff"%3E' + user.charAt(0).toUpperCase() + '%3C/text%3E%3C/svg%3E';
         imgElement.style.display = 'block';
       }
     }

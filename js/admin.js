@@ -67,18 +67,27 @@ export const renderAdminCategories = () => {
 export const renderAdminRewards = () => {
   const rewards = getRewards();
   
-  rewardList.innerHTML = rewards.map(reward => `
-    <li>
-      <div class="reward-left">
-        ${reward.image ? `<img src="${reward.image}" class="reward-img" alt="${reward.name}">` : ''}
-        <span class="reward-name">${reward.name}</span>
-      </div>
-      <div class="action-buttons">
-        <button onclick="window.editRewardHandler('${reward.id}')">✏️</button>
-        <button onclick="window.deleteRewardHandler('${reward.id}')">🗑️</button>
-      </div>
-    </li>
-  `).join('');
+  rewardList.innerHTML = rewards.map(reward => {
+    let imageHtml = '';
+    if (reward.image) {
+      imageHtml = `<img src="${reward.image}" class="reward-img" alt="${reward.name}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22 viewBox=%220 0 40 40%22%3E%3Crect width=%2240%22 height=%2240%22 fill=%22%23f0f0f0%22 rx=%225%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2220%22%3E🎁%3C/text%3E%3C/svg%3E'; this.onerror=null;">`;
+    } else {
+      imageHtml = `<div style="width:40px;height:40px;background:#f0f0f0;border-radius:0.5rem;display:flex;align-items:center;justify-content:center;font-size:1.5rem;border:1px solid #ddd;">🎁</div>`;
+    }
+    
+    return `
+      <li>
+        <div class="reward-left">
+          ${imageHtml}
+          <span class="reward-name">${reward.name}</span>
+        </div>
+        <div class="action-buttons">
+          <button onclick="window.editRewardHandler('${reward.id}')">✏️</button>
+          <button onclick="window.deleteRewardHandler('${reward.id}')">🗑️</button>
+        </div>
+      </li>
+    `;
+  }).join('');
 };
 
 // Dodawanie kategorii

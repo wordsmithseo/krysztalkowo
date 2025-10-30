@@ -9,6 +9,8 @@ export const state = {
   rewardFlowLock: false,
   pendingCategoryId: null,
   ADMIN_FLAG: 'adminLoggedIn',
+  // Hash SHA-256 dla hasła: "admin123"
+  // Aby zmienić hasło, użyj panelu admina lub wygeneruj nowy hash
   ADMIN_HASH: '1640c2fddf7f9dc5e1e06ae9df01879e4f6faf8b84a8ecf696f07cdcac000c66'
 };
 

@@ -182,7 +182,7 @@ export const getAdminPasswordHash = async () => {
     const snapshot = await get(ref(db, 'adminPasswordHash'));
     return snapshot.exists() ? snapshot.val() : null;
   } catch (error) {
-    console.error('Błąd pobierania hasła:', error);
+    // Brak uprawnień lub błąd połączenia - zwróć null
     return null;
   }
 };

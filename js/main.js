@@ -79,7 +79,18 @@ submitPassword.addEventListener('click', async () => {
   }
   
   const hash = await sha256(password);
-  const storedHash = await getAdminPasswordHash() || state.ADMIN_HASH;
+  
+  // Sprawdź najpierw lokalny hash, potem spróbuj Firebase (jeśli są uprawnienia)
+  let storedHash = state.ADMIN_HASH;
+  try {
+    const firebaseHash = await getAdminPasswordHash();
+    if (firebaseHash) {
+      storedHash = firebaseHash;
+    }
+  } catch (error) {
+    // Brak uprawnień do Firebase - używamy lokalnego hasha
+    console.log('Używam lokalnego hasła (brak dostępu do Firebase)');
+  }
   
   if (hash === storedHash) {
     localStorage.setItem(state.ADMIN_FLAG, '1');
