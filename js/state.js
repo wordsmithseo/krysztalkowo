@@ -11,7 +11,12 @@ export const state = {
   ADMIN_FLAG: 'adminLoggedIn',
   // Hash SHA-256 dla hasła: "admin123"
   // Aby zmienić hasło, użyj panelu admina lub wygeneruj nowy hash
-  ADMIN_HASH: '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9'
+  ADMIN_HASH: '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9',
+  // Cache dla kategorii i nagród obu użytkowników
+  cache: {
+    maks: { categories: null, rewards: null },
+    nina: { categories: null, rewards: null }
+  }
 };
 
 // Gettery
@@ -33,10 +38,18 @@ export const setIsLoggedIn = (value) => {
 
 export const setCategories = (categories) => {
   state.categories = categories;
+  // Zaktualizuj cache dla aktualnego użytkownika
+  if (state.cache[state.currentUser]) {
+    state.cache[state.currentUser].categories = categories;
+  }
 };
 
 export const setRewards = (rewards) => {
   state.rewards = rewards;
+  // Zaktualizuj cache dla aktualnego użytkownika
+  if (state.cache[state.currentUser]) {
+    state.cache[state.currentUser].rewards = rewards;
+  }
 };
 
 export const setRewardFlowLock = (value) => {
@@ -45,6 +58,25 @@ export const setRewardFlowLock = (value) => {
 
 export const setPendingCategoryId = (id) => {
   state.pendingCategoryId = id;
+};
+
+// Funkcje cache
+export const getCachedData = (user) => {
+  return state.cache[user] || { categories: null, rewards: null };
+};
+
+export const setCachedCategories = (user, categories) => {
+  if (!state.cache[user]) {
+    state.cache[user] = { categories: null, rewards: null };
+  }
+  state.cache[user].categories = categories;
+};
+
+export const setCachedRewards = (user, rewards) => {
+  if (!state.cache[user]) {
+    state.cache[user] = { categories: null, rewards: null };
+  }
+  state.cache[user].rewards = rewards;
 };
 
 // Funkcje pomocnicze

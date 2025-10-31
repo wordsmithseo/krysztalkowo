@@ -316,24 +316,6 @@
   pointer-events: none;
 }
 
-.reward-modal .modal-content::after {
-  content: '✨';
-  position: absolute;
-  font-size: 3rem;
-  opacity: 0.3;
-  animation: float 3s ease-in-out infinite;
-  pointer-events: none;
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0) rotate(0deg);
-  }
-  50% {
-    transform: translateY(-20px) rotate(10deg);
-  }
-}
-
 .reward-modal h2 {
   margin: 0 0 2.5rem 0;
   font-size: 2.2rem;
@@ -512,25 +494,6 @@
   }
 }
 
-.reward-reveal::before {
-  content: '🌟 ⭐ 🌟';
-  position: absolute;
-  top: -1.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 2rem;
-  animation: starsRotate 2s linear infinite;
-}
-
-@keyframes starsRotate {
-  0% {
-    transform: translateX(-50%) rotate(0deg);
-  }
-  100% {
-    transform: translateX(-50%) rotate(360deg);
-  }
-}
-
 .reward-reveal img {
   max-width: 12rem;
   max-height: 12rem;
@@ -554,217 +517,143 @@
   }
 }
 
-/* ===== RANKING - NOWY WIZUALNIE ATRAKCYJNY DESIGN ===== */
+/* ===== RANKING - LŻEJSZY I BARDZIEJ ATRAKCYJNY DESIGN ===== */
 #rankingContent {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.5rem;
   padding: 0.5rem;
 }
 
-/* Ogólny zwycięzca - podium */
+/* Ogólny zwycięzca - prostszy, lżejszy */
 .overall-winner {
   text-align: center;
-  font-size: 1.8rem;
-  font-weight: 800;
-  padding: 2rem 1.5rem;
-  border-radius: 2rem;
-  margin-bottom: 1rem;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 
-    0 10px 30px rgba(0, 0, 0, 0.25),
-    inset 0 2px 8px rgba(255, 255, 255, 0.3);
-  animation: winnerGlow 2s ease-in-out infinite;
+  font-size: 1.5rem;
+  font-weight: 700;
+  padding: 1.5rem 1rem;
+  border-radius: 1.25rem;
+  margin-bottom: 0.75rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   font-family: 'Balsamiq Sans', cursive;
 }
 
-@keyframes winnerGlow {
-  0%, 100% {
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-  }
-  50% {
-    box-shadow: 0 10px 40px rgba(255, 215, 0, 0.7);
-  }
-}
-
-.overall-winner::before {
-  content: '🏆';
-  position: absolute;
-  top: 50%;
-  left: 10%;
-  transform: translate(-50%, -50%);
-  font-size: 8rem;
-  opacity: 0.1;
-  animation: trophyFloat 3s ease-in-out infinite;
-}
-
-@keyframes trophyFloat {
-  0%, 100% {
-    transform: translate(-50%, -50%) rotate(-5deg);
-  }
-  50% {
-    transform: translate(-50%, -60%) rotate(5deg);
-  }
-}
-
-.overall-winner::after {
-  content: '🏆';
-  position: absolute;
-  top: 50%;
-  right: 10%;
-  transform: translate(50%, -50%) scaleX(-1);
-  font-size: 8rem;
-  opacity: 0.1;
-  animation: trophyFloat 3s ease-in-out infinite;
-  animation-delay: 0.5s;
-}
-
 .maks-overall {
-  background: linear-gradient(135deg, #5a8fff 0%, #3d70e0 50%, #5a8fff 100%);
-  color: #fff;
-  text-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+  background: linear-gradient(135deg, #a0c4ff 0%, #7aa8ff 100%);
+  color: #163771;
 }
 
 .nina-overall {
-  background: linear-gradient(135deg, #ff7a9a 0%, #ff4d73 50%, #ff7a9a 100%);
-  color: #fff;
-  text-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+  background: linear-gradient(135deg, #ffc2d1 0%, #ff9eb3 100%);
+  color: #a01347;
 }
 
 .tie-overall {
-  background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FFD700 100%);
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
   color: #5b3b00;
-  text-shadow: 0 2px 4px rgba(255, 255, 255, 0.6);
 }
 
-/* Sekcje rankingu */
+/* Sekcje rankingu - prostsze */
 .ranking-section {
-  background: linear-gradient(135deg, #fff 0%, #f5f8ff 100%);
-  border-radius: 1.5rem;
-  padding: 1.5rem;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-  border: 2px solid #e0e7ff;
+  background: #fff;
+  border-radius: 1rem;
+  padding: 1.25rem;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e8e8e8;
 }
 
 .ranking-section h3 {
-  font-size: 1.5rem;
-  margin: 0 0 1.5rem 0;
+  font-size: 1.2rem;
+  margin: 0 0 1rem 0;
   color: #333;
   font-family: 'Balsamiq Sans', cursive;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 3px solid #e0e7ff;
+  gap: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #f0f0f0;
 }
 
-/* Pojedyncza kategoria w rankingu - siatka */
+/* Pojedyncza kategoria w rankingu - lżejsza */
 .category-ranking-item {
-  background: #fff;
-  border-radius: 1.25rem;
-  padding: 1.5rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  border: 2px solid #f0f0f0;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: visible;
-  margin-bottom: 1.25rem;
+  background: #fafafa;
+  border-radius: 0.875rem;
+  padding: 1rem;
+  border: 1px solid #e8e8e8;
+  margin-bottom: 0.875rem;
 }
 
-.category-ranking-item:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  border-color: #d0d7ff;
-}
-
-/* Solo kategorie - karty */
+/* Solo kategorie - prostsze */
 .category-ranking-item.solo-category {
-  padding: 1.25rem;
-  background: linear-gradient(135deg, #ffffff 0%, #fafbff 100%);
-  border-left: 6px solid;
+  padding: 0.875rem;
+  background: #fafafa;
+  border-left: 4px solid;
 }
 
 .category-ranking-item.solo-category.maks-category {
-  border-left-color: #5a8fff;
-  background: linear-gradient(135deg, #f0f5ff 0%, #e6f0ff 100%);
+  border-left-color: #7aa8ff;
 }
 
 .category-ranking-item.solo-category.nina-category {
-  border-left-color: #ff7a9a;
-  background: linear-gradient(135deg, #fff0f5 0%, #ffe6f0 100%);
+  border-left-color: #ff9eb3;
 }
 
 .solo-category-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .solo-category-name {
-  font-weight: 700;
-  font-size: 1.2rem;
+  font-weight: 600;
+  font-size: 1rem;
   color: #333;
-  font-family: 'Balsamiq Sans', cursive;
   flex: 1;
 }
 
 .solo-category-score {
-  font-weight: 800;
-  font-size: 1.8rem;
-  padding: 0.6rem 1.2rem;
-  border-radius: 3rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-weight: 700;
+  font-size: 1.25rem;
+  padding: 0.4rem 0.875rem;
+  border-radius: 2rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.35rem;
 }
 
 .maks-score {
   color: #163771;
   background: linear-gradient(135deg, #a0c4ff, #7aa8ff);
-  box-shadow: 0 4px 12px rgba(122, 168, 255, 0.4);
 }
 
 .nina-score {
   color: #a01347;
   background: linear-gradient(135deg, #ffc2d1, #ff9eb3);
-  box-shadow: 0 4px 12px rgba(255, 158, 179, 0.4);
 }
 
 .category-ranking-header {
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: center;
-  margin-bottom: 1.5rem;
-  gap: 1rem;
+  margin-bottom: 1rem;
+  gap: 0.75rem;
 }
 
 .category-ranking-name {
-  font-weight: 800;
-  font-size: 1.4rem;
+  font-weight: 700;
+  font-size: 1.1rem;
   color: #333;
   font-family: 'Balsamiq Sans', cursive;
 }
 
 .winner-badge {
-  font-size: 1.8rem;
-  font-weight: 800;
-  padding: 0.5rem 1rem;
-  border-radius: 2rem;
-  animation: badgePulse 2s ease-in-out infinite;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 0.35rem 0.75rem;
+  border-radius: 1.5rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   white-space: nowrap;
-}
-
-@keyframes badgePulse {
-  0%, 100% { 
-    transform: scale(1);
-  }
-  50% { 
-    transform: scale(1.05);
-  }
 }
 
 .maks-winner {
@@ -782,32 +671,31 @@
   background: linear-gradient(135deg, #FFD700, #FFA500);
 }
 
-/* Paski postępu - siatka */
+/* Paski postępu - prostsze */
 .category-ranking-bars {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  background: linear-gradient(135deg, #fafbff, #f5f8ff);
-  padding: 1.25rem;
-  border-radius: 1rem;
-  border: 2px solid #e6ecff;
+  gap: 0.75rem;
+  background: #fff;
+  padding: 0.875rem;
+  border-radius: 0.75rem;
+  border: 1px solid #efefef;
 }
 
 .ranking-bar-row {
   display: grid;
-  grid-template-columns: 5rem 1fr 4rem;
-  gap: 1rem;
+  grid-template-columns: 4.5rem 1fr 3.5rem;
+  gap: 0.75rem;
   align-items: center;
 }
 
 .ranking-label {
-  font-weight: 700;
-  font-size: 1.05rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 2rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 1.5rem;
   text-align: center;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
-  font-family: 'Balsamiq Sans', cursive;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
 }
 
 .maks-label {
@@ -821,69 +709,42 @@
 }
 
 .ranking-bar {
-  height: 2.5rem;
-  background: linear-gradient(135deg, #f0f0f0, #e0e0e0);
-  border-radius: 1.5rem;
+  height: 1.75rem;
+  background: #f0f0f0;
+  border-radius: 1rem;
   overflow: hidden;
   position: relative;
-  border: 3px solid rgba(0, 0, 0, 0.1);
-  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.15);
+  border: 2px solid rgba(0, 0, 0, 0.05);
 }
 
 .ranking-bar-fill {
   height: 100%;
-  transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
-  border-radius: 1.5rem;
+  transition: width 0.8s ease-out;
+  border-radius: 1rem;
   position: relative;
   overflow: hidden;
-  box-shadow: inset 0 2px 6px rgba(255, 255, 255, 0.4);
-}
-
-.ranking-bar-fill::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, 
-    transparent, 
-    rgba(255, 255, 255, 0.5), 
-    transparent
-  );
-  animation: barShine 2s ease-in-out infinite;
-}
-
-@keyframes barShine {
-  0% { left: -100%; }
-  50%, 100% { left: 100%; }
 }
 
 .maks-bar {
-  background: linear-gradient(90deg, #5a8fff, #3d70e0, #5a8fff);
-  box-shadow: 
-    inset 0 2px 6px rgba(255, 255, 255, 0.4),
-    0 3px 10px rgba(90, 143, 255, 0.4);
+  background: linear-gradient(90deg, #7aa8ff, #5a8fff);
+  box-shadow: inset 0 1px 3px rgba(255, 255, 255, 0.3);
 }
 
 .nina-bar {
-  background: linear-gradient(90deg, #ff7a9a, #ff4d73, #ff7a9a);
-  box-shadow: 
-    inset 0 2px 6px rgba(255, 255, 255, 0.4),
-    0 3px 10px rgba(255, 122, 154, 0.4);
+  background: linear-gradient(90deg, #ff9eb3, #ff7a9a);
+  box-shadow: inset 0 1px 3px rgba(255, 255, 255, 0.3);
 }
 
 .ranking-score {
-  font-weight: 800;
-  font-size: 1.6rem;
+  font-weight: 700;
+  font-size: 1.25rem;
   color: #333;
   text-align: center;
-  padding: 0.4rem 0.8rem;
-  border-radius: 2rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 1.5rem;
   background: linear-gradient(135deg, #FFD700, #FFA500);
-  border: 3px solid #fff;
-  box-shadow: 0 3px 10px rgba(255, 165, 0, 0.4);
-  font-family: 'Balsamiq Sans', cursive;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 6px rgba(255, 165, 0, 0.3);
 }
 
 /* ===== RESPONSIVE ===== */
@@ -918,46 +779,41 @@
   }
 
   .ranking-bar-row {
-    grid-template-columns: 4.5rem 1fr 3.5rem;
-    gap: 0.75rem;
+    grid-template-columns: 4rem 1fr 3rem;
+    gap: 0.5rem;
   }
 
   .ranking-label {
-    font-size: 0.9rem;
-    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
+    padding: 0.3rem 0.4rem;
   }
 
   .ranking-score {
-    font-size: 1.4rem;
-    padding: 0.3rem 0.6rem;
+    font-size: 1.1rem;
+    padding: 0.2rem 0.4rem;
   }
 
   .overall-winner {
-    font-size: 1.4rem;
-    padding: 1.5rem 1rem;
-  }
-
-  .overall-winner::before,
-  .overall-winner::after {
-    font-size: 6rem;
+    font-size: 1.2rem;
+    padding: 1.25rem 0.875rem;
   }
 
   .category-ranking-name {
-    font-size: 1.2rem;
+    font-size: 1rem;
   }
 
   .winner-badge {
-    font-size: 1.4rem;
-    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+    padding: 0.3rem 0.6rem;
   }
 
   .solo-category-score {
-    font-size: 1.5rem;
-    padding: 0.5rem 1rem;
+    font-size: 1.1rem;
+    padding: 0.35rem 0.75rem;
   }
 
   .solo-category-name {
-    font-size: 1.1rem;
+    font-size: 0.95rem;
   }
 
   .category-ranking-header {
@@ -966,6 +822,6 @@
   }
 
   .ranking-bar {
-    height: 2rem;
+    height: 1.5rem;
   }
 }

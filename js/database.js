@@ -1,30 +1,57 @@
 // ===== OPERACJE NA BAZIE DANYCH =====
 import { db } from './config.js';
 import { ref, onValue, set, get, update, remove } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
-import { getCurrentUser, setCategories, setRewards } from './state.js';
+import { getCurrentUser, setCategories, setRewards, getCachedData, setCachedCategories, setCachedRewards } from './state.js';
 import { renderCategories } from './ui.js';
 
-// Nasłuchiwanie zmian kategorii
+// Nasłuchiwanie zmian kategorii z cache
 export const setupRealtimeListener = (user) => {
   const categoriesRef = ref(db, `users/${user}/categories`);
+  
+  // Sprawdź czy mamy dane w cache - jeśli tak, użyj ich natychmiast
+  const cached = getCachedData(user);
+  if (cached.categories) {
+    setCategories(cached.categories);
+    renderCategories();
+  }
   
   onValue(categoriesRef, (snapshot) => {
     const data = snapshot.val();
     const arr = data ? Object.keys(data).map(id => ({ id, ...data[id] })) : [];
     arr.sort((a, b) => (a.order || 0) - (b.order || 0));
-    setCategories(arr);
-    renderCategories();
+    
+    // Zapisz do cache
+    setCachedCategories(user, arr);
+    
+    // Aktualizuj stan tylko jeśli to aktualny użytkownik
+    if (getCurrentUser() === user) {
+      setCategories(arr);
+      renderCategories();
+    }
   });
 };
 
-// Nasłuchiwanie zmian nagród
+// Nasłuchiwanie zmian nagród z cache
 export const listenRewardsForUser = (user) => {
   const rewardsRef = ref(db, `users/${user}/rewards`);
+  
+  // Sprawdź czy mamy dane w cache
+  const cached = getCachedData(user);
+  if (cached.rewards) {
+    setRewards(cached.rewards);
+  }
   
   onValue(rewardsRef, (snapshot) => {
     const data = snapshot.val();
     const arr = data ? Object.keys(data).map(id => ({ id, ...data[id] })) : [];
-    setRewards(arr);
+    
+    // Zapisz do cache
+    setCachedRewards(user, arr);
+    
+    // Aktualizuj stan tylko jeśli to aktualny użytkownik
+    if (getCurrentUser() === user) {
+      setRewards(arr);
+    }
   });
 };
 
@@ -211,11 +238,29 @@ export const deleteCategory = async (categoryId) => {
   }
 };
 
-// Aktualizacja kategorii
+// Aktualizacja kategorii - z obcinaniem kryształków jeśli goal jest mniejszy
 export const updateCategory = async (categoryId, data) => {
   const user = getCurrentUser();
   
   try {
+    // Jeśli zmieniamy goal, sprawdź czy trzeba obciąć count
+    if (data.goal !== undefined) {
+      const categoryRef = ref(db, `users/${user}/categories/${categoryId}`);
+      const snapshot = await get(categoryRef);
+      
+      if (snapshot.exists()) {
+        const currentData = snapshot.val();
+        const currentCount = currentData.count || 0;
+        const newGoal = data.goal;
+        const maxAllowedCount = newGoal - 1;
+        
+        // Jeśli aktualny count przekracza nowy maksymalny dozwolony, obetnij
+        if (currentCount > maxAllowedCount) {
+          data.count = maxAllowedCount;
+        }
+      }
+    }
+    
     await update(ref(db, `users/${user}/categories/${categoryId}`), data);
     return true;
   } catch (error) {
@@ -237,17 +282,28 @@ export const updateCategoryOrder = async (categoryId, newOrder) => {
   }
 };
 
-// Modyfikacja liczby kryształków (plus/minus) - funkcja administracyjna
+// Modyfikacja liczby kryształków (plus/minus) - funkcja administracyjna z ograniczeniem
 export const modifyCrystalCount = async (categoryId, delta) => {
   const user = getCurrentUser();
-  const countRef = ref(db, `users/${user}/categories/${categoryId}/count`);
+  const categoryRef = ref(db, `users/${user}/categories/${categoryId}`);
   
   try {
-    const snapshot = await get(countRef);
-    const currentCount = snapshot.exists() ? snapshot.val() : 0;
-    const newCount = Math.max(0, currentCount + delta);
+    const snapshot = await get(categoryRef);
+    if (!snapshot.exists()) return false;
     
-    await set(countRef, newCount);
+    const category = snapshot.val();
+    const currentCount = category.count || 0;
+    const goal = category.goal || 10;
+    const maxAllowedCount = goal - 1;
+    
+    let newCount = currentCount + delta;
+    
+    // Ograniczenia:
+    // - Minimalna wartość: 0
+    // - Maksymalna wartość: goal - 1
+    newCount = Math.max(0, Math.min(newCount, maxAllowedCount));
+    
+    await set(ref(db, `users/${user}/categories/${categoryId}/count`), newCount);
     return true;
   } catch (error) {
     console.error('Błąd modyfikacji kryształków:', error);

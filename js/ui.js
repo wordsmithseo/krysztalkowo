@@ -1,5 +1,5 @@
 // ===== OBSŁUGA INTERFEJSU UŻYTKOWNIKA =====
-import { getCategories, getCurrentUser, getRewards } from './state.js';
+import { getCategories, getCurrentUser, getRewards, getCachedData } from './state.js';
 import { addCrystal, resetCategory } from './database.js';
 import { openRewardModal } from './rewards.js';
 
@@ -275,8 +275,9 @@ export const fireConfetti = () => {
   }
 };
 
-// Zmiana użytkownika
+// Zmiana użytkownika - z wykorzystaniem cache
 export const switchUser = (user, setupRealtimeListener, listenRewardsForUser) => {
+  // Zmień tło
   if (user === 'maks') {
     document.body.classList.remove('nina-bg');
     document.body.classList.add('maks-bg');
@@ -289,6 +290,21 @@ export const switchUser = (user, setupRealtimeListener, listenRewardsForUser) =>
     elements.maksBtn.classList.remove('active-user');
   }
   
+  // Sprawdź czy mamy dane w cache - jeśli tak, użyj ich natychmiast
+  const cached = getCachedData(user);
+  if (cached.categories) {
+    import('./state.js').then(({ setCategories }) => {
+      setCategories(cached.categories);
+      renderCategories();
+    });
+  }
+  if (cached.rewards) {
+    import('./state.js').then(({ setRewards }) => {
+      setRewards(cached.rewards);
+    });
+  }
+  
+  // Rozpocznij nasłuchiwanie (automatycznie użyje cache jeśli dostępny)
   setupRealtimeListener(user);
   listenRewardsForUser(user);
 };
@@ -312,41 +328,54 @@ export const loadAvatar = (user, imgElement, getAvatar) => {
   });
 };
 
-// Wyświetlanie rankingu
+// Wyświetlanie rankingu - ULEPSZONE - pokazuje dane dla obu dzieci jednocześnie
 export const displayRanking = () => {
-  const categories = getCategories();
   const rankingContent = document.getElementById('rankingContent');
   
-  // Zbierz wszystkie unikalne nazwy kategorii
-  const categoryNames = [...new Set(categories.map(cat => cat.name))];
+  // Pobierz dane dla obu użytkowników z cache
+  const maksData = getCachedData('maks');
+  const ninaData = getCachedData('nina');
   
-  // Przygotuj statystyki dla każdej nazwy kategorii
-  const categoryStats = categoryNames.map(name => {
-    const catsWithName = categories.filter(cat => cat.name === name);
-    
-    let maksWins = 0;
-    let ninaWins = 0;
-    
-    catsWithName.forEach(cat => {
-      maksWins += cat.wins?.maks || 0;
-      ninaWins += cat.wins?.nina || 0;
+  // Połącz kategorie z obu profili
+  const allCategories = [];
+  
+  if (maksData.categories) {
+    maksData.categories.forEach(cat => {
+      allCategories.push({ ...cat, user: 'maks' });
     });
+  }
+  
+  if (ninaData.categories) {
+    ninaData.categories.forEach(cat => {
+      allCategories.push({ ...cat, user: 'nina' });
+    });
+  }
+  
+  // Grupuj kategorie po nazwie
+  const categoryGroups = {};
+  
+  allCategories.forEach(cat => {
+    if (!categoryGroups[cat.name]) {
+      categoryGroups[cat.name] = { maks: 0, nina: 0 };
+    }
     
-    const total = maksWins + ninaWins;
-    const hasBothPlayers = maksWins > 0 && ninaWins > 0;
-    const isMaksOnly = maksWins > 0 && ninaWins === 0;
-    const isNinaOnly = ninaWins > 0 && maksWins === 0;
+    const maksWins = cat.wins?.maks || 0;
+    const ninaWins = cat.wins?.nina || 0;
     
-    return {
-      name,
-      maksWins,
-      ninaWins,
-      total,
-      hasBothPlayers,
-      isMaksOnly,
-      isNinaOnly
-    };
+    categoryGroups[cat.name].maks += maksWins;
+    categoryGroups[cat.name].nina += ninaWins;
   });
+  
+  // Konwertuj do tablicy
+  const categoryStats = Object.keys(categoryGroups).map(name => ({
+    name,
+    maksWins: categoryGroups[name].maks,
+    ninaWins: categoryGroups[name].nina,
+    total: categoryGroups[name].maks + categoryGroups[name].nina,
+    hasBothPlayers: categoryGroups[name].maks > 0 && categoryGroups[name].nina > 0,
+    isMaksOnly: categoryGroups[name].maks > 0 && categoryGroups[name].nina === 0,
+    isNinaOnly: categoryGroups[name].nina > 0 && categoryGroups[name].maks === 0
+  }));
   
   // Sortuj: najpierw kategorie z rywalizacją, potem osobne, wszystko według aktywności
   categoryStats.sort((a, b) => {
@@ -368,25 +397,26 @@ export const displayRanking = () => {
   
   let overallHtml = '';
   if (totalMaks > totalNina) {
-    overallHtml = `<div class="overall-winner maks-overall">🏆 Maks prowadzi!<br><span style="font-size:2.5rem;font-weight:900;">${totalMaks}</span> zwycięstw<br><small style="font-size:0.9em;opacity:0.9;margin-top:0.5rem;display:block;">Nina ma ${totalNina}</small></div>`;
+    overallHtml = `<div class="overall-winner maks-overall">🏆 Maks prowadzi!<br><span style="font-size:2rem;font-weight:900;">${totalMaks} : ${totalNina}</span></div>`;
   } else if (totalNina > totalMaks) {
-    overallHtml = `<div class="overall-winner nina-overall">🏆 Nina prowadzi!<br><span style="font-size:2.5rem;font-weight:900;">${totalNina}</span> zwycięstw<br><small style="font-size:0.9em;opacity:0.9;margin-top:0.5rem;display:block;">Maks ma ${totalMaks}</small></div>`;
+    overallHtml = `<div class="overall-winner nina-overall">🏆 Nina prowadzi!<br><span style="font-size:2rem;font-weight:900;">${totalNina} : ${totalMaks}</span></div>`;
   } else if (totalMaks > 0) {
-    overallHtml = `<div class="overall-winner tie-overall">🤝 Remis!<br><span style="font-size:2.5rem;font-weight:900;">${totalMaks}</span> zwycięstw każde!</div>`;
+    overallHtml = `<div class="overall-winner tie-overall">🤝 Remis!<br><span style="font-size:2rem;font-weight:900;">${totalMaks} : ${totalNina}</span></div>`;
   }
   
   // Sekcja rywalizacji
   if (competitiveCategories.length > 0) {
     html += '<div class="ranking-section"><h3>🏆 Rywalizacja</h3>';
     competitiveCategories.forEach(cat => {
-      const maksWidth = (cat.maksWins / cat.total) * 100;
-      const ninaWidth = (cat.ninaWins / cat.total) * 100;
+      const total = cat.maksWins + cat.ninaWins;
+      const maksWidth = total > 0 ? (cat.maksWins / total) * 100 : 0;
+      const ninaWidth = total > 0 ? (cat.ninaWins / total) * 100 : 0;
       
       let winnerBadge = '';
       if (cat.maksWins > cat.ninaWins) {
-        winnerBadge = '<span class="winner-badge maks-winner">👑 Maks!</span>';
+        winnerBadge = '<span class="winner-badge maks-winner">Maks 👑</span>';
       } else if (cat.ninaWins > cat.maksWins) {
-        winnerBadge = '<span class="winner-badge nina-winner">👑 Nina!</span>';
+        winnerBadge = '<span class="winner-badge nina-winner">Nina 👑</span>';
       } else {
         winnerBadge = '<span class="winner-badge tie">🤝 Remis</span>';
       }
@@ -421,7 +451,7 @@ export const displayRanking = () => {
   
   // Kategorie tylko Maksa
   if (maksOnlyCategories.length > 0) {
-    html += '<div class="ranking-section"><h3>🔵 Osiągnięcia Maksa</h3>';
+    html += '<div class="ranking-section"><h3>🔵 Maks</h3>';
     maksOnlyCategories.forEach(cat => {
       html += `
         <div class="category-ranking-item solo-category maks-category">
@@ -437,7 +467,7 @@ export const displayRanking = () => {
   
   // Kategorie tylko Niny
   if (ninaOnlyCategories.length > 0) {
-    html += '<div class="ranking-section"><h3>🔴 Osiągnięcia Niny</h3>';
+    html += '<div class="ranking-section"><h3>🔴 Nina</h3>';
     ninaOnlyCategories.forEach(cat => {
       html += `
         <div class="category-ranking-item solo-category nina-category">
@@ -452,7 +482,7 @@ export const displayRanking = () => {
   }
   
   if (html === '') {
-    html = '<div style="text-align:center;padding:3rem 2rem;color:#999;font-size:1.2rem;"><div style="font-size:4rem;margin-bottom:1rem;">🎯</div><div style="font-weight:700;margin-bottom:0.5rem;">Brak jeszcze zwycięstw</div><div>Czas zdobyć pierwsze nagrody!</div></div>';
+    html = '<div style="text-align:center;padding:2rem 1rem;color:#999;font-size:1.1rem;"><div style="font-size:3rem;margin-bottom:0.5rem;">🎯</div><div>Brak zwycięstw</div></div>';
   }
   
   rankingContent.innerHTML = overallHtml + html;
