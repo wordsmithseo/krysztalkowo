@@ -15,6 +15,11 @@ export const listenChildren = () => {
     const arr = data ? Object.keys(data).map(id => ({ id, ...data[id] })) : [];
     arr.sort((a, b) => (a.order || 0) - (b.order || 0));
     setChildren(arr);
+    
+    // Automatyczna aktualizacja przycisków użytkowników
+    if (window.updateUserButtons) {
+      window.updateUserButtons();
+    }
   });
 };
 
@@ -475,8 +480,12 @@ export const updateChild = async (childId, data) => {
 
 export const deleteChild = async (childId) => {
   try {
+    // Usuwamy dziecko z listy children
     await remove(ref(db, `children/${childId}`));
+    
+    // Usuwamy wszystkie dane użytkownika (kategorie, nagrody, ranking itp.)
     await remove(ref(db, `users/${childId}`));
+    
     return true;
   } catch (error) {
     console.error('Błąd usuwania dziecka:', error);

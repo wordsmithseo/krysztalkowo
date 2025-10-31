@@ -89,17 +89,29 @@ const hideError = (element) => {
 // Obsługa uwierzytelniania
 setupAuthListener((user) => {
   if (user) {
-    // Użytkownik zalogowany
+    // Użytkownik zalogowany - ukryj modal i pokaż aplikację
     authModal.style.display = 'none';
     document.querySelector('.crystal-app').style.display = 'flex';
     document.getElementById('userEmail').textContent = user.email;
     
-    // Poczekaj na załadowanie dzieci przed sprawdzeniem pustych stanów
+    // Inicjalizacja nasłuchiwania zmian
+    listenChildren();
+    
+    // Poczekaj na załadowanie dzieci
     setTimeout(() => {
+      updateUserButtons();
       checkEmptyStates();
-    }, 1000);
+      
+      // Ustaw pierwszego użytkownika i nasłuchuj zmian
+      const children = state.children;
+      if (children.length > 0) {
+        setCurrentUser(children[0].id);
+        setupRealtimeListener(children[0].id);
+        listenRewardsForUser(children[0].id);
+      }
+    }, 500);
   } else {
-    // Użytkownik niezalogowany
+    // Użytkownik niezalogowany - pokaż modal uwierzytelniania
     authModal.style.display = 'flex';
     document.querySelector('.crystal-app').style.display = 'none';
   }
@@ -433,13 +445,4 @@ document.addEventListener('DOMContentLoaded', () => {
   if (localStorage.getItem(state.ADMIN_FLAG) === '1') {
     setLoggedInUi(true);
   }
-  
-  listenChildren();
-  
-  setTimeout(() => {
-    updateUserButtons();
-    
-    setupRealtimeListener(state.currentUser);
-    listenRewardsForUser(state.currentUser);
-  }, 100);
 });
