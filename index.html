@@ -27,7 +27,14 @@
   <!-- Modal uwierzytelniania -->
   <div id="authModal" class="modal auth-modal" style="display: flex;">
     <div class="modal-content auth-modal-content">
-      <h1 style="text-align: center; margin: 0 0 2rem 0; font-family: 'Balsamiq Sans', cursive; font-size: 2.5rem;">✨ Kryształki ✨</h1>
+      <h1 style="text-align: center; margin: 0 0 1rem 0; font-family: 'Balsamiq Sans', cursive; font-size: 2.5rem;">✨ Kryształki ✨</h1>
+      
+      <div class="auth-description">
+        <p style="text-align: center; margin: 0 0 2rem 0; color: #666; font-size: 0.95rem; line-height: 1.5;">
+          Aplikacja do zarządzania zadaniami i nagrodami dla dzieci. 
+          Zbieraj kryształki za wykonane zadania i odbieraj nagrody! 🎁
+        </p>
+      </div>
       
       <!-- Formularz logowania -->
       <div id="loginForm" style="display: block;">
@@ -38,6 +45,8 @@
         
         <label>Hasło:</label>
         <input type="password" id="loginPassword" placeholder="Hasło">
+        
+        <div id="loginError" class="auth-error" style="display: none;"></div>
         
         <button id="loginSubmitBtn" class="submit-btn" style="width: 100%; margin-top: 1rem;">Zaloguj się</button>
         
@@ -62,6 +71,8 @@
         
         <label>Powtórz hasło:</label>
         <input type="password" id="registerConfirmPassword" placeholder="Powtórz hasło">
+        
+        <div id="registerError" class="auth-error" style="display: none;"></div>
         
         <button id="registerSubmitBtn" class="submit-btn" style="width: 100%; margin-top: 1rem;">Zarejestruj się</button>
         

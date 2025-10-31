@@ -30,7 +30,7 @@ import {
   openAddChildModal
 } from './admin.js';
 import { getAvatar } from './database.js';
-import { setupAuthListener, loginUser, registerUser, logoutUser, getCurrentAuthUser } from './auth.js';
+import { setupAuthListener, loginUser, registerUser, logoutUser } from './auth.js';
 
 const passwordModal = document.getElementById('passwordModal');
 const adminModal = document.getElementById('adminModal');
@@ -63,8 +63,28 @@ const registerForm = document.getElementById('registerForm');
 const loginSubmitBtn = document.getElementById('loginSubmitBtn');
 const registerSubmitBtn = document.getElementById('registerSubmitBtn');
 const authLogoutBtn = document.getElementById('authLogoutBtn');
+const loginError = document.getElementById('loginError');
+const registerError = document.getElementById('registerError');
 
 window.updateUserButtons = updateUserButtons;
+
+// Funkcja pokazująca błąd
+const showError = (element, message) => {
+  element.textContent = message;
+  element.style.display = 'block';
+  element.style.padding = '0.75rem';
+  element.style.margin = '0.75rem 0';
+  element.style.background = '#fee';
+  element.style.border = '1px solid #fcc';
+  element.style.borderRadius = '0.5rem';
+  element.style.color = '#c33';
+  element.style.fontSize = '0.9rem';
+};
+
+// Funkcja ukrywająca błąd
+const hideError = (element) => {
+  element.style.display = 'none';
+};
 
 // Obsługa uwierzytelniania
 setupAuthListener((user) => {
@@ -91,27 +111,33 @@ const checkEmptyStates = () => {
 
 // Przełączanie między logowaniem a rejestracją
 if (showLoginBtn) {
-  showLoginBtn.addEventListener('click', () => {
+  showLoginBtn.addEventListener('click', (e) => {
+    e.preventDefault();
     registerForm.style.display = 'none';
     loginForm.style.display = 'block';
+    hideError(registerError);
   });
 }
 
 if (showRegisterBtn) {
-  showRegisterBtn.addEventListener('click', () => {
+  showRegisterBtn.addEventListener('click', (e) => {
+    e.preventDefault();
     loginForm.style.display = 'none';
     registerForm.style.display = 'block';
+    hideError(loginError);
   });
 }
 
 // Logowanie
 if (loginSubmitBtn) {
   loginSubmitBtn.addEventListener('click', async () => {
+    hideError(loginError);
+    
     const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value;
     
     if (!email || !password) {
-      alert('Podaj email i hasło!');
+      showError(loginError, 'Podaj email i hasło!');
       return;
     }
     
@@ -123,8 +149,9 @@ if (loginSubmitBtn) {
     if (result.success) {
       document.getElementById('loginEmail').value = '';
       document.getElementById('loginPassword').value = '';
+      hideError(loginError);
     } else {
-      alert(result.error);
+      showError(loginError, result.error);
     }
     
     loginSubmitBtn.disabled = false;
@@ -135,23 +162,25 @@ if (loginSubmitBtn) {
 // Rejestracja
 if (registerSubmitBtn) {
   registerSubmitBtn.addEventListener('click', async () => {
+    hideError(registerError);
+    
     const name = document.getElementById('registerName').value.trim();
     const email = document.getElementById('registerEmail').value.trim();
     const password = document.getElementById('registerPassword').value;
     const confirmPassword = document.getElementById('registerConfirmPassword').value;
     
     if (!name || !email || !password || !confirmPassword) {
-      alert('Wypełnij wszystkie pola!');
+      showError(registerError, 'Wypełnij wszystkie pola!');
       return;
     }
     
     if (password !== confirmPassword) {
-      alert('Hasła nie są identyczne!');
+      showError(registerError, 'Hasła nie są identyczne!');
       return;
     }
     
     if (password.length < 6) {
-      alert('Hasło musi mieć co najmniej 6 znaków!');
+      showError(registerError, 'Hasło musi mieć co najmniej 6 znaków!');
       return;
     }
     
@@ -165,11 +194,21 @@ if (registerSubmitBtn) {
       document.getElementById('registerEmail').value = '';
       document.getElementById('registerPassword').value = '';
       document.getElementById('registerConfirmPassword').value = '';
-      alert('Konto utworzone! Możesz się teraz zalogować.');
-      loginForm.style.display = 'block';
-      registerForm.style.display = 'none';
+      hideError(registerError);
+      
+      // Pokaż komunikat sukcesu
+      const successMessage = document.createElement('div');
+      successMessage.textContent = 'Konto utworzone pomyślnie! Możesz się teraz zalogować.';
+      successMessage.style.cssText = 'padding: 0.75rem; margin: 0.75rem 0; background: #e8f5e9; border: 1px solid #4caf50; border-radius: 0.5rem; color: #2e7d32; font-size: 0.9rem;';
+      registerForm.insertBefore(successMessage, registerForm.firstChild);
+      
+      setTimeout(() => {
+        successMessage.remove();
+        loginForm.style.display = 'block';
+        registerForm.style.display = 'none';
+      }, 2000);
     } else {
-      alert(result.error);
+      showError(registerError, result.error);
     }
     
     registerSubmitBtn.disabled = false;
@@ -189,6 +228,12 @@ if (authLogoutBtn) {
 
 // Enter w formularzach
 document.getElementById('loginPassword')?.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    loginSubmitBtn.click();
+  }
+});
+
+document.getElementById('loginEmail')?.addEventListener('keypress', (e) => {
   if (e.key === 'Enter') {
     loginSubmitBtn.click();
   }
