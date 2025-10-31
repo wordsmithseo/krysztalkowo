@@ -33,6 +33,9 @@ export const renderCategories = () => {
     elements.container.innerHTML = '';
     elements.container.appendChild(fragment);
     renderScheduled = false;
+    
+    // Sprawdź czy pokazać wskazówki
+    showEmptyStateGuide();
   });
 };
 
@@ -540,4 +543,73 @@ export const updateUserButtons = () => {
       });
     }
   });
+  
+  // Sprawdź czy pokazać wskazówki
+  showEmptyStateGuide();
+};
+
+// Funkcja pokazująca wskazówki dla pustych stanów
+export const showEmptyStateGuide = () => {
+  const children = getChildren();
+  const categories = getCategories();
+  const container = elements.container;
+  const adminBtn = elements.adminBtn;
+  
+  // Usuń istniejące wskazówki
+  document.querySelectorAll('.empty-guide').forEach(el => el.remove());
+  
+  // Brak dzieci
+  if (children.length === 0) {
+    const guide = document.createElement('div');
+    guide.className = 'empty-guide children-guide';
+    guide.innerHTML = `
+      <div class="empty-guide-content">
+        <div class="empty-guide-icon">👶</div>
+        <h3>Dodaj pierwsze dziecko!</h3>
+        <p>Kliknij przycisk "Panel admina" poniżej, aby dodać profil dziecka.</p>
+        <div class="empty-guide-arrow">
+          <svg width="60" height="60" viewBox="0 0 60 60">
+            <path d="M30 10 L30 40 M20 30 L30 40 L40 30" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </div>
+    `;
+    
+    // Wstaw przed przyciskiem admina
+    adminBtn.parentElement.insertBefore(guide, adminBtn.parentElement.firstChild);
+    
+    // Dodaj efekt pulsowania do przycisku
+    adminBtn.classList.add('pulse-hint');
+    
+    return;
+  }
+  
+  // Brak kategorii
+  if (categories.length === 0 && container) {
+    const guide = document.createElement('div');
+    guide.className = 'empty-guide categories-guide';
+    guide.innerHTML = `
+      <div class="empty-guide-content">
+        <div class="empty-guide-icon">📝</div>
+        <h3>Dodaj pierwszą kategorię!</h3>
+        <p>Kategorie to cele do osiągnięcia, np. "Posprzątaj pokój" lub "Zjedz warzywa".</p>
+        <p style="margin-top: 0.5rem;">Kliknij "Panel admina" i dodaj kategorie, żeby zacząć zbierać kryształki!</p>
+        <div class="empty-guide-arrow">
+          <svg width="60" height="60" viewBox="0 0 60 60">
+            <path d="M30 10 L30 40 M20 30 L30 40 L40 30" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </div>
+    `;
+    
+    container.appendChild(guide);
+    
+    // Dodaj efekt pulsowania do przycisku
+    adminBtn.classList.add('pulse-hint');
+    
+    return;
+  }
+  
+  // Usuń pulsowanie jeśli wszystko OK
+  adminBtn.classList.remove('pulse-hint');
 };

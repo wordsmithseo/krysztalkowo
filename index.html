@@ -15,6 +15,7 @@
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   
   <script type="module" src="js/config.js"></script>
+  <script type="module" src="js/auth.js"></script>
   <script type="module" src="js/state.js"></script>
   <script type="module" src="js/database.js"></script>
   <script type="module" src="js/ui.js"></script>
@@ -23,9 +24,63 @@
   <script type="module" src="js/main.js"></script>
 </head>
 <body>
-  <div class="crystal-app">
+  <!-- Modal uwierzytelniania -->
+  <div id="authModal" class="modal auth-modal" style="display: flex;">
+    <div class="modal-content auth-modal-content">
+      <h1 style="text-align: center; margin: 0 0 2rem 0; font-family: 'Balsamiq Sans', cursive; font-size: 2.5rem;">✨ Kryształki ✨</h1>
+      
+      <!-- Formularz logowania -->
+      <div id="loginForm" style="display: block;">
+        <h2 style="text-align: center; margin-bottom: 1.5rem;">Zaloguj się</h2>
+        
+        <label>Email:</label>
+        <input type="email" id="loginEmail" placeholder="twoj@email.pl">
+        
+        <label>Hasło:</label>
+        <input type="password" id="loginPassword" placeholder="Hasło">
+        
+        <button id="loginSubmitBtn" class="submit-btn" style="width: 100%; margin-top: 1rem;">Zaloguj się</button>
+        
+        <p style="text-align: center; margin-top: 1.5rem; color: #666;">
+          Nie masz konta? 
+          <a href="#" id="showRegisterBtn" style="color: #6a11cb; font-weight: 600; text-decoration: none;">Zarejestruj się</a>
+        </p>
+      </div>
+      
+      <!-- Formularz rejestracji -->
+      <div id="registerForm" style="display: none;">
+        <h2 style="text-align: center; margin-bottom: 1.5rem;">Zarejestruj się</h2>
+        
+        <label>Imię:</label>
+        <input type="text" id="registerName" placeholder="Twoje imię">
+        
+        <label>Email:</label>
+        <input type="email" id="registerEmail" placeholder="twoj@email.pl">
+        
+        <label>Hasło:</label>
+        <input type="password" id="registerPassword" placeholder="Hasło (min. 6 znaków)">
+        
+        <label>Powtórz hasło:</label>
+        <input type="password" id="registerConfirmPassword" placeholder="Powtórz hasło">
+        
+        <button id="registerSubmitBtn" class="submit-btn" style="width: 100%; margin-top: 1rem;">Zarejestruj się</button>
+        
+        <p style="text-align: center; margin-top: 1.5rem; color: #666;">
+          Masz już konto? 
+          <a href="#" id="showLoginBtn" style="color: #6a11cb; font-weight: 600; text-decoration: none;">Zaloguj się</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="crystal-app" style="display: none;">
     <div class="header">
       <h1>✨ Kryształki ✨</h1>
+      
+      <div class="user-info" style="text-align: center; margin-bottom: 0.5rem;">
+        <span style="color: #666; font-size: 0.9rem;">Zalogowany jako: <strong id="userEmail"></strong></span>
+        <button id="authLogoutBtn" style="background: none; border: none; color: #6a11cb; cursor: pointer; text-decoration: underline; margin-left: 0.5rem; font-size: 0.9rem;">Wyloguj</button>
+      </div>
       
       <div class="user-selector">
         <div class="user-buttons-row"></div>

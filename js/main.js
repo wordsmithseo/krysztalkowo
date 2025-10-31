@@ -12,7 +12,8 @@ import {
   switchUser, 
   loadAvatar, 
   displayRanking,
-  updateUserButtons
+  updateUserButtons,
+  showEmptyStateGuide
 } from './ui.js';
 import { 
   initializeSortable,
@@ -29,12 +30,14 @@ import {
   openAddChildModal
 } from './admin.js';
 import { getAvatar } from './database.js';
+import { setupAuthListener, loginUser, registerUser, logoutUser, getCurrentAuthUser } from './auth.js';
 
 const passwordModal = document.getElementById('passwordModal');
 const adminModal = document.getElementById('adminModal');
 const editModal = document.getElementById('editModal');
 const rankingModal = document.getElementById('rankingModal');
 const childModal = document.getElementById('childModal');
+const authModal = document.getElementById('authModal');
 
 const adminPasswordInput = document.getElementById('adminPasswordInput');
 const submitPassword = document.getElementById('submitPassword');
@@ -52,7 +55,150 @@ const resetRankingBtn = document.getElementById('resetRankingBtn');
 const addChildBtn = document.getElementById('addChildBtn');
 const saveChildBtn = document.getElementById('saveChildBtn');
 
+// Elementy uwierzytelniania
+const showLoginBtn = document.getElementById('showLoginBtn');
+const showRegisterBtn = document.getElementById('showRegisterBtn');
+const loginForm = document.getElementById('loginForm');
+const registerForm = document.getElementById('registerForm');
+const loginSubmitBtn = document.getElementById('loginSubmitBtn');
+const registerSubmitBtn = document.getElementById('registerSubmitBtn');
+const authLogoutBtn = document.getElementById('authLogoutBtn');
+
 window.updateUserButtons = updateUserButtons;
+
+// Obsługa uwierzytelniania
+setupAuthListener((user) => {
+  if (user) {
+    // Użytkownik zalogowany
+    authModal.style.display = 'none';
+    document.querySelector('.crystal-app').style.display = 'flex';
+    document.getElementById('userEmail').textContent = user.email;
+    
+    // Sprawdź czy są dzieci i kategorie
+    checkEmptyStates();
+  } else {
+    // Użytkownik niezalogowany
+    authModal.style.display = 'flex';
+    document.querySelector('.crystal-app').style.display = 'none';
+  }
+});
+
+const checkEmptyStates = () => {
+  setTimeout(() => {
+    showEmptyStateGuide();
+  }, 500);
+};
+
+// Przełączanie między logowaniem a rejestracją
+if (showLoginBtn) {
+  showLoginBtn.addEventListener('click', () => {
+    registerForm.style.display = 'none';
+    loginForm.style.display = 'block';
+  });
+}
+
+if (showRegisterBtn) {
+  showRegisterBtn.addEventListener('click', () => {
+    loginForm.style.display = 'none';
+    registerForm.style.display = 'block';
+  });
+}
+
+// Logowanie
+if (loginSubmitBtn) {
+  loginSubmitBtn.addEventListener('click', async () => {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    
+    if (!email || !password) {
+      alert('Podaj email i hasło!');
+      return;
+    }
+    
+    loginSubmitBtn.disabled = true;
+    loginSubmitBtn.textContent = 'Logowanie...';
+    
+    const result = await loginUser(email, password);
+    
+    if (result.success) {
+      document.getElementById('loginEmail').value = '';
+      document.getElementById('loginPassword').value = '';
+    } else {
+      alert(result.error);
+    }
+    
+    loginSubmitBtn.disabled = false;
+    loginSubmitBtn.textContent = 'Zaloguj się';
+  });
+}
+
+// Rejestracja
+if (registerSubmitBtn) {
+  registerSubmitBtn.addEventListener('click', async () => {
+    const name = document.getElementById('registerName').value.trim();
+    const email = document.getElementById('registerEmail').value.trim();
+    const password = document.getElementById('registerPassword').value;
+    const confirmPassword = document.getElementById('registerConfirmPassword').value;
+    
+    if (!name || !email || !password || !confirmPassword) {
+      alert('Wypełnij wszystkie pola!');
+      return;
+    }
+    
+    if (password !== confirmPassword) {
+      alert('Hasła nie są identyczne!');
+      return;
+    }
+    
+    if (password.length < 6) {
+      alert('Hasło musi mieć co najmniej 6 znaków!');
+      return;
+    }
+    
+    registerSubmitBtn.disabled = true;
+    registerSubmitBtn.textContent = 'Rejestracja...';
+    
+    const result = await registerUser(email, password, name);
+    
+    if (result.success) {
+      document.getElementById('registerName').value = '';
+      document.getElementById('registerEmail').value = '';
+      document.getElementById('registerPassword').value = '';
+      document.getElementById('registerConfirmPassword').value = '';
+      alert('Konto utworzone! Możesz się teraz zalogować.');
+      loginForm.style.display = 'block';
+      registerForm.style.display = 'none';
+    } else {
+      alert(result.error);
+    }
+    
+    registerSubmitBtn.disabled = false;
+    registerSubmitBtn.textContent = 'Zarejestruj się';
+  });
+}
+
+// Wylogowanie (z modala uwierzytelniania)
+if (authLogoutBtn) {
+  authLogoutBtn.addEventListener('click', async () => {
+    const result = await logoutUser();
+    if (!result.success) {
+      alert(result.error);
+    }
+  });
+}
+
+// Enter w formularzach
+document.getElementById('loginPassword')?.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    loginSubmitBtn.click();
+  }
+});
+
+document.getElementById('registerConfirmPassword')?.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    registerSubmitBtn.click();
+  }
+});
 
 elements.adminBtn.addEventListener('click', () => {
   if (state.isLoggedIn) {
