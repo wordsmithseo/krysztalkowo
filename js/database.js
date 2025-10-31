@@ -3,6 +3,8 @@ import { db } from './config.js';
 import { ref, onValue, set, get, update, remove } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
 import { getCurrentUser, setCategories, setRewards, setChildren, getCachedData, setCachedCategories, setCachedRewards } from './state.js';
 import { renderCategories } from './ui.js';
+import { getCurrentAuthUser } from './auth.js';
+import { updatePassword } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
 // Nasłuchiwanie zmian dzieci
 export const listenChildren = () => {
@@ -377,6 +379,22 @@ export const getAdminPasswordHash = async () => {
     return snapshot.exists() ? snapshot.val() : null;
   } catch (error) {
     return null;
+  }
+};
+
+// Zmiana hasła użytkownika (Firebase Auth)
+export const changeUserPassword = async (newPassword) => {
+  try {
+    const user = getCurrentAuthUser();
+    if (!user) {
+      throw new Error('Użytkownik nie jest zalogowany');
+    }
+    
+    await updatePassword(user, newPassword);
+    return true;
+  } catch (error) {
+    console.error('Błąd zmiany hasła użytkownika:', error);
+    throw error;
   }
 };
 

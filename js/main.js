@@ -1,11 +1,10 @@
 // ===== GŁÓWNY PLIK APLIKACJI =====
-import { state, setCurrentUser, sha256 } from './state.js';
+import { state, setCurrentUser } from './state.js';
 import { 
   setupRealtimeListener, 
   listenRewardsForUser,
-  getAdminPasswordHash,
-  changeAdminPassword,
-  listenChildren
+  listenChildren,
+  changeUserPassword
 } from './database.js';
 import { 
   elements, 
@@ -27,10 +26,11 @@ import {
   handleAddReward,
   handleSetAvatar,
   handleResetRanking,
-  openAddChildModal
+  openAddChildModal,
+  showLogoutConfirmModal
 } from './admin.js';
 import { getAvatar } from './database.js';
-import { setupAuthListener, loginUser, registerUser, logoutUser } from './auth.js';
+import { setupAuthListener, loginUser, registerUser, logoutUser, getCurrentAuthUser } from './auth.js';
 
 const passwordModal = document.getElementById('passwordModal');
 const adminModal = document.getElementById('adminModal');
@@ -94,8 +94,10 @@ setupAuthListener((user) => {
     document.querySelector('.crystal-app').style.display = 'flex';
     document.getElementById('userEmail').textContent = user.email;
     
-    // Sprawdź czy są dzieci i kategorie
-    checkEmptyStates();
+    // Poczekaj na załadowanie dzieci przed sprawdzeniem pustych stanów
+    setTimeout(() => {
+      checkEmptyStates();
+    }, 1000);
   } else {
     // Użytkownik niezalogowany
     authModal.style.display = 'flex';
@@ -104,9 +106,7 @@ setupAuthListener((user) => {
 });
 
 const checkEmptyStates = () => {
-  setTimeout(() => {
-    showEmptyStateGuide();
-  }, 500);
+  showEmptyStateGuide();
 };
 
 // Przełączanie między logowaniem a rejestracją
@@ -245,6 +245,7 @@ document.getElementById('registerConfirmPassword')?.addEventListener('keypress',
   }
 });
 
+// Panel admina - używa hasła konta do autoryzacji
 elements.adminBtn.addEventListener('click', () => {
   if (state.isLoggedIn) {
     adminModal.style.display = 'flex';
@@ -266,19 +267,22 @@ submitPassword.addEventListener('click', async () => {
     return;
   }
   
-  const hash = await sha256(password);
+  submitPassword.disabled = true;
+  submitPassword.textContent = 'Sprawdzanie...';
   
-  let storedHash = state.ADMIN_HASH;
-  try {
-    const firebaseHash = await getAdminPasswordHash();
-    if (firebaseHash) {
-      storedHash = firebaseHash;
-    }
-  } catch (error) {
-    console.log('Używam lokalnego hasła (brak dostępu do Firebase)');
+  // Próba logowania do Firebase Auth z hasłem
+  const user = getCurrentAuthUser();
+  if (!user) {
+    alert('Błąd: Musisz być zalogowany!');
+    submitPassword.disabled = false;
+    submitPassword.textContent = 'Zatwierdź';
+    return;
   }
   
-  if (hash === storedHash) {
+  const email = user.email;
+  const result = await loginUser(email, password);
+  
+  if (result.success) {
     localStorage.setItem(state.ADMIN_FLAG, '1');
     setLoggedInUi(true);
     passwordModal.style.display = 'none';
@@ -291,6 +295,9 @@ submitPassword.addEventListener('click', async () => {
   } else {
     alert('Nieprawidłowe hasło!');
   }
+  
+  submitPassword.disabled = false;
+  submitPassword.textContent = 'Zatwierdź';
 });
 
 adminPasswordInput.addEventListener('keypress', (e) => {
@@ -300,13 +307,11 @@ adminPasswordInput.addEventListener('keypress', (e) => {
 });
 
 logoutBtn.addEventListener('click', () => {
-  const sure = confirm('Na pewno wylogować z panelu admina?');
-  
-  if (!sure) return;
-  
-  localStorage.removeItem(state.ADMIN_FLAG);
-  setLoggedInUi(false);
-  adminModal.style.display = 'none';
+  showLogoutConfirmModal(() => {
+    localStorage.removeItem(state.ADMIN_FLAG);
+    setLoggedInUi(false);
+    adminModal.style.display = 'none';
+  });
 });
 
 closeButtons.forEach(btn => {
@@ -375,15 +380,27 @@ changePasswordBtn.addEventListener('click', async () => {
     return;
   }
   
-  const hash = await sha256(newPassword);
-  const success = await changeAdminPassword(hash);
+  changePasswordBtn.disabled = true;
+  changePasswordBtn.textContent = 'Zmieniam...';
   
-  if (success) {
-    alert('Hasło zostało zmienione!');
+  try {
+    await changeUserPassword(newPassword);
+    alert('✅ Hasło do konta zostało zmienione!');
     document.getElementById('newPasswordInput').value = '';
-  } else {
-    alert('Błąd zmiany hasła!');
+  } catch (error) {
+    let errorMessage = 'Błąd zmiany hasła!';
+    
+    if (error.code === 'auth/requires-recent-login') {
+      errorMessage = 'Ze względów bezpieczeństwa musisz się ponownie zalogować przed zmianą hasła. Wyloguj się i zaloguj ponownie, a następnie spróbuj zmienić hasło.';
+    } else if (error.code === 'auth/weak-password') {
+      errorMessage = 'Hasło jest zbyt słabe. Użyj co najmniej 6 znaków.';
+    }
+    
+    alert('❌ ' + errorMessage);
   }
+  
+  changePasswordBtn.disabled = false;
+  changePasswordBtn.textContent = 'Zmień';
 });
 
 if (setAvatarMaksBtn) {

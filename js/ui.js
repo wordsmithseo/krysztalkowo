@@ -510,6 +510,13 @@ export const updateUserButtons = () => {
   
   if (!elements.userButtonsRow) return;
   
+  // Jeśli nie ma dzieci, nie pokazuj przycisków
+  if (children.length === 0) {
+    elements.userButtonsRow.innerHTML = '';
+    showEmptyStateGuide();
+    return;
+  }
+  
   elements.userButtonsRow.innerHTML = children.map(child => {
     const genderClass = child.gender === 'male' ? 'maks' : 'nina';
     return `
@@ -576,10 +583,14 @@ export const showEmptyStateGuide = () => {
     `;
     
     // Wstaw przed przyciskiem admina
-    adminBtn.parentElement.insertBefore(guide, adminBtn.parentElement.firstChild);
+    if (adminBtn && adminBtn.parentElement) {
+      adminBtn.parentElement.insertBefore(guide, adminBtn.parentElement.firstChild);
+    }
     
     // Dodaj efekt pulsowania do przycisku
-    adminBtn.classList.add('pulse-hint');
+    if (adminBtn) {
+      adminBtn.classList.add('pulse-hint');
+    }
     
     return;
   }
@@ -605,11 +616,15 @@ export const showEmptyStateGuide = () => {
     container.appendChild(guide);
     
     // Dodaj efekt pulsowania do przycisku
-    adminBtn.classList.add('pulse-hint');
+    if (adminBtn) {
+      adminBtn.classList.add('pulse-hint');
+    }
     
     return;
   }
   
   // Usuń pulsowanie jeśli wszystko OK
-  adminBtn.classList.remove('pulse-hint');
+  if (adminBtn) {
+    adminBtn.classList.remove('pulse-hint');
+  }
 };

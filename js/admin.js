@@ -13,7 +13,8 @@ import {
   resetAllRankings,
   addChild,
   updateChild,
-  deleteChild
+  deleteChild,
+  changeUserPassword
 } from './database.js';
 
 const adminModal = document.getElementById('adminModal');
@@ -402,6 +403,26 @@ export const handleDeleteChild = async (childId) => {
         }
       }
     }
+  );
+};
+
+// Zmiana hasła konta
+export const handleChangePassword = async (newPassword) => {
+  try {
+    const success = await changeUserPassword(newPassword);
+    return success;
+  } catch (error) {
+    console.error('Błąd zmiany hasła:', error);
+    return false;
+  }
+};
+
+// Modal potwierdzenia wylogowania
+export const showLogoutConfirmModal = (onConfirm) => {
+  showConfirmModal(
+    'Wylogowanie z panelu admina',
+    'Czy na pewno chcesz wylogować się z panelu administracyjnego?',
+    onConfirm
   );
 };
 
