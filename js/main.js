@@ -4,32 +4,37 @@ import {
   setupRealtimeListener, 
   listenRewardsForUser,
   getAdminPasswordHash,
-  changeAdminPassword
+  changeAdminPassword,
+  listenChildren
 } from './database.js';
 import { 
   elements, 
   switchUser, 
   loadAvatar, 
-  displayRanking 
+  displayRanking,
+  updateUserButtons
 } from './ui.js';
 import { 
   initializeSortable,
   renderAdminCategories,
   renderAdminRewards,
+  renderChildrenList,
   handleAddCategory,
   handleSaveEdit,
+  handleSaveChild,
   setLoggedInUi,
   handleAddReward,
   handleSetAvatar,
-  handleResetRanking
+  handleResetRanking,
+  openAddChildModal
 } from './admin.js';
 import { getAvatar } from './database.js';
 
-// ===== ELEMENTY DOM =====
 const passwordModal = document.getElementById('passwordModal');
 const adminModal = document.getElementById('adminModal');
 const editModal = document.getElementById('editModal');
 const rankingModal = document.getElementById('rankingModal');
+const childModal = document.getElementById('childModal');
 
 const adminPasswordInput = document.getElementById('adminPasswordInput');
 const submitPassword = document.getElementById('submitPassword');
@@ -44,34 +49,24 @@ const addRewardBtn = document.getElementById('addRewardBtn');
 const setAvatarMaksBtn = document.getElementById('setAvatarMaksBtn');
 const setAvatarNinaBtn = document.getElementById('setAvatarNinaBtn');
 const resetRankingBtn = document.getElementById('resetRankingBtn');
+const addChildBtn = document.getElementById('addChildBtn');
+const saveChildBtn = document.getElementById('saveChildBtn');
 
-// ===== OBSŁUGA PRZYCISKÓW UŻYTKOWNIKA =====
-elements.maksBtn.addEventListener('click', () => {
-  setCurrentUser('maks');
-  switchUser('maks', setupRealtimeListener, listenRewardsForUser);
-});
+window.updateUserButtons = updateUserButtons;
 
-elements.ninaBtn.addEventListener('click', () => {
-  setCurrentUser('nina');
-  switchUser('nina', setupRealtimeListener, listenRewardsForUser);
-});
-
-// ===== OBSŁUGA PANELU ADMINA =====
 elements.adminBtn.addEventListener('click', () => {
   if (state.isLoggedIn) {
-    // Jeśli zalogowany, otwórz panel
     adminModal.style.display = 'flex';
     renderAdminCategories();
     renderAdminRewards();
+    renderChildrenList();
     initializeSortable();
   } else {
-    // Jeśli nie zalogowany, pokaż formularz hasła
     passwordModal.style.display = 'flex';
     adminPasswordInput.focus();
   }
 });
 
-// ===== LOGOWANIE DO PANELU ADMINA =====
 submitPassword.addEventListener('click', async () => {
   const password = adminPasswordInput.value;
   
@@ -82,7 +77,6 @@ submitPassword.addEventListener('click', async () => {
   
   const hash = await sha256(password);
   
-  // Sprawdź najpierw lokalny hash, potem spróbuj Firebase (jeśli są uprawnienia)
   let storedHash = state.ADMIN_HASH;
   try {
     const firebaseHash = await getAdminPasswordHash();
@@ -90,7 +84,6 @@ submitPassword.addEventListener('click', async () => {
       storedHash = firebaseHash;
     }
   } catch (error) {
-    // Brak uprawnień do Firebase - używamy lokalnego hasha
     console.log('Używam lokalnego hasła (brak dostępu do Firebase)');
   }
   
@@ -102,20 +95,19 @@ submitPassword.addEventListener('click', async () => {
     adminPasswordInput.value = '';
     renderAdminCategories();
     renderAdminRewards();
+    renderChildrenList();
     initializeSortable();
   } else {
     alert('Nieprawidłowe hasło!');
   }
 });
 
-// Enter w polu hasła
 adminPasswordInput.addEventListener('keypress', (e) => {
   if (e.key === 'Enter') {
     submitPassword.click();
   }
 });
 
-// ===== WYLOGOWANIE =====
 logoutBtn.addEventListener('click', () => {
   const sure = confirm('Na pewno wylogować z panelu admina?');
   
@@ -126,18 +118,16 @@ logoutBtn.addEventListener('click', () => {
   adminModal.style.display = 'none';
 });
 
-// ===== ZAMYKANIE MODALÓW =====
 closeButtons.forEach(btn => {
   btn.addEventListener('click', () => {
     passwordModal.style.display = 'none';
     adminModal.style.display = 'none';
     editModal.style.display = 'none';
     rankingModal.style.display = 'none';
+    childModal.style.display = 'none';
     
-    // Modal nagród ma własną logikę zamykania
     const rewardModal = document.getElementById('rewardModal');
     if (rewardModal && rewardModal.style.display === 'flex') {
-      // Sprawdź czy można zamknąć (czy skrzynka została wybrana)
       const closeBtn = rewardModal.querySelector('.close-btn');
       if (closeBtn && closeBtn.style.display !== 'none') {
         rewardModal.style.display = 'none';
@@ -146,20 +136,19 @@ closeButtons.forEach(btn => {
   });
 });
 
-// Kliknięcie poza modalem
 document.addEventListener('click', (e) => {
   const modals = [
     passwordModal, 
     adminModal, 
     editModal, 
-    rankingModal
+    rankingModal,
+    childModal
   ];
   
   if (modals.includes(e.target)) {
     e.target.style.display = 'none';
   }
   
-  // Modal nagród ma własną logikę
   const rewardModal = document.getElementById('rewardModal');
   if (e.target === rewardModal) {
     const closeBtn = rewardModal.querySelector('.close-btn');
@@ -169,7 +158,6 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// ===== PRZYCISKI PANELU ADMINA =====
 addCategoryBtn.addEventListener('click', handleAddCategory);
 saveEditBtn.addEventListener('click', handleSaveEdit);
 addRewardBtn.addEventListener('click', handleAddReward);
@@ -179,10 +167,10 @@ backToAdminBtn.addEventListener('click', () => {
   adminModal.style.display = 'flex';
   renderAdminCategories();
   renderAdminRewards();
+  renderChildrenList();
   initializeSortable();
 });
 
-// ===== ZMIANA HASŁA =====
 changePasswordBtn.addEventListener('click', async () => {
   const newPassword = document.getElementById('newPasswordInput').value;
   
@@ -207,36 +195,43 @@ changePasswordBtn.addEventListener('click', async () => {
   }
 });
 
-// ===== USTAWIENIE AVATARA =====
-setAvatarMaksBtn.addEventListener('click', () => handleSetAvatar('maks'));
-setAvatarNinaBtn.addEventListener('click', () => handleSetAvatar('nina'));
+if (setAvatarMaksBtn) {
+  setAvatarMaksBtn.addEventListener('click', () => handleSetAvatar('maks'));
+}
+if (setAvatarNinaBtn) {
+  setAvatarNinaBtn.addEventListener('click', () => handleSetAvatar('nina'));
+}
 
-// ===== RESET RANKINGU =====
 if (resetRankingBtn) {
   resetRankingBtn.addEventListener('click', handleResetRanking);
 }
 
-// ===== RANKING =====
+if (addChildBtn) {
+  addChildBtn.addEventListener('click', openAddChildModal);
+}
+
+if (saveChildBtn) {
+  saveChildBtn.addEventListener('click', handleSaveChild);
+}
+
 elements.rankingBtn.addEventListener('click', () => {
   displayRanking();
   rankingModal.style.display = 'flex';
 });
 
-// ===== INICJALIZACJA APLIKACJI =====
 document.addEventListener('DOMContentLoaded', () => {
-  // Ustaw domyślne tło dla Maksa
   document.body.classList.add('maks-bg');
   
-  // Sprawdź czy użytkownik jest zalogowany
   if (localStorage.getItem(state.ADMIN_FLAG) === '1') {
     setLoggedInUi(true);
   }
   
-  // Załaduj avatary
-  loadAvatar('maks', elements.maksAvatar, getAvatar);
-  loadAvatar('nina', elements.ninaAvatar, getAvatar);
+  listenChildren();
   
-  // Rozpocznij nasłuchiwanie zmian dla domyślnego użytkownika
-  setupRealtimeListener(state.currentUser);
-  listenRewardsForUser(state.currentUser);
+  setTimeout(() => {
+    updateUserButtons();
+    
+    setupRealtimeListener(state.currentUser);
+    listenRewardsForUser(state.currentUser);
+  }, 100);
 });

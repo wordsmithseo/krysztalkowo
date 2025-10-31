@@ -5,19 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <title>Kryształki Maksa i Niny</title>
   
-  <!-- Fonty -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Balsamiq+Sans:wght@700&display=swap" rel="stylesheet">
   
-  <!-- Style -->
   <link rel="stylesheet" href="styles/main.css">
   <link rel="stylesheet" href="styles/categories.css">
   <link rel="stylesheet" href="styles/modals.css">
   
-  <!-- Biblioteki zewnętrzne -->
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   
-  <!-- Firebase -->
   <script type="module" src="js/config.js"></script>
   <script type="module" src="js/state.js"></script>
   <script type="module" src="js/database.js"></script>
@@ -28,42 +24,24 @@
 </head>
 <body>
   <div class="crystal-app">
-    <!-- Nagłówek -->
     <div class="header">
       <h1>✨ Kryształki ✨</h1>
       
-      <!-- Wybór użytkownika -->
       <div class="user-selector">
-        <div class="user-buttons-row">
-          <button id="maksBtn" class="user-btn active-user">
-            <span class="avatar-wrap">
-              <img id="maksAvatar" class="avatar-img" alt="Maks">
-            </span>
-            Maks
-          </button>
-          <button id="ninaBtn" class="user-btn">
-            <span class="avatar-wrap">
-              <img id="ninaAvatar" class="avatar-img" alt="Nina">
-            </span>
-            Nina
-          </button>
-        </div>
+        <div class="user-buttons-row"></div>
       </div>
 
-      <!-- Przyciski akcji -->
       <div style="display:flex;gap:.75rem;flex-wrap:wrap;justify-content:center">
         <button id="adminBtn" class="admin-button">⚙️ Panel admina</button>
         <button id="rankingBtn" class="ranking-button">🏆 Ranking</button>
       </div>
     </div>
 
-    <!-- Główna zawartość - kategorie -->
     <div class="main-content">
       <div id="container" class="container"></div>
     </div>
   </div>
 
-  <!-- Modal: Hasło do panelu admina -->
   <div id="passwordModal" class="modal">
     <div class="modal-content">
       <span class="close-btn">&times;</span>
@@ -73,14 +51,20 @@
     </div>
   </div>
 
-  <!-- Modal: Panel admina -->
   <div id="adminModal" class="modal">
     <div class="modal-content">
       <span class="close-btn">&times;</span>
       <button id="logoutBtn" class="admin-logout-btn">Wyloguj</button>
       <h2>Panel administracyjny</h2>
 
-      <!-- Dodaj kategorię -->
+      <div class="admin-section">
+        <h3>Zarządzaj dziećmi</h3>
+        <div class="form-grid">
+          <button id="addChildBtn" class="add-btn">+ Dodaj dziecko</button>
+        </div>
+        <ul id="childrenList"></ul>
+      </div>
+
       <div class="admin-section">
         <h3>Dodaj kategorię</h3>
         <div class="form-grid">
@@ -89,13 +73,11 @@
         </div>
       </div>
 
-      <!-- Zarządzaj kategoriami -->
       <div class="admin-section">
         <h3>Zarządzaj kategoriami</h3>
         <ul id="categoryList"></ul>
       </div>
 
-      <!-- Zarządzaj nagrodami -->
       <div class="admin-section">
         <h3>Zarządzaj nagrodami</h3>
         <div class="form-grid">
@@ -105,7 +87,6 @@
         <ul id="rewardList"></ul>
       </div>
 
-      <!-- Zmień hasło -->
       <div class="admin-section">
         <h3>Zmień hasło admina</h3>
         <div class="form-grid">
@@ -114,11 +95,10 @@
         </div>
       </div>
 
-      <!-- Zmień avatara -->
       <div class="admin-section">
         <h3>Zmień avatara</h3>
         <div class="form-grid" style="grid-template-columns:1fr">
-          <input type="url" id="avatarUrlInput" placeholder="URL avatara (Maks lub Nina)">
+          <input type="url" id="avatarUrlInput" placeholder="URL avatara">
           <div style="display:flex;gap:.5rem">
             <button id="setAvatarMaksBtn" class="set-avatar-btn">Avatar Maksa</button>
             <button id="setAvatarNinaBtn" class="set-avatar-btn">Avatar Niny</button>
@@ -126,16 +106,40 @@
         </div>
       </div>
 
-      <!-- Reset rankingu -->
       <div class="admin-section">
         <h3>⚠️ Resetuj ranking</h3>
-        <p style="margin:0.5rem 0;font-size:0.9rem;color:#666;">Uwaga: Usunie wszystkie zwycięstwa obu dzieci we wszystkich kategoriach!</p>
+        <p style="margin:0.5rem 0;font-size:0.9rem;color:#666;">Uwaga: Usunie wszystkie zwycięstwa wszystkich dzieci we wszystkich kategoriach!</p>
         <button id="resetRankingBtn" class="cancel-btn" style="width:100%;background:#e74c3c;color:#fff;font-weight:700;">🗑️ Resetuj cały ranking</button>
       </div>
     </div>
   </div>
 
-  <!-- Modal: Edycja kategorii -->
+  <div id="childModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn">&times;</span>
+      <h2>Dodaj dziecko</h2>
+      
+      <label>Imię:</label>
+      <input type="text" id="childName" placeholder="Imię dziecka">
+      
+      <label>Płeć:</label>
+      <div class="gender-selector">
+        <label class="gender-option">
+          <input type="radio" name="childGender" id="childGenderMale" value="male" checked>
+          <span class="gender-label">👦 Chłopiec</span>
+        </label>
+        <label class="gender-option">
+          <input type="radio" name="childGender" id="childGenderFemale" value="female">
+          <span class="gender-label">👧 Dziewczynka</span>
+        </label>
+      </div>
+      
+      <div style="margin-top:1rem;display:flex;gap:.5rem">
+        <button id="saveChildBtn" class="submit-btn">Zapisz</button>
+      </div>
+    </div>
+  </div>
+
   <div id="editModal" class="modal">
     <div class="modal-content">
       <span class="close-btn">&times;</span>
@@ -158,7 +162,6 @@
     </div>
   </div>
 
-  <!-- Modal: Ranking -->
   <div id="rankingModal" class="modal">
     <div class="modal-content">
       <span class="close-btn">&times;</span>
@@ -167,7 +170,6 @@
     </div>
   </div>
 
-  <!-- Modal: Nagroda (skrzynki) -->
   <div id="rewardModal" class="modal reward-modal">
     <div class="modal-content reward-modal-content">
       <span class="close-btn">&times;</span>

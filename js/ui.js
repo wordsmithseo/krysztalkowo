@@ -1,9 +1,8 @@
 // ===== OBSŁUGA INTERFEJSU UŻYTKOWNIKA =====
-import { getCategories, getCurrentUser, getRewards, getCachedData } from './state.js';
+import { getCategories, getCurrentUser, getCachedData, getChildren } from './state.js';
 import { addCrystal, resetCategory } from './database.js';
 import { openRewardModal } from './rewards.js';
 
-// Elementy DOM
 export const elements = {
   container: document.getElementById('container'),
   maksBtn: document.getElementById('maksBtn'),
@@ -11,23 +10,32 @@ export const elements = {
   adminBtn: document.getElementById('adminBtn'),
   rankingBtn: document.getElementById('rankingBtn'),
   maksAvatar: document.getElementById('maksAvatar'),
-  ninaAvatar: document.getElementById('ninaAvatar')
+  ninaAvatar: document.getElementById('ninaAvatar'),
+  userButtonsRow: document.querySelector('.user-buttons-row')
 };
 
-// Renderowanie kategorii
+let renderScheduled = false;
+
 export const renderCategories = () => {
-  const categories = getCategories();
-  const user = getCurrentUser();
+  if (renderScheduled) return;
   
-  elements.container.innerHTML = '';
-  
-  categories.forEach(cat => {
-    const card = createCategoryCard(cat, user);
-    elements.container.appendChild(card);
+  renderScheduled = true;
+  requestAnimationFrame(() => {
+    const categories = getCategories();
+    const user = getCurrentUser();
+    const fragment = document.createDocumentFragment();
+    
+    categories.forEach(cat => {
+      const card = createCategoryCard(cat, user);
+      fragment.appendChild(card);
+    });
+    
+    elements.container.innerHTML = '';
+    elements.container.appendChild(fragment);
+    renderScheduled = false;
   });
 };
 
-// Tworzenie karty kategorii
 const createCategoryCard = (cat, user) => {
   const card = document.createElement('div');
   card.className = 'category-card';
@@ -37,30 +45,24 @@ const createCategoryCard = (cat, user) => {
   const isReady = count >= goal;
   const pendingReset = cat.pendingReset || false;
   
-  // Sprawdzenie czy to korona
   const wins = cat.wins?.[user] || 0;
   const isCrown = wins >= 3;
   
-  // Ustawianie kolorów i klas
   if (isReady && !pendingReset) {
-    // Złota karta - cel osiągnięty, czeka na otwarcie modala
     card.classList.add('reward-ready');
     if (isCrown) {
       card.classList.add('reward-crown');
     }
   } else if (pendingReset) {
-    // Złota karta po wygranej - pulsuje, czeka na reset
     card.classList.add('reward-won');
     if (isCrown) {
       card.classList.add('reward-crown');
     }
   } else {
-    // Normalne kolory
     card.style.backgroundColor = cat.color || '#FFB6C1';
     card.style.borderColor = cat.borderColor || '#FF69B4';
   }
   
-  // Obrazek
   const imgWrap = document.createElement('div');
   imgWrap.className = 'cat-img-wrap';
   
@@ -83,19 +85,16 @@ const createCategoryCard = (cat, user) => {
   
   card.appendChild(imgWrap);
   
-  // Nazwa
   const name = document.createElement('div');
   name.className = 'category-name';
   name.textContent = cat.name;
   card.appendChild(name);
   
-  // Licznik
   const countDiv = document.createElement('div');
   countDiv.className = 'crystal-count';
   countDiv.textContent = `${count} / ${goal}`;
   card.appendChild(countDiv);
   
-  // Kryształki
   const crystalsDisplay = document.createElement('div');
   crystalsDisplay.className = 'crystals-display';
   
@@ -113,7 +112,6 @@ const createCategoryCard = (cat, user) => {
   
   card.appendChild(crystalsDisplay);
   
-  // Ostatnia nagroda (tylko na złotej karcie po wygranej)
   if (pendingReset && cat.lastReward) {
     const lastReward = document.createElement('div');
     lastReward.className = 'last-reward';
@@ -121,13 +119,11 @@ const createCategoryCard = (cat, user) => {
     card.appendChild(lastReward);
   }
   
-  // Obsługa interakcji
   setupCardInteraction(card, cat.id, isReady, pendingReset, count, goal);
   
   return card;
 };
 
-// Konfiguracja interakcji z kartą
 const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCount, goal) => {
   let holdTimer = null;
   let fillAnimTimeout = null;
@@ -146,7 +142,6 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
   const startHold = () => {
     if (isHolding) return;
     
-    // Jeśli jest już gotowe (osiągnięto cel) ale jeszcze nie pokazano modala - nie pozwalaj trzymać
     if (isReady && !pendingReset) {
       return;
     }
@@ -155,14 +150,11 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
     
     card.classList.add('active-hold');
     
-    // Wibracja na starcie
     vibrate(50);
     
     if (pendingReset) {
-      // Złota animacja dla resetu
       card.classList.add('reset-filling');
     } else {
-      // Normalna animacja dodawania
       card.classList.add('filling');
     }
     
@@ -172,32 +164,23 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
     }, 500);
     
     holdTimer = setTimeout(async () => {
-      // Wibracja sukcesu
       vibrate([100, 50, 100]);
       
       if (pendingReset) {
-        // Reset kategorii
         await resetCategory(categoryId);
       } else {
-        // Sprawdź czy to będzie ostatni kryształek
         const newCount = currentCount + 1;
         const willComplete = newCount >= goal;
         
-        // Dodaj kryształek
         const success = await addCrystal(categoryId);
         
         if (!success) {
-          // Cooldown aktywny - nie rób nic więcej
           return;
         }
         
-        // Jeśli to był ostatni kryształek
         if (willComplete) {
-          // Wibracja specjalna dla ukończenia
           vibrate([200, 100, 200, 100, 200]);
           
-          // Daj czas na wizualizację złotej karty (Firebase update + rerender)
-          // Modal otworzy się po ~1000ms gdy karta już będzie złota
           setTimeout(() => {
             openRewardModal(categoryId);
           }, 1000);
@@ -215,18 +198,15 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
     isHolding = false;
   };
   
-  // Mouse events (desktop)
   card.addEventListener('mousedown', startHold);
   card.addEventListener('mouseup', cancelHold);
   card.addEventListener('mouseleave', cancelHold);
   
-  // Touch events (mobile)
   card.addEventListener('touchstart', (e) => {
     isTouchMoved = false;
     touchStartY = e.touches[0].clientY;
     touchStartTime = Date.now();
     
-    // Rozpocznij przytrzymywanie natychmiast
     startHold();
   }, { passive: true });
   
@@ -234,7 +214,6 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
     const touchCurrentY = e.touches[0].clientY;
     const deltaY = Math.abs(touchCurrentY - touchStartY);
     
-    // Jeśli użytkownik przewija, anuluj przytrzymywanie
     if (deltaY > SCROLL_THRESHOLD) {
       isTouchMoved = true;
       cancelHold();
@@ -242,17 +221,14 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
   }, { passive: true });
   
   card.addEventListener('touchend', (e) => {
-    // Jeśli był ruch (przewijanie), nie rób nic
     if (isTouchMoved) {
       cancelHold();
       isTouchMoved = false;
       return;
     }
     
-    // Sprawdź ile czasu minęło od rozpoczęcia dotyku
     const holdDuration = Date.now() - touchStartTime;
     
-    // Jeśli puszczono przed zakończeniem animacji (500ms), anuluj
     if (holdDuration < 500) {
       cancelHold();
     }
@@ -263,7 +239,6 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
   card.addEventListener('touchcancel', cancelHold);
 };
 
-// Wyświetlanie confetti
 export const fireConfetti = () => {
   if (typeof confetti !== 'undefined') {
     confetti({
@@ -275,22 +250,27 @@ export const fireConfetti = () => {
   }
 };
 
-// Zmiana użytkownika - z wykorzystaniem cache
 export const switchUser = (user, setupRealtimeListener, listenRewardsForUser) => {
-  // Zmień tło
-  if (user === 'maks') {
-    document.body.classList.remove('nina-bg');
-    document.body.classList.add('maks-bg');
-    elements.maksBtn.classList.add('active-user');
-    elements.ninaBtn.classList.remove('active-user');
-  } else {
-    document.body.classList.remove('maks-bg');
-    document.body.classList.add('nina-bg');
-    elements.ninaBtn.classList.add('active-user');
-    elements.maksBtn.classList.remove('active-user');
+  const children = getChildren();
+  const child = children.find(c => c.id === user);
+  
+  if (!child) return;
+  
+  const bgClass = child.gender === 'male' ? 'maks-bg' : 'nina-bg';
+  const otherBgClass = child.gender === 'male' ? 'nina-bg' : 'maks-bg';
+  
+  document.body.classList.remove(otherBgClass);
+  document.body.classList.add(bgClass);
+  
+  document.querySelectorAll('.user-btn').forEach(btn => {
+    btn.classList.remove('active-user');
+  });
+  
+  const activeBtn = document.getElementById(`user-${user}`);
+  if (activeBtn) {
+    activeBtn.classList.add('active-user');
   }
   
-  // Sprawdź czy mamy dane w cache - jeśli tak, użyj ich natychmiast
   const cached = getCachedData(user);
   if (cached.categories) {
     import('./state.js').then(({ setCategories }) => {
@@ -304,12 +284,10 @@ export const switchUser = (user, setupRealtimeListener, listenRewardsForUser) =>
     });
   }
   
-  // Rozpocznij nasłuchiwanie (automatycznie użyje cache jeśli dostępny)
   setupRealtimeListener(user);
   listenRewardsForUser(user);
 };
 
-// Ładowanie avatara
 export const loadAvatar = (user, imgElement, getAvatar) => {
   getAvatar(user, (url) => {
     if (imgElement) {
@@ -317,106 +295,133 @@ export const loadAvatar = (user, imgElement, getAvatar) => {
         imgElement.src = url;
         imgElement.style.display = 'block';
         imgElement.onerror = () => {
-          imgElement.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"%3E%3Ccircle cx="50" cy="50" r="50" fill="%23' + (user === 'maks' ? 'a0c4ff' : 'ffc2d1') + '"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="40" font-weight="bold" fill="%23fff"%3E' + user.charAt(0).toUpperCase() + '%3C/text%3E%3C/svg%3E';
+          const children = getChildren();
+          const child = children.find(c => c.id === user);
+          const color = child && child.gender === 'female' ? 'ffc2d1' : 'a0c4ff';
+          imgElement.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"%3E%3Ccircle cx="50" cy="50" r="50" fill="%23' + color + '"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="40" font-weight="bold" fill="%23fff"%3E' + (child ? child.name.charAt(0).toUpperCase() : 'U') + '%3C/text%3E%3C/svg%3E';
           imgElement.onerror = null;
         };
       } else {
-        imgElement.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"%3E%3Ccircle cx="50" cy="50" r="50" fill="%23' + (user === 'maks' ? 'a0c4ff' : 'ffc2d1') + '"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="40" font-weight="bold" fill="%23fff"%3E' + user.charAt(0).toUpperCase() + '%3C/text%3E%3C/svg%3E';
+        const children = getChildren();
+        const child = children.find(c => c.id === user);
+        const color = child && child.gender === 'female' ? 'ffc2d1' : 'a0c4ff';
+        imgElement.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"%3E%3Ccircle cx="50" cy="50" r="50" fill="%23' + color + '"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="40" font-weight="bold" fill="%23fff"%3E' + (child ? child.name.charAt(0).toUpperCase() : 'U') + '%3C/text%3E%3C/svg%3E';
         imgElement.style.display = 'block';
       }
     }
   });
 };
 
-// Wyświetlanie rankingu - ULEPSZONE - pokazuje dane dla obu dzieci jednocześnie
 export const displayRanking = () => {
   const rankingContent = document.getElementById('rankingContent');
+  const children = getChildren();
   
-  // Pobierz dane dla obu użytkowników z cache
-  const maksData = getCachedData('maks');
-  const ninaData = getCachedData('nina');
+  const allData = {};
   
-  // Połącz kategorie z obu profili
-  const allCategories = [];
-  
-  if (maksData.categories) {
-    maksData.categories.forEach(cat => {
-      allCategories.push({ ...cat, user: 'maks' });
-    });
-  }
-  
-  if (ninaData.categories) {
-    ninaData.categories.forEach(cat => {
-      allCategories.push({ ...cat, user: 'nina' });
-    });
-  }
-  
-  // Grupuj kategorie po nazwie
-  const categoryGroups = {};
-  
-  allCategories.forEach(cat => {
-    if (!categoryGroups[cat.name]) {
-      categoryGroups[cat.name] = { maks: 0, nina: 0 };
+  children.forEach(child => {
+    const cached = getCachedData(child.id);
+    if (cached.categories) {
+      allData[child.id] = {
+        name: child.name,
+        gender: child.gender,
+        categories: cached.categories
+      };
     }
-    
-    const maksWins = cat.wins?.maks || 0;
-    const ninaWins = cat.wins?.nina || 0;
-    
-    categoryGroups[cat.name].maks += maksWins;
-    categoryGroups[cat.name].nina += ninaWins;
   });
   
-  // Konwertuj do tablicy
-  const categoryStats = Object.keys(categoryGroups).map(name => ({
-    name,
-    maksWins: categoryGroups[name].maks,
-    ninaWins: categoryGroups[name].nina,
-    total: categoryGroups[name].maks + categoryGroups[name].nina,
-    hasBothPlayers: categoryGroups[name].maks > 0 && categoryGroups[name].nina > 0,
-    isMaksOnly: categoryGroups[name].maks > 0 && categoryGroups[name].nina === 0,
-    isNinaOnly: categoryGroups[name].nina > 0 && categoryGroups[name].maks === 0
-  }));
+  const categoryGroups = {};
   
-  // Sortuj: najpierw kategorie z rywalizacją, potem osobne, wszystko według aktywności
+  Object.keys(allData).forEach(userId => {
+    const userData = allData[userId];
+    userData.categories.forEach(cat => {
+      if (!categoryGroups[cat.name]) {
+        categoryGroups[cat.name] = {};
+      }
+      
+      const wins = cat.wins?.[userId] || 0;
+      categoryGroups[cat.name][userId] = (categoryGroups[cat.name][userId] || 0) + wins;
+    });
+  });
+  
+  const categoryStats = Object.keys(categoryGroups).map(catName => {
+    const stats = categoryGroups[catName];
+    const userIds = Object.keys(stats);
+    const total = userIds.reduce((sum, uid) => sum + stats[uid], 0);
+    const hasMultipleUsers = userIds.length > 1;
+    
+    return {
+      name: catName,
+      users: stats,
+      total,
+      hasMultipleUsers
+    };
+  }).filter(cat => cat.total > 0);
+  
   categoryStats.sort((a, b) => {
-    if (a.hasBothPlayers && !b.hasBothPlayers) return -1;
-    if (!a.hasBothPlayers && b.hasBothPlayers) return 1;
+    if (a.hasMultipleUsers && !b.hasMultipleUsers) return -1;
+    if (!a.hasMultipleUsers && b.hasMultipleUsers) return 1;
     return b.total - a.total;
   });
   
-  // Generuj HTML
-  const competitiveCategories = categoryStats.filter(cat => cat.hasBothPlayers);
-  const maksOnlyCategories = categoryStats.filter(cat => cat.isMaksOnly);
-  const ninaOnlyCategories = categoryStats.filter(cat => cat.isNinaOnly);
+  const competitiveCategories = categoryStats.filter(cat => cat.hasMultipleUsers);
+  const soloCategories = categoryStats.filter(cat => !cat.hasMultipleUsers);
   
   let html = '';
   
-  // Ogólny wynik
-  const totalMaks = categoryStats.reduce((sum, cat) => sum + cat.maksWins, 0);
-  const totalNina = categoryStats.reduce((sum, cat) => sum + cat.ninaWins, 0);
+  const totalsByUser = {};
+  children.forEach(child => {
+    totalsByUser[child.id] = 0;
+  });
   
-  let overallHtml = '';
-  if (totalMaks > totalNina) {
-    overallHtml = `<div class="overall-winner maks-overall">🏆 Maks prowadzi!<br><span style="font-size:2rem;font-weight:900;">${totalMaks} : ${totalNina}</span></div>`;
-  } else if (totalNina > totalMaks) {
-    overallHtml = `<div class="overall-winner nina-overall">🏆 Nina prowadzi!<br><span style="font-size:2rem;font-weight:900;">${totalNina} : ${totalMaks}</span></div>`;
-  } else if (totalMaks > 0) {
-    overallHtml = `<div class="overall-winner tie-overall">🤝 Remis!<br><span style="font-size:2rem;font-weight:900;">${totalMaks} : ${totalNina}</span></div>`;
+  Object.values(categoryGroups).forEach(catUsers => {
+    Object.keys(catUsers).forEach(userId => {
+      if (totalsByUser[userId] !== undefined) {
+        totalsByUser[userId] += catUsers[userId];
+      }
+    });
+  });
+  
+  const sortedTotals = Object.entries(totalsByUser)
+    .filter(([_, total]) => total > 0)
+    .sort((a, b) => b[1] - a[1]);
+  
+  if (sortedTotals.length > 0) {
+    const topUserId = sortedTotals[0][0];
+    const topTotal = sortedTotals[0][1];
+    const topChild = children.find(c => c.id === topUserId);
+    
+    if (sortedTotals.length > 1 && sortedTotals[1][1] === topTotal) {
+      html += `<div class="overall-winner tie-overall">🤝 Remis!<br><span style="font-size:2rem;font-weight:900;">`;
+      sortedTotals.filter(([_, t]) => t === topTotal).forEach(([uid, _], idx) => {
+        const child = children.find(c => c.id === uid);
+        if (idx > 0) html += ' : ';
+        html += topTotal;
+      });
+      html += `</span></div>`;
+    } else if (topChild) {
+      const genderClass = topChild.gender === 'male' ? 'maks-overall' : 'nina-overall';
+      html += `<div class="overall-winner ${genderClass}">🏆 ${topChild.name} prowadzi!<br><span style="font-size:2rem;font-weight:900;">${topTotal}`;
+      if (sortedTotals.length > 1) {
+        html += ` : ${sortedTotals[1][1]}`;
+      }
+      html += `</span></div>`;
+    }
   }
   
-  // Sekcja rywalizacji
   if (competitiveCategories.length > 0) {
     html += '<div class="ranking-section"><h3>🏆 Rywalizacja</h3>';
     competitiveCategories.forEach(cat => {
-      const total = cat.maksWins + cat.ninaWins;
-      const maksWidth = total > 0 ? (cat.maksWins / total) * 100 : 0;
-      const ninaWidth = total > 0 ? (cat.ninaWins / total) * 100 : 0;
+      const userIds = Object.keys(cat.users);
+      const maxWins = Math.max(...Object.values(cat.users));
+      const winners = userIds.filter(uid => cat.users[uid] === maxWins);
       
       let winnerBadge = '';
-      if (cat.maksWins > cat.ninaWins) {
-        winnerBadge = '<span class="winner-badge maks-winner">Maks 👑</span>';
-      } else if (cat.ninaWins > cat.maksWins) {
-        winnerBadge = '<span class="winner-badge nina-winner">Nina 👑</span>';
+      if (winners.length === 1) {
+        const winnerChild = children.find(c => c.id === winners[0]);
+        if (winnerChild) {
+          const genderClass = winnerChild.gender === 'male' ? 'maks-winner' : 'nina-winner';
+          winnerBadge = `<span class="winner-badge ${genderClass}">${winnerChild.name} 👑</span>`;
+        }
       } else {
         winnerBadge = '<span class="winner-badge tie">🤝 Remis</span>';
       }
@@ -428,20 +433,28 @@ export const displayRanking = () => {
             ${winnerBadge}
           </div>
           <div class="category-ranking-bars">
-            <div class="ranking-bar-row">
-              <span class="ranking-label maks-label">Maks</span>
-              <div class="ranking-bar">
-                <div class="ranking-bar-fill maks-bar" style="width: ${maksWidth}%"></div>
-              </div>
-              <span class="ranking-score">${cat.maksWins}</span>
+      `;
+      
+      userIds.forEach(userId => {
+        const child = children.find(c => c.id === userId);
+        if (!child) return;
+        
+        const wins = cat.users[userId];
+        const percentage = cat.total > 0 ? (wins / cat.total) * 100 : 0;
+        const genderClass = child.gender === 'male' ? 'maks' : 'nina';
+        
+        html += `
+          <div class="ranking-bar-row">
+            <span class="ranking-label ${genderClass}-label">${child.name}</span>
+            <div class="ranking-bar">
+              <div class="ranking-bar-fill ${genderClass}-bar" style="width: ${percentage}%"></div>
             </div>
-            <div class="ranking-bar-row">
-              <span class="ranking-label nina-label">Nina</span>
-              <div class="ranking-bar">
-                <div class="ranking-bar-fill nina-bar" style="width: ${ninaWidth}%"></div>
-              </div>
-              <span class="ranking-score">${cat.ninaWins}</span>
-            </div>
+            <span class="ranking-score">${wins}</span>
+          </div>
+        `;
+      });
+      
+      html += `
           </div>
         </div>
       `;
@@ -449,41 +462,82 @@ export const displayRanking = () => {
     html += '</div>';
   }
   
-  // Kategorie tylko Maksa
-  if (maksOnlyCategories.length > 0) {
-    html += '<div class="ranking-section"><h3>🔵 Maks</h3>';
-    maksOnlyCategories.forEach(cat => {
-      html += `
-        <div class="category-ranking-item solo-category maks-category">
-          <div class="solo-category-row">
-            <span class="solo-category-name">${cat.name}</span>
-            <span class="solo-category-score maks-score">${cat.maksWins} 🏆</span>
-          </div>
-        </div>
-      `;
+  if (soloCategories.length > 0) {
+    const soloByUser = {};
+    soloCategories.forEach(cat => {
+      const userId = Object.keys(cat.users)[0];
+      if (!soloByUser[userId]) {
+        soloByUser[userId] = [];
+      }
+      soloByUser[userId].push(cat);
     });
-    html += '</div>';
-  }
-  
-  // Kategorie tylko Niny
-  if (ninaOnlyCategories.length > 0) {
-    html += '<div class="ranking-section"><h3>🔴 Nina</h3>';
-    ninaOnlyCategories.forEach(cat => {
-      html += `
-        <div class="category-ranking-item solo-category nina-category">
-          <div class="solo-category-row">
-            <span class="solo-category-name">${cat.name}</span>
-            <span class="solo-category-score nina-score">${cat.ninaWins} 🏆</span>
+    
+    Object.keys(soloByUser).forEach(userId => {
+      const child = children.find(c => c.id === userId);
+      if (!child) return;
+      
+      const genderClass = child.gender === 'male' ? 'maks' : 'nina';
+      const icon = child.gender === 'male' ? '🔵' : '🔴';
+      
+      html += `<div class="ranking-section"><h3>${icon} ${child.name}</h3>`;
+      soloByUser[userId].forEach(cat => {
+        const wins = cat.users[userId];
+        html += `
+          <div class="category-ranking-item solo-category ${genderClass}-category">
+            <div class="solo-category-row">
+              <span class="solo-category-name">${cat.name}</span>
+              <span class="solo-category-score ${genderClass}-score">${wins} 🏆</span>
+            </div>
           </div>
-        </div>
-      `;
+        `;
+      });
+      html += '</div>';
     });
-    html += '</div>';
   }
   
   if (html === '') {
     html = '<div style="text-align:center;padding:2rem 1rem;color:#999;font-size:1.1rem;"><div style="font-size:3rem;margin-bottom:0.5rem;">🎯</div><div>Brak zwycięstw</div></div>';
   }
   
-  rankingContent.innerHTML = overallHtml + html;
+  rankingContent.innerHTML = html;
+};
+
+export const updateUserButtons = () => {
+  const children = getChildren();
+  
+  if (!elements.userButtonsRow) return;
+  
+  elements.userButtonsRow.innerHTML = children.map(child => {
+    const genderClass = child.gender === 'male' ? 'maks' : 'nina';
+    return `
+      <button id="user-${child.id}" class="user-btn ${genderClass}-btn" data-user-id="${child.id}">
+        <span class="avatar-wrap">
+          <img id="avatar-${child.id}" class="avatar-img" alt="${child.name}">
+        </span>
+        ${child.name}
+      </button>
+    `;
+  }).join('');
+  
+  children.forEach(child => {
+    const btn = document.getElementById(`user-${child.id}`);
+    const avatar = document.getElementById(`avatar-${child.id}`);
+    
+    if (btn) {
+      btn.addEventListener('click', () => {
+        import('./state.js').then(({ setCurrentUser }) => {
+          setCurrentUser(child.id);
+          import('./database.js').then(({ setupRealtimeListener, listenRewardsForUser }) => {
+            switchUser(child.id, setupRealtimeListener, listenRewardsForUser);
+          });
+        });
+      });
+    }
+    
+    if (avatar) {
+      import('./database.js').then(({ getAvatar }) => {
+        loadAvatar(child.id, avatar, getAvatar);
+      });
+    }
+  });
 };

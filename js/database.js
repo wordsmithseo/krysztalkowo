@@ -1,18 +1,29 @@
 // ===== OPERACJE NA BAZIE DANYCH =====
 import { db } from './config.js';
 import { ref, onValue, set, get, update, remove } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
-import { getCurrentUser, setCategories, setRewards, getCachedData, setCachedCategories, setCachedRewards } from './state.js';
+import { getCurrentUser, setCategories, setRewards, setChildren, getCachedData, setCachedCategories, setCachedRewards } from './state.js';
 import { renderCategories } from './ui.js';
+
+// Nasłuchiwanie zmian dzieci
+export const listenChildren = () => {
+  const childrenRef = ref(db, 'children');
+  
+  onValue(childrenRef, (snapshot) => {
+    const data = snapshot.val();
+    const arr = data ? Object.keys(data).map(id => ({ id, ...data[id] })) : [];
+    arr.sort((a, b) => (a.order || 0) - (b.order || 0));
+    setChildren(arr);
+  });
+};
 
 // Nasłuchiwanie zmian kategorii z cache
 export const setupRealtimeListener = (user) => {
   const categoriesRef = ref(db, `users/${user}/categories`);
   
-  // Sprawdź czy mamy dane w cache - jeśli tak, użyj ich natychmiast
   const cached = getCachedData(user);
   if (cached.categories) {
     setCategories(cached.categories);
-    renderCategories();
+    requestAnimationFrame(() => renderCategories());
   }
   
   onValue(categoriesRef, (snapshot) => {
@@ -20,13 +31,11 @@ export const setupRealtimeListener = (user) => {
     const arr = data ? Object.keys(data).map(id => ({ id, ...data[id] })) : [];
     arr.sort((a, b) => (a.order || 0) - (b.order || 0));
     
-    // Zapisz do cache
     setCachedCategories(user, arr);
     
-    // Aktualizuj stan tylko jeśli to aktualny użytkownik
     if (getCurrentUser() === user) {
       setCategories(arr);
-      renderCategories();
+      requestAnimationFrame(() => renderCategories());
     }
   });
 };
@@ -35,7 +44,6 @@ export const setupRealtimeListener = (user) => {
 export const listenRewardsForUser = (user) => {
   const rewardsRef = ref(db, `users/${user}/rewards`);
   
-  // Sprawdź czy mamy dane w cache
   const cached = getCachedData(user);
   if (cached.rewards) {
     setRewards(cached.rewards);
@@ -45,23 +53,18 @@ export const listenRewardsForUser = (user) => {
     const data = snapshot.val();
     const arr = data ? Object.keys(data).map(id => ({ id, ...data[id] })) : [];
     
-    // Zapisz do cache
     setCachedRewards(user, arr);
     
-    // Aktualizuj stan tylko jeśli to aktualny użytkownik
     if (getCurrentUser() === user) {
       setRewards(arr);
     }
   });
 };
 
-// Modal informacyjny o limicie
 const showCooldownModal = (remainingSeconds) => {
-  // Sprawdź czy modal już istnieje
   let modal = document.getElementById('cooldownModal');
   
   if (!modal) {
-    // Utwórz modal
     modal = document.createElement('div');
     modal.id = 'cooldownModal';
     modal.className = 'modal';
@@ -77,7 +80,6 @@ const showCooldownModal = (remainingSeconds) => {
     `;
     document.body.appendChild(modal);
     
-    // Obsługa zamykania
     const okBtn = modal.querySelector('#cooldownOkBtn');
     okBtn.addEventListener('click', () => {
       modal.style.display = 'none';
@@ -91,7 +93,6 @@ const showCooldownModal = (remainingSeconds) => {
       }
     });
   } else {
-    // Aktualizuj istniejący modal
     modal.style.display = 'flex';
     const secondsSpan = modal.querySelector('#cooldownSeconds');
     if (secondsSpan) {
@@ -99,7 +100,6 @@ const showCooldownModal = (remainingSeconds) => {
     }
   }
   
-  // Odliczanie
   const interval = setInterval(() => {
     remainingSeconds--;
     const secondsSpan = modal.querySelector('#cooldownSeconds');
@@ -115,7 +115,6 @@ const showCooldownModal = (remainingSeconds) => {
   }, 1000);
 };
 
-// Sprawdzenie limitu czasowego (30 sekund)
 const checkCooldown = async (categoryId) => {
   const user = getCurrentUser();
   const lastAddRef = ref(db, `users/${user}/categories/${categoryId}/lastAddTimestamp`);
@@ -125,7 +124,7 @@ const checkCooldown = async (categoryId) => {
     const lastAddTime = snapshot.exists() ? snapshot.val() : 0;
     const now = Date.now();
     const timeDiff = now - lastAddTime;
-    const cooldownMs = 30000; // 30 sekund
+    const cooldownMs = 30000;
     
     if (timeDiff < cooldownMs) {
       const remainingSeconds = Math.ceil((cooldownMs - timeDiff) / 1000);
@@ -136,13 +135,11 @@ const checkCooldown = async (categoryId) => {
     return true;
   } catch (error) {
     console.error('Błąd sprawdzania cooldown:', error);
-    return true; // W razie błędu pozwól na dodanie
+    return true;
   }
 };
 
-// Dodawanie kryształka
 export const addCrystal = async (categoryId) => {
-  // Sprawdź cooldown
   const canAdd = await checkCooldown(categoryId);
   if (!canAdd) {
     return false;
@@ -167,29 +164,26 @@ export const addCrystal = async (categoryId) => {
   }
 };
 
-// Reset kategorii
 export const resetCategory = async (categoryId) => {
   const user = getCurrentUser();
   
   try {
-    // Import funkcji generowania kolorów
     const { generateCategoryColors } = await import('./state.js');
     const colors = generateCategoryColors();
     
     const updates = {};
     updates[`users/${user}/categories/${categoryId}/count`] = 0;
     updates[`users/${user}/categories/${categoryId}/pendingReset`] = null;
-    updates[`users/${user}/categories/${categoryId}/lastReward`] = null; // Usuń informację o nagrodzie
-    updates[`users/${user}/categories/${categoryId}/lastAddTimestamp`] = null; // Resetuj cooldown
-    updates[`users/${user}/categories/${categoryId}/color`] = colors.color; // Nowy kolor tła
-    updates[`users/${user}/categories/${categoryId}/borderColor`] = colors.borderColor; // Nowy kolor obramowania
+    updates[`users/${user}/categories/${categoryId}/lastReward`] = null;
+    updates[`users/${user}/categories/${categoryId}/lastAddTimestamp`] = null;
+    updates[`users/${user}/categories/${categoryId}/color`] = colors.color;
+    updates[`users/${user}/categories/${categoryId}/borderColor`] = colors.borderColor;
     await update(ref(db), updates);
   } catch (error) {
     console.error('Błąd resetowania kategorii:', error);
   }
 };
 
-// Dodawanie kategorii
 export const addCategory = async (name) => {
   const user = getCurrentUser();
   const categoriesRef = ref(db, `users/${user}/categories`);
@@ -202,7 +196,6 @@ export const addCategory = async (name) => {
     
     const newId = Date.now().toString();
     
-    // Import funkcji generowania kolorów
     const { generateCategoryColors } = await import('./state.js');
     const colors = generateCategoryColors();
     
@@ -225,7 +218,6 @@ export const addCategory = async (name) => {
   }
 };
 
-// Usuwanie kategorii
 export const deleteCategory = async (categoryId) => {
   const user = getCurrentUser();
   
@@ -238,12 +230,10 @@ export const deleteCategory = async (categoryId) => {
   }
 };
 
-// Aktualizacja kategorii - z obcinaniem kryształków jeśli goal jest mniejszy
 export const updateCategory = async (categoryId, data) => {
   const user = getCurrentUser();
   
   try {
-    // Jeśli zmieniamy goal, sprawdź czy trzeba obciąć count
     if (data.goal !== undefined) {
       const categoryRef = ref(db, `users/${user}/categories/${categoryId}`);
       const snapshot = await get(categoryRef);
@@ -254,7 +244,6 @@ export const updateCategory = async (categoryId, data) => {
         const newGoal = data.goal;
         const maxAllowedCount = newGoal - 1;
         
-        // Jeśli aktualny count przekracza nowy maksymalny dozwolony, obetnij
         if (currentCount > maxAllowedCount) {
           data.count = maxAllowedCount;
         }
@@ -269,7 +258,6 @@ export const updateCategory = async (categoryId, data) => {
   }
 };
 
-// Aktualizacja kolejności kategorii
 export const updateCategoryOrder = async (categoryId, newOrder) => {
   const user = getCurrentUser();
   
@@ -282,7 +270,6 @@ export const updateCategoryOrder = async (categoryId, newOrder) => {
   }
 };
 
-// Modyfikacja liczby kryształków (plus/minus) - funkcja administracyjna z ograniczeniem
 export const modifyCrystalCount = async (categoryId, delta) => {
   const user = getCurrentUser();
   const categoryRef = ref(db, `users/${user}/categories/${categoryId}`);
@@ -297,10 +284,6 @@ export const modifyCrystalCount = async (categoryId, delta) => {
     const maxAllowedCount = goal - 1;
     
     let newCount = currentCount + delta;
-    
-    // Ograniczenia:
-    // - Minimalna wartość: 0
-    // - Maksymalna wartość: goal - 1
     newCount = Math.max(0, Math.min(newCount, maxAllowedCount));
     
     await set(ref(db, `users/${user}/categories/${categoryId}/count`), newCount);
@@ -311,14 +294,13 @@ export const modifyCrystalCount = async (categoryId, delta) => {
   }
 };
 
-// Reset wszystkich rankingów
 export const resetAllRankings = async () => {
   try {
-    // Reset dla obu użytkowników
-    const users = ['maks', 'nina'];
+    const childrenSnapshot = await get(ref(db, 'children'));
+    const children = childrenSnapshot.exists() ? childrenSnapshot.val() : {};
     
-    for (const user of users) {
-      const categoriesRef = ref(db, `users/${user}/categories`);
+    for (const childId in children) {
+      const categoriesRef = ref(db, `users/${childId}/categories`);
       const snapshot = await get(categoriesRef);
       
       if (snapshot.exists()) {
@@ -326,7 +308,7 @@ export const resetAllRankings = async () => {
         const updates = {};
         
         for (const catId in categories) {
-          updates[`users/${user}/categories/${catId}/wins`] = null;
+          updates[`users/${childId}/categories/${catId}/wins`] = null;
         }
         
         if (Object.keys(updates).length > 0) {
@@ -342,7 +324,6 @@ export const resetAllRankings = async () => {
   }
 };
 
-// Dodawanie nagrody
 export const addReward = async (name, image = '') => {
   const user = getCurrentUser();
   const newId = Date.now().toString();
@@ -356,7 +337,6 @@ export const addReward = async (name, image = '') => {
   }
 };
 
-// Usuwanie nagrody
 export const deleteReward = async (rewardId) => {
   const user = getCurrentUser();
   
@@ -369,7 +349,6 @@ export const deleteReward = async (rewardId) => {
   }
 };
 
-// Aktualizacja nagrody
 export const updateReward = async (rewardId, data) => {
   const user = getCurrentUser();
   
@@ -382,7 +361,6 @@ export const updateReward = async (rewardId, data) => {
   }
 };
 
-// Zmiana hasła admina
 export const changeAdminPassword = async (newPasswordHash) => {
   try {
     await set(ref(db, 'adminPasswordHash'), newPasswordHash);
@@ -393,18 +371,15 @@ export const changeAdminPassword = async (newPasswordHash) => {
   }
 };
 
-// Pobieranie hasła admina
 export const getAdminPasswordHash = async () => {
   try {
     const snapshot = await get(ref(db, 'adminPasswordHash'));
     return snapshot.exists() ? snapshot.val() : null;
   } catch (error) {
-    // Brak uprawnień lub błąd połączenia - zwróć null
     return null;
   }
 };
 
-// Ustawienie avatara
 export const setAvatar = async (user, url) => {
   try {
     await set(ref(db, `users/${user}/profile/avatarUrl`), url);
@@ -415,7 +390,6 @@ export const setAvatar = async (user, url) => {
   }
 };
 
-// Pobieranie avatara
 export const getAvatar = (user, callback) => {
   const avatarRef = ref(db, `users/${user}/profile/avatarUrl`);
   
@@ -425,7 +399,6 @@ export const getAvatar = (user, callback) => {
   });
 };
 
-// Finalizacja nagrody
 export const finalizeReward = async (categoryId, rewardName) => {
   const user = getCurrentUser();
   
@@ -443,6 +416,52 @@ export const finalizeReward = async (categoryId, rewardName) => {
     return true;
   } catch (error) {
     console.error('Błąd finalizacji nagrody:', error);
+    return false;
+  }
+};
+
+// Zarządzanie dziećmi
+export const addChild = async (name, gender) => {
+  try {
+    const childrenRef = ref(db, 'children');
+    const snapshot = await get(childrenRef);
+    const data = snapshot.val() || {};
+    const maxOrder = Object.values(data).reduce((max, child) => 
+      Math.max(max, child.order || 0), 0);
+    
+    const newId = Date.now().toString();
+    
+    const newChild = {
+      name,
+      gender,
+      order: maxOrder + 1
+    };
+    
+    await set(ref(db, `children/${newId}`), newChild);
+    return true;
+  } catch (error) {
+    console.error('Błąd dodawania dziecka:', error);
+    return false;
+  }
+};
+
+export const updateChild = async (childId, data) => {
+  try {
+    await update(ref(db, `children/${childId}`), data);
+    return true;
+  } catch (error) {
+    console.error('Błąd aktualizacji dziecka:', error);
+    return false;
+  }
+};
+
+export const deleteChild = async (childId) => {
+  try {
+    await remove(ref(db, `children/${childId}`));
+    await remove(ref(db, `users/${childId}`));
+    return true;
+  } catch (error) {
+    console.error('Błąd usuwania dziecka:', error);
     return false;
   }
 };

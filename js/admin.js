@@ -1,5 +1,5 @@
 // ===== PANEL ADMINISTRACYJNY =====
-import { getCategories, getRewards, setIsLoggedIn, state } from './state.js';
+import { getCategories, getRewards, getChildren, setIsLoggedIn, state } from './state.js';
 import { 
   addCategory, 
   deleteCategory, 
@@ -10,16 +10,17 @@ import {
   updateReward,
   setAvatar,
   modifyCrystalCount,
-  resetAllRankings
+  resetAllRankings,
+  addChild,
+  updateChild,
+  deleteChild
 } from './database.js';
 
-// Elementy DOM
 const adminModal = document.getElementById('adminModal');
 const editModal = document.getElementById('editModal');
 const categoryList = document.getElementById('categoryList');
 const rewardList = document.getElementById('rewardList');
 
-// Inicjalizacja Sortable dla kategorii
 let sortableInstance = null;
 
 export const initializeSortable = () => {
@@ -33,7 +34,6 @@ export const initializeSortable = () => {
       handle: '.drag-handle',
       ghostClass: 'sortable-ghost',
       onEnd: async (evt) => {
-        const categories = getCategories();
         const items = Array.from(categoryList.children);
         
         const updates = items.map((item, index) => {
@@ -47,7 +47,6 @@ export const initializeSortable = () => {
   }
 };
 
-// Renderowanie listy kategorii w adminie
 export const renderAdminCategories = () => {
   const categories = getCategories();
   
@@ -72,7 +71,6 @@ export const renderAdminCategories = () => {
   `).join('');
 };
 
-// Modyfikacja liczby kryształków
 export const handleModifyCrystals = async (categoryId, delta) => {
   const success = await modifyCrystalCount(categoryId, delta);
   
@@ -82,7 +80,6 @@ export const handleModifyCrystals = async (categoryId, delta) => {
   }
 };
 
-// Renderowanie listy nagród w adminie
 export const renderAdminRewards = () => {
   const rewards = getRewards();
   
@@ -109,7 +106,27 @@ export const renderAdminRewards = () => {
   }).join('');
 };
 
-// Dodawanie kategorii
+export const renderChildrenList = () => {
+  const children = getChildren();
+  const childrenList = document.getElementById('childrenList');
+  
+  if (!childrenList) return;
+  
+  childrenList.innerHTML = children.map(child => `
+    <li>
+      <div class="child-info">
+        <span class="child-gender-icon">${child.gender === 'male' ? '👦' : '👧'}</span>
+        <span class="child-name">${child.name}</span>
+        <span class="child-gender-label">${child.gender === 'male' ? 'Chłopiec' : 'Dziewczynka'}</span>
+      </div>
+      <div class="action-buttons">
+        <button onclick="window.editChildHandler('${child.id}')">✏️</button>
+        <button onclick="window.deleteChildHandler('${child.id}')">🗑️</button>
+      </div>
+    </li>
+  `).join('');
+};
+
 export const handleAddCategory = async () => {
   const input = document.getElementById('categoryNameInput');
   const name = input.value.trim();
@@ -128,21 +145,20 @@ export const handleAddCategory = async () => {
   }
 };
 
-// Usuwanie kategorii
 export const handleDeleteCategory = async (categoryId) => {
-  const sure = confirm('Na pewno usunąć tę kategorię?');
-  
-  if (!sure) return;
-  
-  const success = await deleteCategory(categoryId);
-  
-  if (success) {
-    renderAdminCategories();
-    initializeSortable();
-  }
+  showConfirmModal(
+    'Usuwanie kategorii',
+    'Czy na pewno chcesz usunąć tę kategorię? Tej operacji nie można cofnąć.',
+    async () => {
+      const success = await deleteCategory(categoryId);
+      if (success) {
+        renderAdminCategories();
+        initializeSortable();
+      }
+    }
+  );
 };
 
-// Edycja kategorii - otwarcie modala
 export const handleEditCategory = (categoryId) => {
   const categories = getCategories();
   const cat = categories.find(c => c.id === categoryId);
@@ -155,14 +171,12 @@ export const handleEditCategory = (categoryId) => {
   
   editModal.dataset.editingId = categoryId;
   
-  // Podgląd obrazków
   renderImagePreviews(cat.image);
   
   adminModal.style.display = 'none';
   editModal.style.display = 'flex';
 };
 
-// Zapisywanie edycji kategorii
 export const handleSaveEdit = async () => {
   const categoryId = editModal.dataset.editingId;
   
@@ -187,7 +201,6 @@ export const handleSaveEdit = async () => {
   }
 };
 
-// Renderowanie podglądów obrazków
 const renderImagePreviews = (currentImage) => {
   const previewContainer = document.getElementById('imagePreviewsEdit');
   
@@ -211,12 +224,10 @@ const renderImagePreviews = (currentImage) => {
   ).join('');
 };
 
-// Wybór obrazka z podglądu
 export const handleSelectImage = (url) => {
   document.getElementById('editCategoryImage').value = url;
 };
 
-// Dodawanie nagrody
 export const handleAddReward = async () => {
   const input = document.getElementById('rewardNameInput');
   const name = input.value.trim();
@@ -234,20 +245,19 @@ export const handleAddReward = async () => {
   }
 };
 
-// Usuwanie nagrody
 export const handleDeleteReward = async (rewardId) => {
-  const sure = confirm('Na pewno usunąć tę nagrodę?');
-  
-  if (!sure) return;
-  
-  const success = await deleteReward(rewardId);
-  
-  if (success) {
-    renderAdminRewards();
-  }
+  showConfirmModal(
+    'Usuwanie nagrody',
+    'Czy na pewno chcesz usunąć tę nagrodę? Tej operacji nie można cofnąć.',
+    async () => {
+      const success = await deleteReward(rewardId);
+      if (success) {
+        renderAdminRewards();
+      }
+    }
+  );
 };
 
-// Edycja nagrody
 export const handleEditReward = async (rewardId) => {
   const rewards = getRewards();
   const reward = rewards.find(r => r.id === rewardId);
@@ -270,26 +280,21 @@ export const handleEditReward = async (rewardId) => {
   }
 };
 
-// Reset rankingu
 export const handleResetRanking = async () => {
-  const sure = confirm('⚠️ UWAGA!\n\nCzy na pewno zresetować CAŁY ranking?\n\nSpowoduje to usunięcie wszystkich zwycięstw dla obu dzieci we wszystkich kategoriach.\n\nTej operacji nie można cofnąć!');
-  
-  if (!sure) return;
-  
-  const doubleSure = confirm('Czy jesteś ABSOLUTNIE pewien?\n\nWszystkie osiągnięcia zostaną utracone!');
-  
-  if (!doubleSure) return;
-  
-  const success = await resetAllRankings();
-  
-  if (success) {
-    alert('✅ Ranking został zresetowany!');
-  } else {
-    alert('❌ Błąd podczas resetowania rankingu!');
-  }
+  showConfirmModal(
+    '⚠️ Resetowanie rankingu',
+    'Czy na pewno zresetować CAŁY ranking?\n\nSpowoduje to usunięcie wszystkich zwycięstw dla wszystkich dzieci we wszystkich kategoriach.\n\nTej operacji nie można cofnąć!',
+    async () => {
+      const success = await resetAllRankings();
+      if (success) {
+        alert('✅ Ranking został zresetowany!');
+      } else {
+        alert('❌ Błąd podczas resetowania rankingu!');
+      }
+    }
+  );
 };
 
-// Ustawienie UI zalogowania
 export const setLoggedInUi = (isLoggedIn) => {
   const adminBtn = document.getElementById('adminBtn');
   
@@ -302,7 +307,6 @@ export const setLoggedInUi = (isLoggedIn) => {
   setIsLoggedIn(isLoggedIn);
 };
 
-// Ustawienie avatara
 export const handleSetAvatar = async (user) => {
   const input = document.getElementById('avatarUrlInput');
   const url = input.value.trim();
@@ -320,7 +324,136 @@ export const handleSetAvatar = async (user) => {
   }
 };
 
-// Export funkcji globalnych dla onclick
+// Zarządzanie dziećmi
+export const openAddChildModal = () => {
+  const modal = document.getElementById('childModal');
+  const modalTitle = modal.querySelector('h2');
+  
+  modalTitle.textContent = 'Dodaj dziecko';
+  document.getElementById('childName').value = '';
+  document.getElementById('childGenderMale').checked = true;
+  
+  modal.dataset.editingId = '';
+  modal.style.display = 'flex';
+};
+
+export const openEditChildModal = (childId) => {
+  const children = getChildren();
+  const child = children.find(c => c.id === childId);
+  
+  if (!child) return;
+  
+  const modal = document.getElementById('childModal');
+  const modalTitle = modal.querySelector('h2');
+  
+  modalTitle.textContent = 'Edytuj dziecko';
+  document.getElementById('childName').value = child.name;
+  
+  if (child.gender === 'male') {
+    document.getElementById('childGenderMale').checked = true;
+  } else {
+    document.getElementById('childGenderFemale').checked = true;
+  }
+  
+  modal.dataset.editingId = childId;
+  modal.style.display = 'flex';
+};
+
+export const handleSaveChild = async () => {
+  const modal = document.getElementById('childModal');
+  const childId = modal.dataset.editingId;
+  const name = document.getElementById('childName').value.trim();
+  const gender = document.getElementById('childGenderMale').checked ? 'male' : 'female';
+  
+  if (!name) {
+    alert('Podaj imię dziecka!');
+    return;
+  }
+  
+  let success;
+  if (childId) {
+    success = await updateChild(childId, { name, gender });
+  } else {
+    success = await addChild(name, gender);
+  }
+  
+  if (success) {
+    modal.style.display = 'none';
+    renderChildrenList();
+  }
+};
+
+export const handleDeleteChild = async (childId) => {
+  const children = getChildren();
+  const child = children.find(c => c.id === childId);
+  
+  if (!child) return;
+  
+  showConfirmModal(
+    'Usuwanie dziecka',
+    `Czy na pewno chcesz usunąć profil dziecka "${child.name}"?\n\nSpowoduje to usunięcie wszystkich kategorii i danych tego dziecka.\n\nTej operacji nie można cofnąć!`,
+    async () => {
+      const success = await deleteChild(childId);
+      if (success) {
+        renderChildrenList();
+        // Odśwież listę przycisków użytkowników
+        if (window.updateUserButtons) {
+          window.updateUserButtons();
+        }
+      }
+    }
+  );
+};
+
+// Modal potwierdzenia
+const showConfirmModal = (title, message, onConfirm) => {
+  let modal = document.getElementById('confirmModal');
+  
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'confirmModal';
+    modal.className = 'modal';
+    modal.innerHTML = `
+      <div class="modal-content" style="max-width: 28rem; text-align: center; padding: 2rem;">
+        <h2 id="confirmTitle" style="margin-top: 0; font-size: 1.5rem; margin-bottom: 1rem;"></h2>
+        <p id="confirmMessage" style="font-size: 1rem; margin: 1rem 0 1.5rem 0; white-space: pre-line;"></p>
+        <div style="display: flex; gap: 0.75rem; justify-content: center;">
+          <button id="confirmCancelBtn" class="cancel-btn">Anuluj</button>
+          <button id="confirmOkBtn" class="submit-btn">Potwierdź</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+  
+  const modalTitle = modal.querySelector('#confirmTitle');
+  const modalMessage = modal.querySelector('#confirmMessage');
+  const okBtn = modal.querySelector('#confirmOkBtn');
+  const cancelBtn = modal.querySelector('#confirmCancelBtn');
+  
+  modalTitle.textContent = title;
+  modalMessage.textContent = message;
+  
+  const closeModal = () => {
+    modal.style.display = 'none';
+  };
+  
+  okBtn.onclick = () => {
+    closeModal();
+    onConfirm();
+  };
+  
+  cancelBtn.onclick = closeModal;
+  
+  modal.onclick = (e) => {
+    if (e.target === modal) {
+      closeModal();
+    }
+  };
+  
+  modal.style.display = 'flex';
+};
+
 if (typeof window !== 'undefined') {
   window.editCategoryHandler = handleEditCategory;
   window.deleteCategoryHandler = handleDeleteCategory;
@@ -328,4 +461,6 @@ if (typeof window !== 'undefined') {
   window.editRewardHandler = handleEditReward;
   window.deleteRewardHandler = handleDeleteReward;
   window.modifyCrystalsHandler = handleModifyCrystals;
+  window.editChildHandler = openEditChildModal;
+  window.deleteChildHandler = handleDeleteChild;
 }

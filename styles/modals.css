@@ -26,7 +26,6 @@
   overflow: auto;
 }
 
-/* ===== PRZYCISK ZAMYKANIA ===== */
 .close-btn {
   position: absolute;
   top: 0.6rem;
@@ -42,7 +41,6 @@
   color: #222;
 }
 
-/* ===== PRZYCISK WYLOGOWANIA W ADMINIE ===== */
 .admin-logout-btn {
   position: absolute;
   top: 0.6rem;
@@ -62,7 +60,6 @@
   filter: brightness(1.05);
 }
 
-/* ===== SEKCJE PANELU ADMINA ===== */
 .admin-section {
   background: #fff;
   border: 1px solid #eaeaea;
@@ -76,7 +73,6 @@
   margin: 0.2rem 0 0.75rem 0;
 }
 
-/* ===== SIATKA FORMULARZY ===== */
 .admin-section .form-grid {
   display: flex;
   flex-wrap: wrap;
@@ -105,7 +101,6 @@
   }
 }
 
-/* ===== PODGLĄD OBRAZKÓW ===== */
 .image-previews {
   display: flex;
   gap: 0.5rem;
@@ -120,7 +115,7 @@
   border-radius: 0.5rem;
   border: 1px solid #eee;
   cursor: pointer;
-  transition: 0.15s;
+  transition: transform 0.15s, box-shadow 0.15s;
 }
 
 .image-previews .image-preview:hover {
@@ -128,8 +123,8 @@
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
 }
 
-/* ===== LISTA KATEGORII W ADMINIE ===== */
-#categoryList {
+#categoryList,
+#childrenList {
   list-style: none;
   padding: 0;
   margin: 0;
@@ -138,7 +133,8 @@
   gap: 0.5rem;
 }
 
-#categoryList li {
+#categoryList li,
+#childrenList li {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -176,7 +172,6 @@
   flex: 1;
 }
 
-/* ===== PRZYCISKI PLUS/MINUS KRYSZTAŁKÓW ===== */
 .crystal-controls {
   display: flex;
   gap: 0.25rem;
@@ -221,7 +216,6 @@
   text-align: center;
 }
 
-/* ===== PRZYCISKI AKCJI ===== */
 .action-buttons {
   display: flex;
   gap: 0.35rem;
@@ -241,7 +235,75 @@
   background: #e7e7f3;
 }
 
-/* ===== LISTA NAGRÓD ===== */
+#childrenList .child-info {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: 1;
+  min-width: 0;
+}
+
+#childrenList .child-gender-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+#childrenList .child-name {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+#childrenList .child-gender-label {
+  font-size: 0.85rem;
+  color: #666;
+  background: #f0f0f0;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.4rem;
+}
+
+.gender-selector {
+  display: flex;
+  gap: 1rem;
+  margin: 0.5rem 0;
+}
+
+.gender-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border: 2px solid #ddd;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.gender-option:hover {
+  background: #f8f8f8;
+  border-color: #6a11cb;
+}
+
+.gender-option input[type="radio"] {
+  margin-right: 0.5rem;
+  cursor: pointer;
+}
+
+.gender-option input[type="radio"]:checked + .gender-label {
+  font-weight: 700;
+}
+
+.gender-option:has(input[type="radio"]:checked) {
+  background: #f0e7ff;
+  border-color: #6a11cb;
+}
+
+.gender-label {
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 #rewardList {
   list-style: none;
   padding: 0;
@@ -285,7 +347,6 @@
   border: 1px solid #ddd;
 }
 
-/* ===== MODAL NAGRÓD (SKRZYNKI) - NOWY DESIGN ===== */
 .reward-modal {
   background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(8px);
@@ -452,7 +513,6 @@
   }
 }
 
-/* ===== WYŚWIETLANIE NAGRODY ===== */
 .reward-reveal {
   min-height: 10rem;
   display: flex;
@@ -517,7 +577,6 @@
   }
 }
 
-/* ===== RANKING - LŻEJSZY I BARDZIEJ ATRAKCYJNY DESIGN ===== */
 #rankingContent {
   display: flex;
   flex-direction: column;
@@ -525,7 +584,6 @@
   padding: 0.5rem;
 }
 
-/* Ogólny zwycięzca - prostszy, lżejszy */
 .overall-winner {
   text-align: center;
   font-size: 1.5rem;
@@ -552,7 +610,6 @@
   color: #5b3b00;
 }
 
-/* Sekcje rankingu - prostsze */
 .ranking-section {
   background: #fff;
   border-radius: 1rem;
@@ -573,7 +630,6 @@
   border-bottom: 2px solid #f0f0f0;
 }
 
-/* Pojedyncza kategoria w rankingu - lżejsza */
 .category-ranking-item {
   background: #fafafa;
   border-radius: 0.875rem;
@@ -582,7 +638,6 @@
   margin-bottom: 0.875rem;
 }
 
-/* Solo kategorie - prostsze */
 .category-ranking-item.solo-category {
   padding: 0.875rem;
   background: #fafafa;
@@ -671,7 +726,6 @@
   background: linear-gradient(135deg, #FFD700, #FFA500);
 }
 
-/* Paski postępu - prostsze */
 .category-ranking-bars {
   display: flex;
   flex-direction: column;
@@ -747,7 +801,6 @@
   box-shadow: 0 2px 6px rgba(255, 165, 0, 0.3);
 }
 
-/* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
   .reward-modal .modal-content {
     padding: 2rem 1rem;
@@ -823,5 +876,9 @@
 
   .ranking-bar {
     height: 1.5rem;
+  }
+  
+  .gender-selector {
+    flex-direction: column;
   }
 }
