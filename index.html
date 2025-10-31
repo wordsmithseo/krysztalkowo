@@ -109,11 +109,13 @@
   </div>
 
   <div id="passwordModal" class="modal">
-    <div class="modal-content">
+    <div class="modal-content password-modal-content">
       <span class="close-btn">&times;</span>
-      <h2>Podaj hasło do panelu admina</h2>
-      <input type="password" id="adminPasswordInput" placeholder="Hasło">
-      <button id="submitPassword" class="submit-btn">Zatwierdź</button>
+      <h2>Weryfikacja hasła</h2>
+      <p style="color: #666; margin: 0.5rem 0 1.5rem 0; font-size: 0.95rem;">Wprowadź hasło do swojego konta, aby uzyskać dostęp do panelu administracyjnego.</p>
+      <label>Hasło:</label>
+      <input type="password" id="adminPasswordInput" placeholder="Twoje hasło">
+      <button id="submitPassword" class="submit-btn" style="width: 100%; margin-top: 1rem;">Zatwierdź</button>
     </div>
   </div>
 
@@ -121,7 +123,20 @@
     <div class="modal-content">
       <span class="close-btn">&times;</span>
       <button id="logoutBtn" class="admin-logout-btn">Wyloguj</button>
-      <h2>Panel administracyjny</h2>
+      
+      <div class="admin-header-info">
+        <h2>Panel administracyjny</h2>
+        <div class="admin-user-info">
+          <div class="admin-info-row">
+            <span class="admin-info-label">👤 Konto rodzica:</span>
+            <span class="admin-info-value" id="adminUserEmail"></span>
+          </div>
+          <div class="admin-info-row">
+            <span class="admin-info-label">👶 Edytujesz profil:</span>
+            <span class="admin-info-value" id="adminCurrentChild"></span>
+          </div>
+        </div>
+      </div>
 
       <div class="admin-section">
         <h3>Zarządzaj dziećmi</h3>

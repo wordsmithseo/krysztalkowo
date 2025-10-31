@@ -27,7 +27,8 @@ import {
   handleSetAvatar,
   handleResetRanking,
   openAddChildModal,
-  showLogoutConfirmModal
+  showLogoutConfirmModal,
+  updateAdminHeaderInfo
 } from './admin.js';
 import { getAvatar } from './database.js';
 import { setupAuthListener, loginUser, registerUser, logoutUser, getCurrentAuthUser } from './auth.js';
@@ -68,6 +69,9 @@ const registerError = document.getElementById('registerError');
 
 window.updateUserButtons = updateUserButtons;
 
+// Flaga dla opóźnionego renderowania
+let dataLoaded = false;
+
 // Funkcja pokazująca błąd
 const showError = (element, message) => {
   element.textContent = message;
@@ -97,10 +101,9 @@ setupAuthListener((user) => {
     // Inicjalizacja nasłuchiwania zmian
     listenChildren();
     
-    // Poczekaj na załadowanie dzieci
+    // Poczekaj na załadowanie dzieci z małym opóźnieniem
     setTimeout(() => {
       updateUserButtons();
-      checkEmptyStates();
       
       // Ustaw pierwszego użytkownika i nasłuchuj zmian
       const children = state.children;
@@ -109,16 +112,25 @@ setupAuthListener((user) => {
         setupRealtimeListener(children[0].id);
         listenRewardsForUser(children[0].id);
       }
+      
+      // Opóźnione sprawdzanie pustych stanów - dopiero po załadowaniu danych
+      setTimeout(() => {
+        dataLoaded = true;
+        checkEmptyStates();
+      }, 1000);
     }, 500);
   } else {
     // Użytkownik niezalogowany - pokaż modal uwierzytelniania
     authModal.style.display = 'flex';
     document.querySelector('.crystal-app').style.display = 'none';
+    dataLoaded = false;
   }
 });
 
 const checkEmptyStates = () => {
-  showEmptyStateGuide();
+  if (dataLoaded) {
+    showEmptyStateGuide();
+  }
 };
 
 // Przełączanie między logowaniem a rejestracją
@@ -265,6 +277,7 @@ elements.adminBtn.addEventListener('click', () => {
     renderAdminRewards();
     renderChildrenList();
     initializeSortable();
+    updateAdminHeaderInfo();
   } else {
     passwordModal.style.display = 'flex';
     adminPasswordInput.focus();
@@ -304,6 +317,7 @@ submitPassword.addEventListener('click', async () => {
     renderAdminRewards();
     renderChildrenList();
     initializeSortable();
+    updateAdminHeaderInfo();
   } else {
     alert('Nieprawidłowe hasło!');
   }
@@ -377,6 +391,7 @@ backToAdminBtn.addEventListener('click', () => {
   renderAdminRewards();
   renderChildrenList();
   initializeSortable();
+  updateAdminHeaderInfo();
 });
 
 changePasswordBtn.addEventListener('click', async () => {

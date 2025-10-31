@@ -1,5 +1,5 @@
 // ===== PANEL ADMINISTRACYJNY =====
-import { getCategories, getRewards, getChildren, setIsLoggedIn, state } from './state.js';
+import { getCategories, getRewards, getChildren, setIsLoggedIn, state, getCurrentUser } from './state.js';
 import { 
   addCategory, 
   deleteCategory, 
@@ -16,6 +16,7 @@ import {
   deleteChild,
   changeUserPassword
 } from './database.js';
+import { getCurrentAuthUser } from './auth.js';
 
 const adminModal = document.getElementById('adminModal');
 const editModal = document.getElementById('editModal');
@@ -45,6 +46,27 @@ export const initializeSortable = () => {
         await Promise.all(updates);
       }
     });
+  }
+};
+
+export const updateAdminHeaderInfo = () => {
+  const user = getCurrentAuthUser();
+  const currentUserId = getCurrentUser();
+  const children = getChildren();
+  const currentChild = children.find(c => c.id === currentUserId);
+  
+  const adminUserEmail = document.getElementById('adminUserEmail');
+  const adminCurrentChild = document.getElementById('adminCurrentChild');
+  
+  if (adminUserEmail && user) {
+    adminUserEmail.textContent = user.email || 'Brak danych';
+  }
+  
+  if (adminCurrentChild && currentChild) {
+    const genderIcon = currentChild.gender === 'male' ? '👦' : '👧';
+    adminCurrentChild.textContent = `${genderIcon} ${currentChild.name}`;
+  } else if (adminCurrentChild) {
+    adminCurrentChild.textContent = 'Nie wybrano';
   }
 };
 
@@ -199,6 +221,7 @@ export const handleSaveEdit = async () => {
     adminModal.style.display = 'flex';
     renderAdminCategories();
     initializeSortable();
+    updateAdminHeaderInfo();
   }
 };
 

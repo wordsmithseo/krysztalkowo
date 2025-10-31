@@ -119,6 +119,110 @@
   font-size: 0.9rem;
 }
 
+/* ===== MODAL HASŁA ADMINA ===== */
+.password-modal-content {
+  max-width: 26rem;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 2rem 2rem 2.5rem;
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+}
+
+.password-modal-content h2 {
+  color: #333 !important;
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+  text-align: center;
+}
+
+.password-modal-content p {
+  text-align: center;
+  line-height: 1.5;
+}
+
+.password-modal-content label {
+  display: block;
+  font-weight: 600;
+  font-size: 1rem;
+  color: #555 !important;
+  margin: 0.75rem 0 0.5rem 0;
+}
+
+.password-modal-content input[type="password"] {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  font-size: 1.05rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 0.75rem;
+  box-sizing: border-box;
+  background: #fff;
+  transition: border-color 0.2s;
+}
+
+.password-modal-content input[type="password"]:focus {
+  border-color: #6a11cb;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(106, 17, 203, 0.1);
+}
+
+.password-modal-content .submit-btn {
+  padding: 0.9rem 1.5rem;
+  font-size: 1.1rem;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, #6a11cb, #8a2be2);
+  box-shadow: 0 6px 16px rgba(106, 17, 203, 0.3);
+}
+
+.password-modal-content .submit-btn:hover {
+  box-shadow: 0 8px 20px rgba(106, 17, 203, 0.4);
+}
+
+/* ===== NAGŁÓWEK PANELU ADMINA ===== */
+.admin-header-info {
+  margin-bottom: 2rem;
+}
+
+.admin-header-info h2 {
+  margin: 0 0 1rem 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+  text-align: center;
+  color: #333 !important;
+}
+
+.admin-user-info {
+  background: linear-gradient(135deg, rgba(106, 17, 203, 0.08), rgba(138, 43, 226, 0.08));
+  border: 2px solid rgba(106, 17, 203, 0.2);
+  border-radius: 1rem;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.admin-info-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.95rem;
+}
+
+.admin-info-label {
+  font-weight: 600;
+  color: #666 !important;
+  white-space: nowrap;
+}
+
+.admin-info-value {
+  font-weight: 700;
+  color: #6a11cb !important;
+  flex: 1;
+}
+
 /* ===== MODAL DZIECKA ===== */
 #childModal .modal-content {
   max-width: 28rem;
@@ -352,6 +456,10 @@
   .admin-section .form-grid input,
   .admin-section .form-grid button {
     flex: initial;
+  }
+  
+  .admin-info-row {
+    font-size: 1rem;
   }
 }
 
@@ -1070,6 +1178,14 @@
     padding: 1.5rem 1.5rem 2rem;
   }
   
+  .password-modal-content {
+    padding: 1.5rem 1.5rem 2rem;
+  }
+  
+  .password-modal-content h2 {
+    font-size: 1.4rem;
+  }
+  
   #childModal .modal-content {
     padding: 1.5rem 1.5rem 2rem;
   }
@@ -1206,5 +1322,28 @@
   .crystal-controls .count {
     font-size: 0.9rem;
     min-width: 2.2rem;
+  }
+  
+  .admin-header-info h2 {
+    font-size: 1.5rem;
+  }
+  
+  .admin-user-info {
+    padding: 0.875rem 1rem;
+  }
+  
+  .admin-info-row {
+    font-size: 0.875rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+  
+  .admin-info-label {
+    font-size: 0.85rem;
+  }
+  
+  .admin-info-value {
+    font-size: 0.95rem;
   }
 }
