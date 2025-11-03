@@ -1,6 +1,6 @@
 // ===== OPERACJE NA BAZIE DANYCH =====
 import { db } from './config.js';
-import { ref, onValue, set, get, update, remove } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+import { ref, onValue, set, get, update, remove, push } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
 import { getCurrentUser, setCategories, setRewards, setChildren, getCachedData, setCachedCategories, setCachedRewards } from './state.js';
 import { renderCategories } from './ui.js';
 import { getCurrentAuthUser } from './auth.js';
@@ -439,6 +439,78 @@ export const finalizeReward = async (categoryId, rewardName) => {
     return true;
   } catch (error) {
     console.error('Błąd finalizacji nagrody:', error);
+    return false;
+  }
+};
+
+// Dodawanie nagrody do zaległych
+export const addPendingReward = async (categoryId, categoryName, rewardName) => {
+  const user = getCurrentUser();
+  
+  try {
+    const pendingRewardsRef = ref(db, 'pendingRewards');
+    const newRewardRef = push(pendingRewardsRef);
+    
+    await set(newRewardRef, {
+      childId: user,
+      categoryId,
+      categoryName,
+      rewardName,
+      timestamp: Date.now()
+    });
+    
+    // Finalizuj nagrodę w kategorii
+    const winsRef = ref(db, `users/${user}/categories/${categoryId}/wins/${user}`);
+    const snapshot = await get(winsRef);
+    const currentWins = snapshot.exists() ? snapshot.val() : 0;
+    
+    const updates = {};
+    updates[`users/${user}/categories/${categoryId}/wins/${user}`] = currentWins + 1;
+    updates[`users/${user}/categories/${categoryId}/lastReward`] = rewardName;
+    updates[`users/${user}/categories/${categoryId}/pendingReset`] = true;
+    
+    await update(ref(db), updates);
+    
+    return true;
+  } catch (error) {
+    console.error('Błąd dodawania zaległej nagrody:', error);
+    return false;
+  }
+};
+
+// Pobieranie zaległych nagród
+export const getPendingRewards = async () => {
+  try {
+    const pendingRewardsRef = ref(db, 'pendingRewards');
+    const snapshot = await get(pendingRewardsRef);
+    
+    if (!snapshot.exists()) {
+      return [];
+    }
+    
+    const data = snapshot.val();
+    const rewards = Object.keys(data).map(id => ({
+      id,
+      ...data[id]
+    }));
+    
+    // Sortuj od najstarszych
+    rewards.sort((a, b) => a.timestamp - b.timestamp);
+    
+    return rewards;
+  } catch (error) {
+    console.error('Błąd pobierania zaległych nagród:', error);
+    return [];
+  }
+};
+
+// Realizacja zaległej nagrody
+export const completePendingReward = async (rewardId) => {
+  try {
+    await remove(ref(db, `pendingRewards/${rewardId}`));
+    return true;
+  } catch (error) {
+    console.error('Błąd realizacji zaległej nagrody:', error);
     return false;
   }
 };

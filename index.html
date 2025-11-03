@@ -24,6 +24,14 @@
   <script type="module" src="js/main.js"></script>
 </head>
 <body>
+  <!-- Loader -->
+  <div id="appLoader" class="app-loader">
+    <div class="loader-content">
+      <div class="loader-spinner"></div>
+      <div class="loader-text">Ładowanie...</div>
+    </div>
+  </div>
+
   <!-- Modal uwierzytelniania -->
   <div id="authModal" class="modal auth-modal" style="display: flex;">
     <div class="modal-content auth-modal-content">
@@ -100,6 +108,7 @@
       <div style="display:flex;gap:.75rem;flex-wrap:wrap;justify-content:center">
         <button id="adminBtn" class="admin-button">⚙️ Panel admina</button>
         <button id="rankingBtn" class="ranking-button">🏆 Ranking</button>
+        <button id="pendingRewardsBtn" class="pending-rewards-button">📋 Zaległe nagrody</button>
       </div>
     </div>
 
@@ -251,6 +260,14 @@
     </div>
   </div>
 
+  <div id="pendingRewardsModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn">&times;</span>
+      <h2>📋 Zaległe nagrody</h2>
+      <div id="pendingRewardsContent"></div>
+    </div>
+  </div>
+
   <div id="rewardModal" class="modal reward-modal">
     <div class="modal-content reward-modal-content">
       <span class="close-btn">&times;</span>
@@ -261,6 +278,9 @@
         <div class="reward-chest" tabindex="0" role="button" aria-label="Skrzynka 3"></div>
       </div>
       <div id="rewardReveal" class="reward-reveal"></div>
+      <div id="rewardActions" class="reward-actions" style="display: none;">
+        <button id="realizeLaterBtn" class="realize-later-btn">📋 Zrealizuj później</button>
+      </div>
     </div>
   </div>
 </body>

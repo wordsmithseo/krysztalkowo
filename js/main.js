@@ -12,7 +12,8 @@ import {
   loadAvatar, 
   displayRanking,
   updateUserButtons,
-  showEmptyStateGuide
+  showEmptyStateGuide,
+  displayPendingRewards
 } from './ui.js';
 import { 
   initializeSortable,
@@ -39,6 +40,8 @@ const editModal = document.getElementById('editModal');
 const rankingModal = document.getElementById('rankingModal');
 const childModal = document.getElementById('childModal');
 const authModal = document.getElementById('authModal');
+const pendingRewardsModal = document.getElementById('pendingRewardsModal');
+const appLoader = document.getElementById('appLoader');
 
 const adminPasswordInput = document.getElementById('adminPasswordInput');
 const submitPassword = document.getElementById('submitPassword');
@@ -55,6 +58,7 @@ const setAvatarNinaBtn = document.getElementById('setAvatarNinaBtn');
 const resetRankingBtn = document.getElementById('resetRankingBtn');
 const addChildBtn = document.getElementById('addChildBtn');
 const saveChildBtn = document.getElementById('saveChildBtn');
+const pendingRewardsBtn = document.getElementById('pendingRewardsBtn');
 
 // Elementy uwierzytelniania
 const showLoginBtn = document.getElementById('showLoginBtn');
@@ -71,6 +75,20 @@ window.updateUserButtons = updateUserButtons;
 
 // Flaga dla opóźnionego renderowania
 let dataLoaded = false;
+let appFullyLoaded = false;
+
+// Funkcja ukrywania loadera
+const hideLoader = () => {
+  if (appFullyLoaded) return;
+  appFullyLoaded = true;
+  
+  setTimeout(() => {
+    appLoader.classList.add('hidden');
+    setTimeout(() => {
+      appLoader.style.display = 'none';
+    }, 500);
+  }, 300);
+};
 
 // Funkcja pokazująca błąd
 const showError = (element, message) => {
@@ -108,15 +126,31 @@ setupAuthListener((user) => {
       // Ustaw pierwszego użytkownika i nasłuchuj zmian
       const children = state.children;
       if (children.length > 0) {
-        setCurrentUser(children[0].id);
-        setupRealtimeListener(children[0].id);
-        listenRewardsForUser(children[0].id);
+        const firstChild = children[0];
+        setCurrentUser(firstChild.id);
+        setupRealtimeListener(firstChild.id);
+        listenRewardsForUser(firstChild.id);
+        
+        // Ustaw aktywny przycisk dla pierwszego dziecka
+        setTimeout(() => {
+          const firstBtn = document.getElementById(`user-${firstChild.id}`);
+          if (firstBtn) {
+            firstBtn.classList.add('active-user');
+          }
+          
+          // Ustaw odpowiednie tło
+          const bgClass = firstChild.gender === 'male' ? 'maks-bg' : 'nina-bg';
+          const otherBgClass = firstChild.gender === 'male' ? 'nina-bg' : 'maks-bg';
+          document.body.classList.remove(otherBgClass);
+          document.body.classList.add(bgClass);
+        }, 100);
       }
       
       // Opóźnione sprawdzanie pustych stanów - dopiero po załadowaniu danych
       setTimeout(() => {
         dataLoaded = true;
         checkEmptyStates();
+        hideLoader();
       }, 1000);
     }, 500);
   } else {
@@ -124,6 +158,7 @@ setupAuthListener((user) => {
     authModal.style.display = 'flex';
     document.querySelector('.crystal-app').style.display = 'none';
     dataLoaded = false;
+    hideLoader();
   }
 });
 
@@ -347,6 +382,7 @@ closeButtons.forEach(btn => {
     editModal.style.display = 'none';
     rankingModal.style.display = 'none';
     childModal.style.display = 'none';
+    pendingRewardsModal.style.display = 'none';
     
     const rewardModal = document.getElementById('rewardModal');
     if (rewardModal && rewardModal.style.display === 'flex') {
@@ -364,7 +400,8 @@ document.addEventListener('click', (e) => {
     adminModal, 
     editModal, 
     rankingModal,
-    childModal
+    childModal,
+    pendingRewardsModal
   ];
   
   if (modals.includes(e.target)) {
@@ -453,6 +490,13 @@ elements.rankingBtn.addEventListener('click', () => {
   displayRanking();
   rankingModal.style.display = 'flex';
 });
+
+if (pendingRewardsBtn) {
+  pendingRewardsBtn.addEventListener('click', () => {
+    displayPendingRewards();
+    pendingRewardsModal.style.display = 'flex';
+  });
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   document.body.classList.add('maks-bg');

@@ -8,6 +8,53 @@
   --chest-open: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='140' viewBox='0 0 160 140'><rect x='10' y='60' rx='12' ry='12' width='140' height='70' fill='%238b5a2b' stroke='%235a381a' stroke-width='6'/><rect x='10' y='10' rx='10' ry='10' width='140' height='40' fill='%23b06d34' stroke='%235a381a' stroke-width='6' transform='rotate(-22,80,30)'/><g><rect x='20' y='70' width='120' height='12' fill='%23ffd700'/><rect x='20' y='86' width='120' height='12' fill='%23ffec8b'/><rect x='20' y='102' width='120' height='12' fill='%23ffd700'/></g><circle cx='80' cy='78' r='9' fill='%23d4af37' stroke='%238c7a2b' stroke-width='3'/></svg>");
 }
 
+/* ===== LOADER ===== */
+.app-loader {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(135deg, #6a11cb 0%, #8a2be2 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+.app-loader.hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.loader-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.loader-spinner {
+  width: 4rem;
+  height: 4rem;
+  border: 5px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loader-text {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+  font-family: 'Balsamiq Sans', cursive;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
 /* ===== RESET I PODSTAWY ===== */
 html, body {
   margin: 0;
@@ -149,7 +196,8 @@ body.nina-bg {
 }
 
 .admin-button,
-.ranking-button {
+.ranking-button,
+.pending-rewards-button {
   background-color: #ff9a8b;
   color: #fff;
   padding: 0.9rem 1.5rem;
@@ -163,7 +211,8 @@ body.nina-bg {
 }
 
 .admin-button:hover,
-.ranking-button:hover {
+.ranking-button:hover,
+.pending-rewards-button:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
 }
@@ -171,6 +220,10 @@ body.nina-bg {
 .admin-button.logged-in {
   outline: 3px solid #2ecc71;
   box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.15), 0 8px 14px rgba(0, 0, 0, 0.15);
+}
+
+.pending-rewards-button {
+  background-color: #ffa07a;
 }
 
 .main-content {

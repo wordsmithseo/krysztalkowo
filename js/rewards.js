@@ -1,12 +1,16 @@
 // ===== SYSTEM NAGRÓD =====
-import { getRewards, setRewardFlowLock, setPendingCategoryId, randInt, state } from './state.js';
-import { finalizeReward } from './database.js';
+import { getRewards, setRewardFlowLock, setPendingCategoryId, randInt, state, getCategories } from './state.js';
+import { finalizeReward, addPendingReward } from './database.js';
 import { fireConfetti } from './ui.js';
 
 // Elementy DOM
 const rewardModal = document.getElementById('rewardModal');
 const chestsRow = document.getElementById('chestsRow');
 const rewardReveal = document.getElementById('rewardReveal');
+const rewardActions = document.getElementById('rewardActions');
+const realizeLaterBtn = document.getElementById('realizeLaterBtn');
+
+let selectedReward = null;
 
 // Otwieranie modala z nagrodami
 export const openRewardModal = (categoryId) => {
@@ -20,9 +24,11 @@ export const openRewardModal = (categoryId) => {
   
   setPendingCategoryId(categoryId);
   setRewardFlowLock(false);
+  selectedReward = null;
   
   rewardReveal.textContent = '';
   rewardReveal.innerHTML = '';
+  rewardActions.style.display = 'none';
   rewardModal.style.display = 'flex';
   
   // Blokada zamykania modala
@@ -42,7 +48,7 @@ export const openRewardModal = (categoryId) => {
   });
   
   // Ustawienie obsługi kliknięć
-  setupChestHandlers(chests, rewards);
+  setupChestHandlers(chests, rewards, categoryId);
 };
 
 // Blokada zamykania modala
@@ -76,7 +82,7 @@ const unblockModalClosing = () => {
 };
 
 // Konfiguracja obsługi skrzynek
-const setupChestHandlers = (chests, rewards) => {
+const setupChestHandlers = (chests, rewards, categoryId) => {
   const onPick = async (e) => {
     if (state.rewardFlowLock) return;
     
@@ -101,6 +107,7 @@ const setupChestHandlers = (chests, rewards) => {
     
     // Losowanie nagrody
     const reward = rewards[randInt(0, rewards.length - 1)];
+    selectedReward = reward;
     
     // Wyświetlenie nagrody po 420ms
     setTimeout(() => {
@@ -113,21 +120,10 @@ const setupChestHandlers = (chests, rewards) => {
         ${imageHtml}
         <div style="font-weight:800;font-size:1.5rem;margin-top:1rem">🎁 ${reward.name}</div>
       `;
+      
+      // Pokaż przyciski akcji
+      rewardActions.style.display = 'flex';
     }, 420);
-    
-    // Finalizacja nagrody po 900ms
-    setTimeout(async () => {
-      await finalizeReward(state.pendingCategoryId, reward.name);
-      setPendingCategoryId(null);
-      
-      // Odblokuj zamykanie modala
-      unblockModalClosing();
-      
-      // Automatycznie zamknij modal po 2 sekundach
-      setTimeout(() => {
-        closeRewardModal();
-      }, 2000);
-    }, 900);
   };
   
   chests.forEach(chest => {
@@ -142,9 +138,57 @@ const setupChestHandlers = (chests, rewards) => {
   });
 };
 
+// Obsługa przycisku "Zrealizuj później"
+if (realizeLaterBtn) {
+  realizeLaterBtn.addEventListener('click', async () => {
+    if (!selectedReward || !state.pendingCategoryId) return;
+    
+    realizeLaterBtn.disabled = true;
+    realizeLaterBtn.textContent = 'Zapisywanie...';
+    
+    // Pobierz nazwę kategorii
+    const categories = getCategories();
+    const category = categories.find(c => c.id === state.pendingCategoryId);
+    const categoryName = category ? category.name : 'Nieznana kategoria';
+    
+    const success = await addPendingReward(
+      state.pendingCategoryId, 
+      categoryName,
+      selectedReward.name
+    );
+    
+    if (success) {
+      setPendingCategoryId(null);
+      selectedReward = null;
+      
+      // Odblokuj zamykanie modala
+      unblockModalClosing();
+      
+      // Pokaż komunikat sukcesu
+      rewardReveal.innerHTML = `
+        <div style="font-size:2rem;margin-bottom:1rem;">✅</div>
+        <div style="font-weight:700;font-size:1.3rem;">Nagroda zapisana!</div>
+        <div style="font-size:1rem;margin-top:0.5rem;opacity:0.8;">Znajdziesz ją w "Zaległe nagrody"</div>
+      `;
+      rewardActions.style.display = 'none';
+      
+      // Automatycznie zamknij modal po 2 sekundach
+      setTimeout(() => {
+        closeRewardModal();
+      }, 2000);
+    } else {
+      alert('❌ Błąd zapisywania nagrody!');
+      realizeLaterBtn.disabled = false;
+      realizeLaterBtn.textContent = '📋 Zrealizuj później';
+    }
+  });
+}
+
 // Zamykanie modala nagród
 export const closeRewardModal = () => {
   rewardModal.style.display = 'none';
+  selectedReward = null;
+  rewardActions.style.display = 'none';
   
   // Przywróć normalny stan modala
   const closeBtn = rewardModal.querySelector('.close-btn');

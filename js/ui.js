@@ -1,7 +1,8 @@
 // ===== OBSŁUGA INTERFEJSU UŻYTKOWNIKA =====
 import { getCategories, getCurrentUser, getCachedData, getChildren } from './state.js';
-import { addCrystal, resetCategory } from './database.js';
+import { addCrystal, resetCategory, getPendingRewards, completePendingReward } from './database.js';
 import { openRewardModal } from './rewards.js';
+import { loginUser } from './auth.js';
 
 export const elements = {
   container: document.getElementById('container'),
@@ -15,6 +16,9 @@ export const elements = {
 };
 
 let renderScheduled = false;
+
+// Mapa przechowująca aktywne cooldowny
+const activeCooldowns = new Map();
 
 export const renderCategories = () => {
   if (renderScheduled) return;
@@ -101,6 +105,13 @@ const createCategoryCard = (cat, user) => {
   const crystalsDisplay = document.createElement('div');
   crystalsDisplay.className = 'crystals-display';
   
+  // Sprawdź czy kategoria jest w cooldownie
+  const lastAddTimestamp = cat.lastAddTimestamp || 0;
+  const now = Date.now();
+  const timeDiff = now - lastAddTimestamp;
+  const cooldownMs = 30000;
+  const isInCooldown = timeDiff < cooldownMs && count < goal;
+  
   for (let i = 0; i < goal; i++) {
     const crystal = document.createElement('span');
     crystal.className = 'crystal-item';
@@ -108,6 +119,26 @@ const createCategoryCard = (cat, user) => {
     
     if (i >= count) {
       crystal.classList.add('missing-crystal');
+      
+      // Dodaj pulsowanie do następnego dostępnego kryształka podczas cooldownu
+      if (isInCooldown && i === count) {
+        crystal.classList.add('next-available');
+        
+        // Usuń klasę po zakończeniu cooldownu
+        const remainingTime = cooldownMs - timeDiff;
+        const cooldownKey = `${cat.id}-${count}`;
+        
+        if (activeCooldowns.has(cooldownKey)) {
+          clearTimeout(activeCooldowns.get(cooldownKey));
+        }
+        
+        const timeoutId = setTimeout(() => {
+          crystal.classList.remove('next-available');
+          activeCooldowns.delete(cooldownKey);
+        }, remainingTime);
+        
+        activeCooldowns.set(cooldownKey, timeoutId);
+      }
     }
     
     crystalsDisplay.appendChild(crystal);
@@ -503,6 +534,153 @@ export const displayRanking = () => {
   }
   
   rankingContent.innerHTML = html;
+};
+
+export const displayPendingRewards = async () => {
+  const pendingRewardsContent = document.getElementById('pendingRewardsContent');
+  const children = getChildren();
+  
+  try {
+    const pendingRewards = await getPendingRewards();
+    
+    if (!pendingRewards || pendingRewards.length === 0) {
+      pendingRewardsContent.innerHTML = `
+        <div class="empty-pending-rewards">
+          <div class="empty-pending-rewards-icon">📋</div>
+          <div class="empty-pending-rewards-text">Brak zaległych nagród do zrealizowania</div>
+        </div>
+      `;
+      return;
+    }
+    
+    let html = '<ul class="pending-rewards-list">';
+    
+    pendingRewards.forEach(reward => {
+      const child = children.find(c => c.id === reward.childId);
+      if (!child) return;
+      
+      const genderIcon = child.gender === 'male' ? '👦' : '👧';
+      const date = new Date(reward.timestamp).toLocaleDateString('pl-PL');
+      
+      html += `
+        <li class="pending-reward-item" data-reward-id="${reward.id}">
+          <div class="pending-reward-header">
+            <span class="pending-reward-child-icon">${genderIcon}</span>
+            <span class="pending-reward-child-name">${child.name}</span>
+            <span class="pending-reward-category">${reward.categoryName}</span>
+          </div>
+          <div class="pending-reward-body">
+            <div>
+              <div class="pending-reward-name">🎁 ${reward.rewardName}</div>
+              <div class="pending-reward-date">${date}</div>
+            </div>
+            <button class="complete-reward-btn" onclick="window.completePendingRewardHandler('${reward.id}')">
+              ✅ Zrealizuj
+            </button>
+          </div>
+        </li>
+      `;
+    });
+    
+    html += '</ul>';
+    pendingRewardsContent.innerHTML = html;
+    
+  } catch (error) {
+    console.error('Błąd pobierania zaległych nagród:', error);
+    pendingRewardsContent.innerHTML = `
+      <div class="empty-pending-rewards">
+        <div class="empty-pending-rewards-icon">❌</div>
+        <div class="empty-pending-rewards-text">Błąd ładowania zaległych nagród</div>
+      </div>
+    `;
+  }
+};
+
+// Handler realizacji nagrody
+window.completePendingRewardHandler = async (rewardId) => {
+  const passwordModal = document.createElement('div');
+  passwordModal.className = 'modal';
+  passwordModal.style.display = 'flex';
+  passwordModal.innerHTML = `
+    <div class="modal-content password-modal-content">
+      <h2>Weryfikacja hasła</h2>
+      <p style="color: #666; margin: 0.5rem 0 1.5rem 0; font-size: 0.95rem;">Wprowadź hasło do swojego konta, aby zrealizować tę nagrodę.</p>
+      <label>Hasło:</label>
+      <input type="password" id="completeRewardPassword" placeholder="Twoje hasło">
+      <div style="display:flex;gap:0.5rem;margin-top:1rem;">
+        <button id="completeRewardCancel" class="cancel-btn" style="flex:1;">Anuluj</button>
+        <button id="completeRewardConfirm" class="submit-btn" style="flex:1;">Potwierdź</button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(passwordModal);
+  
+  const passwordInput = passwordModal.querySelector('#completeRewardPassword');
+  const confirmBtn = passwordModal.querySelector('#completeRewardConfirm');
+  const cancelBtn = passwordModal.querySelector('#completeRewardCancel');
+  
+  passwordInput.focus();
+  
+  const closeModal = () => {
+    passwordModal.style.display = 'none';
+    setTimeout(() => passwordModal.remove(), 300);
+  };
+  
+  cancelBtn.onclick = closeModal;
+  
+  passwordModal.onclick = (e) => {
+    if (e.target === passwordModal) {
+      closeModal();
+    }
+  };
+  
+  const handleConfirm = async () => {
+    const password = passwordInput.value;
+    
+    if (!password) {
+      alert('Podaj hasło!');
+      return;
+    }
+    
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = 'Sprawdzanie...';
+    
+    const user = await import('./auth.js').then(m => m.getCurrentAuthUser());
+    if (!user) {
+      alert('Błąd: Musisz być zalogowany!');
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = 'Potwierdź';
+      return;
+    }
+    
+    const result = await loginUser(user.email, password);
+    
+    if (result.success) {
+      const success = await completePendingReward(rewardId);
+      
+      if (success) {
+        alert('✅ Nagroda została zrealizowana!');
+        closeModal();
+        displayPendingRewards();
+      } else {
+        alert('❌ Błąd realizacji nagrody!');
+      }
+    } else {
+      alert('❌ Nieprawidłowe hasło!');
+    }
+    
+    confirmBtn.disabled = false;
+    confirmBtn.textContent = 'Potwierdź';
+  };
+  
+  confirmBtn.onclick = handleConfirm;
+  
+  passwordInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      handleConfirm();
+    }
+  });
 };
 
 export const updateUserButtons = () => {
