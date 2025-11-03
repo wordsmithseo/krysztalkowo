@@ -123,24 +123,37 @@ setupAuthListener((user) => {
     setTimeout(() => {
       updateUserButtons();
       
-      // Ustaw pierwszego użytkownika i nasłuchuj zmian
+      // Ustaw wybranego użytkownika i nasłuchuj zmian
       const children = state.children;
       if (children.length > 0) {
-        const firstChild = children[0];
-        setCurrentUser(firstChild.id);
-        setupRealtimeListener(firstChild.id);
-        listenRewardsForUser(firstChild.id);
+        // Sprawdź czy jest zapisany wybór w localStorage
+        const savedUserId = localStorage.getItem('selectedChildId');
+        let selectedChild = null;
         
-        // Ustaw aktywny przycisk dla pierwszego dziecka
+        // Jeśli jest zapisany wybór i dziecko nadal istnieje, użyj go
+        if (savedUserId && children.find(c => c.id === savedUserId)) {
+          selectedChild = children.find(c => c.id === savedUserId);
+        } else {
+          // W przeciwnym razie wybierz pierwsze dziecko
+          selectedChild = children[0];
+          // Zapisz wybór
+          localStorage.setItem('selectedChildId', selectedChild.id);
+        }
+        
+        setCurrentUser(selectedChild.id);
+        setupRealtimeListener(selectedChild.id);
+        listenRewardsForUser(selectedChild.id);
+        
+        // Ustaw aktywny przycisk dla wybranego dziecka
         setTimeout(() => {
-          const firstBtn = document.getElementById(`user-${firstChild.id}`);
-          if (firstBtn) {
-            firstBtn.classList.add('active-user');
+          const activeBtn = document.getElementById(`user-${selectedChild.id}`);
+          if (activeBtn) {
+            activeBtn.classList.add('active-user');
           }
           
           // Ustaw odpowiednie tło
-          const bgClass = firstChild.gender === 'male' ? 'maks-bg' : 'nina-bg';
-          const otherBgClass = firstChild.gender === 'male' ? 'nina-bg' : 'maks-bg';
+          const bgClass = selectedChild.gender === 'male' ? 'maks-bg' : 'nina-bg';
+          const otherBgClass = selectedChild.gender === 'male' ? 'nina-bg' : 'maks-bg';
           document.body.classList.remove(otherBgClass);
           document.body.classList.add(bgClass);
         }, 100);

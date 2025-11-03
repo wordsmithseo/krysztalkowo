@@ -20,6 +20,41 @@ let renderScheduled = false;
 // Mapa przechowująca aktywne cooldowny
 const activeCooldowns = new Map();
 
+// Cache dla obrazków
+const imageCache = new Map();
+
+// Funkcja do preloadowania obrazków z cache
+const preloadImage = (url) => {
+  return new Promise((resolve, reject) => {
+    // Sprawdź czy obrazek jest już w cache
+    if (imageCache.has(url)) {
+      resolve(imageCache.get(url));
+      return;
+    }
+    
+    const img = new Image();
+    img.onload = () => {
+      imageCache.set(url, img.src);
+      resolve(img.src);
+    };
+    img.onerror = () => {
+      reject(new Error(`Failed to load image: ${url}`));
+    };
+    img.src = url;
+  });
+};
+
+// Funkcja do preloadowania wszystkich obrazków kategorii
+const preloadCategoryImages = (categories) => {
+  categories.forEach(cat => {
+    if (cat.image) {
+      preloadImage(cat.image).catch(() => {
+        // Ignoruj błędy - użyj fallback przy renderowaniu
+      });
+    }
+  });
+};
+
 export const renderCategories = () => {
   if (renderScheduled) return;
   
@@ -28,6 +63,9 @@ export const renderCategories = () => {
     const categories = getCategories();
     const user = getCurrentUser();
     const fragment = document.createDocumentFragment();
+    
+    // Preloaduj obrazki
+    preloadCategoryImages(categories);
     
     categories.forEach(cat => {
       const card = createCategoryCard(cat, user);
@@ -76,7 +114,18 @@ const createCategoryCard = (cat, user) => {
   if (cat.image) {
     const img = document.createElement('img');
     img.className = 'cat-img';
-    img.src = cat.image;
+    
+    // Użyj cache'owanego obrazka jeśli dostępny
+    if (imageCache.has(cat.image)) {
+      img.src = imageCache.get(cat.image);
+    } else {
+      img.src = cat.image;
+      // Dodaj do cache po załadowaniu
+      img.onload = () => {
+        imageCache.set(cat.image, cat.image);
+      };
+    }
+    
     img.alt = cat.name;
     img.onerror = () => { 
       img.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"%3E%3Crect width="200" height="200" fill="%23e0e5ec"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="80" fill="%23999"%3E' + encodeURIComponent(cat.name.charAt(0).toUpperCase()) + '%3C/text%3E%3C/svg%3E';
@@ -290,6 +339,9 @@ export const switchUser = (user, setupRealtimeListener, listenRewardsForUser) =>
   
   if (!child) return;
   
+  // Zapisz wybór do localStorage
+  localStorage.setItem('selectedChildId', user);
+  
   const bgClass = child.gender === 'male' ? 'maks-bg' : 'nina-bg';
   const otherBgClass = child.gender === 'male' ? 'nina-bg' : 'maks-bg';
   
@@ -326,15 +378,24 @@ export const loadAvatar = (user, imgElement, getAvatar) => {
   getAvatar(user, (url) => {
     if (imgElement) {
       if (url) {
-        imgElement.src = url;
-        imgElement.style.display = 'block';
-        imgElement.onerror = () => {
-          const children = getChildren();
-          const child = children.find(c => c.id === user);
-          const color = child && child.gender === 'female' ? 'ffc2d1' : 'a0c4ff';
-          imgElement.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"%3E%3Ccircle cx="50" cy="50" r="50" fill="%23' + color + '"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="40" font-weight="bold" fill="%23fff"%3E' + (child ? child.name.charAt(0).toUpperCase() : 'U') + '%3C/text%3E%3C/svg%3E';
-          imgElement.onerror = null;
-        };
+        // Użyj cache dla avatarów
+        if (imageCache.has(url)) {
+          imgElement.src = imageCache.get(url);
+          imgElement.style.display = 'block';
+        } else {
+          imgElement.src = url;
+          imgElement.style.display = 'block';
+          imgElement.onload = () => {
+            imageCache.set(url, url);
+          };
+          imgElement.onerror = () => {
+            const children = getChildren();
+            const child = children.find(c => c.id === user);
+            const color = child && child.gender === 'female' ? 'ffc2d1' : 'a0c4ff';
+            imgElement.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"%3E%3Ccircle cx="50" cy="50" r="50" fill="%23' + color + '"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="40" font-weight="bold" fill="%23fff"%3E' + (child ? child.name.charAt(0).toUpperCase() : 'U') + '%3C/text%3E%3C/svg%3E';
+            imgElement.onerror = null;
+          };
+        }
       } else {
         const children = getChildren();
         const child = children.find(c => c.id === user);
@@ -596,7 +657,7 @@ export const displayPendingRewards = async () => {
   }
 };
 
-// Handler realizacji nagrody
+// Handler realizacji nagrody z komunikatem w modalu
 window.completePendingRewardHandler = async (rewardId) => {
   const passwordModal = document.createElement('div');
   passwordModal.className = 'modal';
@@ -657,21 +718,40 @@ window.completePendingRewardHandler = async (rewardId) => {
     const result = await loginUser(user.email, password);
     
     if (result.success) {
-      const success = await completePendingReward(rewardId);
+      // Zmień zawartość modala na komunikat o sukcesie
+      const modalContent = passwordModal.querySelector('.modal-content');
+      modalContent.innerHTML = `
+        <div style="text-align: center; padding: 2rem 1.5rem;">
+          <div style="font-size: 4rem; margin-bottom: 1rem;">✅</div>
+          <h2 style="color: #2ecc71 !important; margin-bottom: 1rem;">Nagroda zrealizowana!</h2>
+          <p style="color: #666; font-size: 1rem; margin-bottom: 1.5rem;">
+            Nagroda została pomyślnie zrealizowana i usunięta z listy zaległych nagród.
+          </p>
+          <button id="closeSuccessBtn" class="submit-btn" style="width: 100%;">Zamknij</button>
+        </div>
+      `;
       
-      if (success) {
-        alert('✅ Nagroda została zrealizowana!');
+      // Realizuj nagrodę w tle
+      await completePendingReward(rewardId);
+      
+      // Obsługa przycisku zamknięcia
+      const closeSuccessBtn = modalContent.querySelector('#closeSuccessBtn');
+      closeSuccessBtn.onclick = () => {
+        closeModal();
+        // Odśwież listę zaległych nagród
+        displayPendingRewards();
+      };
+      
+      // Automatyczne zamknięcie po 3 sekundach
+      setTimeout(() => {
         closeModal();
         displayPendingRewards();
-      } else {
-        alert('❌ Błąd realizacji nagrody!');
-      }
+      }, 3000);
     } else {
       alert('❌ Nieprawidłowe hasło!');
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = 'Potwierdź';
     }
-    
-    confirmBtn.disabled = false;
-    confirmBtn.textContent = 'Potwierdź';
   };
   
   confirmBtn.onclick = handleConfirm;
