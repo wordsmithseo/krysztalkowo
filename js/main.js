@@ -78,6 +78,7 @@ window.updateUserButtons = updateUserButtons;
 // Flaga dla opóźnionego renderowania
 let dataLoaded = false;
 let appFullyLoaded = false;
+let childrenLoaded = false;
 
 // Funkcja ukrywania loadera
 const hideLoader = () => {
@@ -110,6 +111,63 @@ const hideError = (element) => {
   element.style.display = 'none';
 };
 
+// Funkcja automatycznego ładowania profilu dziecka
+const autoLoadChildProfile = () => {
+  const children = state.children;
+  
+  if (children.length === 0) {
+    // Brak dzieci - pokaż pusty stan
+    dataLoaded = true;
+    checkEmptyStates();
+    hideLoader();
+    return;
+  }
+  
+  // Sprawdź czy jest zapisany wybór w localStorage
+  const savedUserId = localStorage.getItem('selectedChildId');
+  let selectedChild = null;
+  
+  // Jeśli jest zapisany wybór i dziecko nadal istnieje, użyj go
+  if (savedUserId && children.find(c => c.id === savedUserId)) {
+    selectedChild = children.find(c => c.id === savedUserId);
+  } else {
+    // W przeciwnym razie wybierz pierwsze dziecko
+    selectedChild = children[0];
+    // Zapisz wybór
+    localStorage.setItem('selectedChildId', selectedChild.id);
+  }
+  
+  // Pokaż loader profilu podczas ładowania
+  showProfileLoader(selectedChild.name);
+  
+  setCurrentUser(selectedChild.id);
+  setupRealtimeListener(selectedChild.id);
+  listenRewardsForUser(selectedChild.id);
+  
+  // Ustaw aktywny przycisk dla wybranego dziecka
+  setTimeout(() => {
+    const activeBtn = document.getElementById(`user-${selectedChild.id}`);
+    if (activeBtn) {
+      activeBtn.classList.add('active-user');
+    }
+  }, 100);
+  
+  // Ustaw odpowiednie tło
+  const bgClass = selectedChild.gender === 'male' ? 'maks-bg' : 'nina-bg';
+  const otherBgClass = selectedChild.gender === 'male' ? 'nina-bg' : 'maks-bg';
+  document.body.classList.remove(otherBgClass);
+  document.body.classList.add(bgClass);
+  
+  // Opóźnione sprawdzanie pustych stanów - dopiero po załadowaniu danych
+  setTimeout(() => {
+    dataLoaded = true;
+    checkEmptyStates();
+    hideLoader();
+    // Ukryj loader profilu po zakończeniu
+    hideProfileLoader();
+  }, 1000);
+};
+
 // Obsługa uwierzytelniania
 setupAuthListener((user) => {
   if (user) {
@@ -122,55 +180,39 @@ setupAuthListener((user) => {
     listenChildren();
     
     // Poczekaj na załadowanie dzieci z małym opóźnieniem
-    setTimeout(() => {
-      updateUserButtons();
-      
-      // Ustaw wybranego użytkownika i nasłuchuj zmian
+    const waitForChildren = setInterval(() => {
       const children = state.children;
-      if (children.length > 0) {
-        // Sprawdź czy jest zapisany wybór w localStorage
-        const savedUserId = localStorage.getItem('selectedChildId');
-        let selectedChild = null;
-        
-        // Jeśli jest zapisany wybór i dziecko nadal istnieje, użyj go
-        if (savedUserId && children.find(c => c.id === savedUserId)) {
-          selectedChild = children.find(c => c.id === savedUserId);
-        } else {
-          // W przeciwnym razie wybierz pierwsze dziecko
-          selectedChild = children[0];
-          // Zapisz wybór
-          localStorage.setItem('selectedChildId', selectedChild.id);
-        }
-        
-        setCurrentUser(selectedChild.id);
-        setupRealtimeListener(selectedChild.id);
-        listenRewardsForUser(selectedChild.id);
-        
-        // Ustaw aktywny przycisk dla wybranego dziecka
-        const activeBtn = document.getElementById(`user-${selectedChild.id}`);
-        if (activeBtn) {
-          activeBtn.classList.add('active-user');
-        }
-        
-        // Ustaw odpowiednie tło
-        const bgClass = selectedChild.gender === 'male' ? 'maks-bg' : 'nina-bg';
-        const otherBgClass = selectedChild.gender === 'male' ? 'nina-bg' : 'maks-bg';
-        document.body.classList.remove(otherBgClass);
-        document.body.classList.add(bgClass);
-      }
       
-      // Opóźnione sprawdzanie pustych stanów - dopiero po załadowaniu danych
-      setTimeout(() => {
+      // Sprawdź czy dzieci zostały załadowane
+      if (children && children.length >= 0) {
+        clearInterval(waitForChildren);
+        childrenLoaded = true;
+        
+        // Zaktualizuj przyciski użytkowników
+        updateUserButtons();
+        
+        // Automatycznie załaduj profil dziecka
+        setTimeout(() => {
+          autoLoadChildProfile();
+        }, 200);
+      }
+    }, 100);
+    
+    // Zabezpieczenie - jeśli po 3 sekundach nie załadowano dzieci
+    setTimeout(() => {
+      if (!childrenLoaded) {
+        clearInterval(waitForChildren);
         dataLoaded = true;
         checkEmptyStates();
         hideLoader();
-      }, 800);
-    }, 300);
+      }
+    }, 3000);
   } else {
     // Użytkownik niezalogowany - pokaż modal uwierzytelniania
     authModal.style.display = 'flex';
     document.querySelector('.crystal-app').style.display = 'none';
     dataLoaded = false;
+    childrenLoaded = false;
     hideLoader();
   }
 });
