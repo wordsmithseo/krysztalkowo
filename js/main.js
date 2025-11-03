@@ -13,7 +13,9 @@ import {
   displayRanking,
   updateUserButtons,
   showEmptyStateGuide,
-  displayPendingRewards
+  displayPendingRewards,
+  showProfileLoader,
+  hideProfileLoader
 } from './ui.js';
 import { 
   initializeSortable,
@@ -145,18 +147,16 @@ setupAuthListener((user) => {
         listenRewardsForUser(selectedChild.id);
         
         // Ustaw aktywny przycisk dla wybranego dziecka
-        setTimeout(() => {
-          const activeBtn = document.getElementById(`user-${selectedChild.id}`);
-          if (activeBtn) {
-            activeBtn.classList.add('active-user');
-          }
-          
-          // Ustaw odpowiednie tło
-          const bgClass = selectedChild.gender === 'male' ? 'maks-bg' : 'nina-bg';
-          const otherBgClass = selectedChild.gender === 'male' ? 'nina-bg' : 'maks-bg';
-          document.body.classList.remove(otherBgClass);
-          document.body.classList.add(bgClass);
-        }, 100);
+        const activeBtn = document.getElementById(`user-${selectedChild.id}`);
+        if (activeBtn) {
+          activeBtn.classList.add('active-user');
+        }
+        
+        // Ustaw odpowiednie tło
+        const bgClass = selectedChild.gender === 'male' ? 'maks-bg' : 'nina-bg';
+        const otherBgClass = selectedChild.gender === 'male' ? 'nina-bg' : 'maks-bg';
+        document.body.classList.remove(otherBgClass);
+        document.body.classList.add(bgClass);
       }
       
       // Opóźnione sprawdzanie pustych stanów - dopiero po załadowaniu danych
@@ -164,8 +164,8 @@ setupAuthListener((user) => {
         dataLoaded = true;
         checkEmptyStates();
         hideLoader();
-      }, 1000);
-    }, 500);
+      }, 800);
+    }, 300);
   } else {
     // Użytkownik niezalogowany - pokaż modal uwierzytelniania
     authModal.style.display = 'flex';

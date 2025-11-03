@@ -55,6 +55,43 @@ const preloadCategoryImages = (categories) => {
   });
 };
 
+// ===== LOADER PROFILU =====
+let profileLoaderElement = null;
+
+export const showProfileLoader = (childName) => {
+  // Usuń istniejący loader jeśli jest
+  hideProfileLoader();
+  
+  // Utwórz nowy loader
+  profileLoaderElement = document.createElement('div');
+  profileLoaderElement.className = 'profile-loader';
+  profileLoaderElement.innerHTML = `
+    <div class="profile-loader-content">
+      <div class="profile-loader-spinner"></div>
+      <div class="profile-loader-text">Ładowanie profilu ${childName}...</div>
+    </div>
+  `;
+  
+  document.body.appendChild(profileLoaderElement);
+  
+  // Pokaż loader
+  requestAnimationFrame(() => {
+    profileLoaderElement.classList.add('visible');
+  });
+};
+
+export const hideProfileLoader = () => {
+  if (profileLoaderElement) {
+    profileLoaderElement.classList.remove('visible');
+    setTimeout(() => {
+      if (profileLoaderElement && profileLoaderElement.parentNode) {
+        profileLoaderElement.parentNode.removeChild(profileLoaderElement);
+        profileLoaderElement = null;
+      }
+    }, 300);
+  }
+};
+
 export const renderCategories = () => {
   if (renderScheduled) return;
   
@@ -78,6 +115,9 @@ export const renderCategories = () => {
     
     // Sprawdź czy pokazać wskazówki
     showEmptyStateGuide();
+    
+    // Ukryj loader profilu po wyrenderowaniu
+    hideProfileLoader();
   });
 };
 
@@ -338,6 +378,9 @@ export const switchUser = (user, setupRealtimeListener, listenRewardsForUser) =>
   const child = children.find(c => c.id === user);
   
   if (!child) return;
+  
+  // Pokaż loader profilu
+  showProfileLoader(child.name);
   
   // Zapisz wybór do localStorage
   localStorage.setItem('selectedChildId', user);
