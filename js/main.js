@@ -19,7 +19,7 @@ import {
   hideProfileLoader,
   renderCategories
 } from './ui.js';
-import { 
+import {
   initializeSortable,
   renderAdminCategories,
   renderAdminRewards,
@@ -33,7 +33,11 @@ import {
   handleResetRanking,
   openAddChildModal,
   showLogoutConfirmModal,
-  updateAdminHeaderInfo
+  updateAdminHeaderInfo,
+  handleEditReward,
+  handleSaveRewardEdit,
+  updateRewardPreview,
+  updateProbabilityInfo
 } from './admin.js';
 import { getAvatar } from './database.js';
 import { setupAuthListener, loginUser, registerUser, logoutUser, getCurrentAuthUser } from './auth.js';
@@ -500,6 +504,37 @@ document.addEventListener('click', (e) => {
 addCategoryBtn.addEventListener('click', handleAddCategory);
 saveEditBtn.addEventListener('click', handleSaveEdit);
 addRewardBtn.addEventListener('click', handleAddReward);
+
+// Event listenery dla modalu edycji nagrody
+const saveRewardEditBtn = document.getElementById('saveRewardEditBtn');
+const cancelRewardEditBtn = document.getElementById('cancelRewardEditBtn');
+const editRewardImage = document.getElementById('editRewardImage');
+const editRewardProbability = document.getElementById('editRewardProbability');
+
+if (saveRewardEditBtn) {
+  saveRewardEditBtn.addEventListener('click', handleSaveRewardEdit);
+}
+
+if (cancelRewardEditBtn) {
+  cancelRewardEditBtn.addEventListener('click', () => {
+    const editRewardModal = document.getElementById('editRewardModal');
+    editRewardModal.style.display = 'none';
+    adminModal.style.display = 'flex';
+  });
+}
+
+// Aktualizuj podgląd obrazka w czasie rzeczywistym
+if (editRewardImage) {
+  editRewardImage.addEventListener('input', updateRewardPreview);
+}
+
+// Aktualizuj informacje o częstotliwości w czasie rzeczywistym
+if (editRewardProbability) {
+  editRewardProbability.addEventListener('input', () => {
+    updateProbabilityInfo();
+    updateRewardPreview(); // Aktualizuj też podgląd bo rzadkość się zmienia
+  });
+}
 
 backToAdminBtn.addEventListener('click', () => {
   editModal.style.display = 'none';

@@ -105,20 +105,31 @@ export const handleModifyCrystals = async (categoryId, delta) => {
 
 export const renderAdminRewards = () => {
   const rewards = getRewards();
-  
+
   rewardList.innerHTML = rewards.map(reward => {
+    const probability = reward.probability || 50;
+    const rarityClass = getRarityClass(probability);
+    const frequency = calculateFrequency(probability);
+
     let imageHtml = '';
     if (reward.image) {
-      imageHtml = `<img src="${reward.image}" class="reward-img" alt="${reward.name}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22 viewBox=%220 0 40 40%22%3E%3Crect width=%2240%22 height=%2240%22 fill=%22%23f0f0f0%22 rx=%225%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2220%22%3E🎁%3C/text%3E%3C/svg%3E'; this.onerror=null;">`;
+      imageHtml = `
+        <div class="reward-preview-wrapper ${rarityClass}" style="display:inline-block;">
+          <img src="${reward.image}" class="reward-img" alt="${reward.name}" style="width:45px;height:45px;object-fit:cover;border-radius:0.5rem;" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22 viewBox=%220 0 40 40%22%3E%3Crect width=%2240%22 height=%2240%22 fill=%22%23f0f0f0%22 rx=%225%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2220%22%3E🎁%3C/text%3E%3C/svg%3E'; this.onerror=null;">
+        </div>
+      `;
     } else {
-      imageHtml = `<div style="width:40px;height:40px;background:#f0f0f0;border-radius:0.5rem;display:flex;align-items:center;justify-content:center;font-size:1.5rem;border:1px solid #ddd;">🎁</div>`;
+      imageHtml = `<div style="width:45px;height:45px;background:#f0f0f0;border-radius:0.5rem;display:flex;align-items:center;justify-content:center;font-size:1.5rem;border:1px solid #ddd;">🎁</div>`;
     }
-    
+
     return `
       <li>
         <div class="reward-left">
           ${imageHtml}
-          <span class="reward-name">${reward.name}</span>
+          <div style="display:flex;flex-direction:column;gap:0.25rem;min-width:0;flex:1;">
+            <span class="reward-name">${reward.name}</span>
+            <span style="font-size:0.8rem;color:#666;">${frequency || '~1 na 2 losowań'}</span>
+          </div>
         </div>
         <div class="action-buttons">
           <button onclick="window.editRewardHandler('${reward.id}')">✏️</button>
@@ -282,26 +293,119 @@ export const handleDeleteReward = async (rewardId) => {
   );
 };
 
-export const handleEditReward = async (rewardId) => {
+// Pomocnicze funkcje dla rzadkości nagród
+export const getRarityClass = (probability) => {
+  if (!probability || probability >= 60) return 'rarity-common';
+  if (probability >= 30) return 'rarity-uncommon';
+  if (probability >= 10) return 'rarity-rare';
+  return 'rarity-epic';
+};
+
+export const getRarityName = (probability) => {
+  if (!probability || probability >= 60) return 'Częsta';
+  if (probability >= 30) return 'Rzadsza';
+  if (probability >= 10) return 'Rzadka';
+  return 'Epicka';
+};
+
+export const calculateFrequency = (probability) => {
+  if (!probability || probability <= 0) return '';
+  const frequency = Math.round(100 / probability);
+  return `~1 na ${frequency} losowań`;
+};
+
+// Funkcja edycji nagrody
+export const handleEditReward = (rewardId) => {
   const rewards = getRewards();
   const reward = rewards.find(r => r.id === rewardId);
-  
+
   if (!reward) return;
-  
-  const newName = prompt('Nowa nazwa nagrody:', reward.name);
-  
-  if (!newName || newName.trim() === '') return;
-  
-  const newImage = prompt('URL obrazka (opcjonalnie):', reward.image || '');
-  
-  const success = await updateReward(rewardId, {
-    name: newName.trim(),
-    image: newImage ? newImage.trim() : ''
-  });
-  
+
+  const editRewardModal = document.getElementById('editRewardModal');
+  const adminModal = document.getElementById('adminModal');
+
+  document.getElementById('editRewardName').value = reward.name || '';
+  document.getElementById('editRewardImage').value = reward.image || '';
+  document.getElementById('editRewardProbability').value = reward.probability || 50;
+
+  // Zapisz ID edytowanej nagrody
+  editRewardModal.dataset.editingId = rewardId;
+
+  // Zaktualizuj podgląd i informacje o częstotliwości
+  updateRewardPreview();
+  updateProbabilityInfo();
+
+  adminModal.style.display = 'none';
+  editRewardModal.style.display = 'flex';
+};
+
+// Funkcja zapisywania edycji nagrody
+export const handleSaveRewardEdit = async () => {
+  const editRewardModal = document.getElementById('editRewardModal');
+  const rewardId = editRewardModal.dataset.editingId;
+
+  const data = {
+    name: document.getElementById('editRewardName').value.trim(),
+    image: document.getElementById('editRewardImage').value.trim(),
+    probability: parseInt(document.getElementById('editRewardProbability').value) || 50
+  };
+
+  if (!data.name) {
+    alert('Nazwa nie może być pusta!');
+    return;
+  }
+
+  if (data.probability < 1 || data.probability > 100) {
+    alert('Szansa musi być między 1% a 100%!');
+    return;
+  }
+
+  const success = await updateReward(rewardId, data);
+
   if (success) {
+    editRewardModal.style.display = 'none';
+    const adminModal = document.getElementById('adminModal');
+    adminModal.style.display = 'flex';
     renderAdminRewards();
   }
+};
+
+// Funkcja aktualizacji podglądu nagrody
+export const updateRewardPreview = () => {
+  const imageUrl = document.getElementById('editRewardImage').value.trim();
+  const probability = parseInt(document.getElementById('editRewardProbability').value) || 50;
+  const previewContainer = document.getElementById('rewardImagePreview');
+
+  if (!imageUrl) {
+    previewContainer.innerHTML = '<p style="color:#999;text-align:center;">Wklej URL obrazka aby zobaczyć podgląd</p>';
+    return;
+  }
+
+  const rarityClass = getRarityClass(probability);
+  const rarityName = getRarityName(probability);
+
+  previewContainer.innerHTML = `
+    <div class="reward-preview-wrapper ${rarityClass}">
+      <img src="${imageUrl}" class="reward-preview-image" alt="Podgląd nagrody" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22150%22 height=%22150%22 viewBox=%220 0 150 150%22%3E%3Crect width=%22150%22 height=%22150%22 fill=%22%23f0f0f0%22 rx=%2210%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2260%22%3E🎁%3C/text%3E%3C/svg%3E'; this.onerror=null;">
+      <span class="rarity-label">${rarityName}</span>
+    </div>
+  `;
+};
+
+// Funkcja aktualizacji informacji o częstotliwości
+export const updateProbabilityInfo = () => {
+  const probability = parseInt(document.getElementById('editRewardProbability').value) || 0;
+  const probabilityInfo = document.getElementById('probabilityInfo');
+
+  if (probability <= 0 || probability > 100) {
+    probabilityInfo.className = 'probability-info empty';
+    probabilityInfo.textContent = 'Wprowadź wartość między 1% a 100%';
+    return;
+  }
+
+  const frequency = calculateFrequency(probability);
+  probabilityInfo.className = 'probability-info';
+  probabilityInfo.innerHTML = `📊 ${frequency} <span style="font-weight:400;opacity:0.8;">(${probability}% szansy)</span>`;
 };
 
 export const handleResetRanking = async () => {
