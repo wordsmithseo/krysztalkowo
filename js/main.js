@@ -1,21 +1,22 @@
 // ===== GŁÓWNY PLIK APLIKACJI =====
-import { state, setCurrentUser } from './state.js';
-import { 
-  setupRealtimeListener, 
+import { state, setCurrentUser, getCachedData, setCategories, setRewards } from './state.js';
+import {
+  setupRealtimeListener,
   listenRewardsForUser,
   listenChildren,
   changeUserPassword
 } from './database.js';
-import { 
-  elements, 
-  switchUser, 
-  loadAvatar, 
+import {
+  elements,
+  switchUser,
+  loadAvatar,
   displayRanking,
   updateUserButtons,
   showEmptyStateGuide,
   displayPendingRewards,
   showProfileLoader,
-  hideProfileLoader
+  hideProfileLoader,
+  renderCategories
 } from './ui.js';
 import { 
   initializeSortable,
@@ -139,11 +140,23 @@ const autoLoadChildProfile = () => {
   
   // Pokaż loader profilu podczas ładowania
   showProfileLoader(selectedChild.name);
-  
+
   setCurrentUser(selectedChild.id);
+
+  // Załaduj cached data i wyrenderuj kategorie
+  const cached = getCachedData(selectedChild.id);
+  if (cached.categories) {
+    setCategories(cached.categories);
+    renderCategories();
+  }
+  if (cached.rewards) {
+    setRewards(cached.rewards);
+  }
+
+  // Załaduj aktualne dane z Firebase
   setupRealtimeListener(selectedChild.id);
   listenRewardsForUser(selectedChild.id);
-  
+
   // Ustaw aktywny przycisk dla wybranego dziecka
   setTimeout(() => {
     const activeBtn = document.getElementById(`user-${selectedChild.id}`);
