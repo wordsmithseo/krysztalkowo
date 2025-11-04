@@ -24,7 +24,29 @@ export const listenChildren = () => {
 };
 
 // Nasłuchiwanie zmian dla wszystkich dzieci (potrzebne do rankingu)
-export const listenAllChildrenData = (childrenList) => {
+export const listenAllChildrenData = async (childrenList) => {
+  // Najpierw pobierz wszystkie dane jednorazowo aby wypełnić cache
+  const loadPromises = childrenList.map(async (child) => {
+    // Pobierz kategorie
+    const categoriesRef = ref(db, `users/${child.id}/categories`);
+    const categoriesSnapshot = await get(categoriesRef);
+    const categoriesData = categoriesSnapshot.val();
+    const categoriesArr = categoriesData ? Object.keys(categoriesData).map(id => ({ id, ...categoriesData[id] })) : [];
+    categoriesArr.sort((a, b) => (a.order || 0) - (b.order || 0));
+    setCachedCategories(child.id, categoriesArr);
+
+    // Pobierz nagrody
+    const rewardsRef = ref(db, `users/${child.id}/rewards`);
+    const rewardsSnapshot = await get(rewardsRef);
+    const rewardsData = rewardsSnapshot.val();
+    const rewardsArr = rewardsData ? Object.keys(rewardsData).map(id => ({ id, ...rewardsData[id] })) : [];
+    setCachedRewards(child.id, rewardsArr);
+  });
+
+  // Poczekaj aż wszystkie dane się załadują
+  await Promise.all(loadPromises);
+
+  // Teraz ustaw nasłuchiwanie na zmiany w czasie rzeczywistym
   childrenList.forEach(child => {
     // Nasłuchuj kategorii dla każdego dziecka
     const categoriesRef = ref(db, `users/${child.id}/categories`);

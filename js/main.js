@@ -210,12 +210,11 @@ setupAuthListener((user) => {
         updateUserButtons();
 
         // Załaduj dane dla wszystkich dzieci (potrzebne do rankingu)
-        listenAllChildrenData(children);
-
-        // Automatycznie załaduj profil dziecka
-        setTimeout(() => {
+        // Czekamy aż dane się załadują zanim załadujemy profil dziecka
+        listenAllChildrenData(children).then(() => {
+          // Automatycznie załaduj profil dziecka po załadowaniu danych
           autoLoadChildProfile();
-        }, 200);
+        });
       }
     }, 100);
     
