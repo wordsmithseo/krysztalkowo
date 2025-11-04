@@ -9,17 +9,54 @@ import { updatePassword } from 'https://www.gstatic.com/firebasejs/10.7.1/fireba
 // Nasłuchiwanie zmian dzieci
 export const listenChildren = () => {
   const childrenRef = ref(db, 'children');
-  
+
   onValue(childrenRef, (snapshot) => {
     const data = snapshot.val();
     const arr = data ? Object.keys(data).map(id => ({ id, ...data[id] })) : [];
     arr.sort((a, b) => (a.order || 0) - (b.order || 0));
     setChildren(arr);
-    
+
     // Automatyczna aktualizacja przycisków użytkowników
     if (window.updateUserButtons) {
       window.updateUserButtons();
     }
+  });
+};
+
+// Nasłuchiwanie zmian dla wszystkich dzieci (potrzebne do rankingu)
+export const listenAllChildrenData = (childrenList) => {
+  childrenList.forEach(child => {
+    // Nasłuchuj kategorii dla każdego dziecka
+    const categoriesRef = ref(db, `users/${child.id}/categories`);
+    onValue(categoriesRef, (snapshot) => {
+      const data = snapshot.val();
+      const arr = data ? Object.keys(data).map(id => ({ id, ...data[id] })) : [];
+      arr.sort((a, b) => (a.order || 0) - (b.order || 0));
+
+      // Zapisz do cache dla tego dziecka
+      setCachedCategories(child.id, arr);
+
+      // Jeśli to aktualnie wybrane dziecko, zaktualizuj główny stan
+      if (getCurrentUser() === child.id) {
+        setCategories(arr);
+        requestAnimationFrame(() => renderCategories());
+      }
+    });
+
+    // Nasłuchuj nagród dla każdego dziecka
+    const rewardsRef = ref(db, `users/${child.id}/rewards`);
+    onValue(rewardsRef, (snapshot) => {
+      const data = snapshot.val();
+      const arr = data ? Object.keys(data).map(id => ({ id, ...data[id] })) : [];
+
+      // Zapisz do cache dla tego dziecka
+      setCachedRewards(child.id, arr);
+
+      // Jeśli to aktualnie wybrane dziecko, zaktualizuj główny stan
+      if (getCurrentUser() === child.id) {
+        setRewards(arr);
+      }
+    });
   });
 };
 
