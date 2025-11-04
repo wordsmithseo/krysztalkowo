@@ -390,12 +390,12 @@ export const resetAllRankings = async () => {
   }
 };
 
-export const addReward = async (name, image = '') => {
+export const addReward = async (name, image = '', probability = 50) => {
   const user = getCurrentUser();
   const newId = Date.now().toString();
-  
+
   try {
-    await set(ref(db, `users/${user}/rewards/${newId}`), { name, image });
+    await set(ref(db, `users/${user}/rewards/${newId}`), { name, image, probability });
     return true;
   } catch (error) {
     console.error('Błąd dodawania nagrody:', error);
