@@ -4,6 +4,7 @@ import {
   setupRealtimeListener,
   listenRewardsForUser,
   listenChildren,
+  listenAllChildrenData,
   changeUserPassword
 } from './database.js';
 import {
@@ -170,7 +171,8 @@ const autoLoadChildProfile = () => {
     setRewards(cached.rewards);
   }
 
-  // Załaduj aktualne dane z Firebase
+  // Dane są już ładowane przez listenAllChildrenData(), ale dla pewności
+  // wywołujemy również listenery dla aktualnie wybranego dziecka
   setupRealtimeListener(selectedChild.id);
   listenRewardsForUser(selectedChild.id);
 
@@ -207,10 +209,12 @@ setupAuthListener((user) => {
         // Zaktualizuj przyciski użytkowników
         updateUserButtons();
 
-        // Automatycznie załaduj profil dziecka
-        setTimeout(() => {
+        // Załaduj dane dla wszystkich dzieci (potrzebne do rankingu)
+        // Czekamy aż dane się załadują zanim załadujemy profil dziecka
+        listenAllChildrenData(children).then(() => {
+          // Automatycznie załaduj profil dziecka po załadowaniu danych
           autoLoadChildProfile();
-        }, 200);
+        });
       }
     }, 100);
     

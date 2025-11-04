@@ -9,17 +9,76 @@ import { updatePassword } from 'https://www.gstatic.com/firebasejs/10.7.1/fireba
 // Nasłuchiwanie zmian dzieci
 export const listenChildren = () => {
   const childrenRef = ref(db, 'children');
-  
+
   onValue(childrenRef, (snapshot) => {
     const data = snapshot.val();
     const arr = data ? Object.keys(data).map(id => ({ id, ...data[id] })) : [];
     arr.sort((a, b) => (a.order || 0) - (b.order || 0));
     setChildren(arr);
-    
+
     // Automatyczna aktualizacja przycisków użytkowników
     if (window.updateUserButtons) {
       window.updateUserButtons();
     }
+  });
+};
+
+// Nasłuchiwanie zmian dla wszystkich dzieci (potrzebne do rankingu)
+export const listenAllChildrenData = async (childrenList) => {
+  // Najpierw pobierz wszystkie dane jednorazowo aby wypełnić cache
+  const loadPromises = childrenList.map(async (child) => {
+    // Pobierz kategorie
+    const categoriesRef = ref(db, `users/${child.id}/categories`);
+    const categoriesSnapshot = await get(categoriesRef);
+    const categoriesData = categoriesSnapshot.val();
+    const categoriesArr = categoriesData ? Object.keys(categoriesData).map(id => ({ id, ...categoriesData[id] })) : [];
+    categoriesArr.sort((a, b) => (a.order || 0) - (b.order || 0));
+    setCachedCategories(child.id, categoriesArr);
+
+    // Pobierz nagrody
+    const rewardsRef = ref(db, `users/${child.id}/rewards`);
+    const rewardsSnapshot = await get(rewardsRef);
+    const rewardsData = rewardsSnapshot.val();
+    const rewardsArr = rewardsData ? Object.keys(rewardsData).map(id => ({ id, ...rewardsData[id] })) : [];
+    setCachedRewards(child.id, rewardsArr);
+  });
+
+  // Poczekaj aż wszystkie dane się załadują
+  await Promise.all(loadPromises);
+
+  // Teraz ustaw nasłuchiwanie na zmiany w czasie rzeczywistym
+  childrenList.forEach(child => {
+    // Nasłuchuj kategorii dla każdego dziecka
+    const categoriesRef = ref(db, `users/${child.id}/categories`);
+    onValue(categoriesRef, (snapshot) => {
+      const data = snapshot.val();
+      const arr = data ? Object.keys(data).map(id => ({ id, ...data[id] })) : [];
+      arr.sort((a, b) => (a.order || 0) - (b.order || 0));
+
+      // Zapisz do cache dla tego dziecka
+      setCachedCategories(child.id, arr);
+
+      // Jeśli to aktualnie wybrane dziecko, zaktualizuj główny stan
+      if (getCurrentUser() === child.id) {
+        setCategories(arr);
+        requestAnimationFrame(() => renderCategories());
+      }
+    });
+
+    // Nasłuchuj nagród dla każdego dziecka
+    const rewardsRef = ref(db, `users/${child.id}/rewards`);
+    onValue(rewardsRef, (snapshot) => {
+      const data = snapshot.val();
+      const arr = data ? Object.keys(data).map(id => ({ id, ...data[id] })) : [];
+
+      // Zapisz do cache dla tego dziecka
+      setCachedRewards(child.id, arr);
+
+      // Jeśli to aktualnie wybrane dziecko, zaktualizuj główny stan
+      if (getCurrentUser() === child.id) {
+        setRewards(arr);
+      }
+    });
   });
 };
 
