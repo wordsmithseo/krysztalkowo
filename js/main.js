@@ -1,21 +1,22 @@
 // ===== GŁÓWNY PLIK APLIKACJI =====
-import { state, setCurrentUser } from './state.js';
-import { 
-  setupRealtimeListener, 
+import { state, setCurrentUser, getCachedData, setCategories, setRewards } from './state.js';
+import {
+  setupRealtimeListener,
   listenRewardsForUser,
   listenChildren,
   changeUserPassword
 } from './database.js';
-import { 
-  elements, 
-  switchUser, 
-  loadAvatar, 
+import {
+  elements,
+  switchUser,
+  loadAvatar,
   displayRanking,
   updateUserButtons,
   showEmptyStateGuide,
   displayPendingRewards,
   showProfileLoader,
-  hideProfileLoader
+  hideProfileLoader,
+  renderCategories
 } from './ui.js';
 import { 
   initializeSortable,
@@ -133,31 +134,46 @@ const autoLoadChildProfile = () => {
   } else {
     // W przeciwnym razie wybierz pierwsze dziecko
     selectedChild = children[0];
-    // Zapisz wybór
-    localStorage.setItem('selectedChildId', selectedChild.id);
   }
   
   // Pokaż loader profilu podczas ładowania
   showProfileLoader(selectedChild.name);
-  
-  setCurrentUser(selectedChild.id);
-  setupRealtimeListener(selectedChild.id);
-  listenRewardsForUser(selectedChild.id);
-  
-  // Ustaw aktywny przycisk dla wybranego dziecka
-  setTimeout(() => {
-    const activeBtn = document.getElementById(`user-${selectedChild.id}`);
-    if (activeBtn) {
-      activeBtn.classList.add('active-user');
-    }
-  }, 100);
-  
+
+  // Zapisz wybór do localStorage
+  localStorage.setItem('selectedChildId', selectedChild.id);
+
   // Ustaw odpowiednie tło
   const bgClass = selectedChild.gender === 'male' ? 'maks-bg' : 'nina-bg';
   const otherBgClass = selectedChild.gender === 'male' ? 'nina-bg' : 'maks-bg';
   document.body.classList.remove(otherBgClass);
   document.body.classList.add(bgClass);
-  
+
+  // Usuń active-user ze wszystkich przycisków i ustaw dla wybranego dziecka
+  document.querySelectorAll('.user-btn').forEach(btn => {
+    btn.classList.remove('active-user');
+  });
+
+  const activeBtn = document.getElementById(`user-${selectedChild.id}`);
+  if (activeBtn) {
+    activeBtn.classList.add('active-user');
+  }
+
+  setCurrentUser(selectedChild.id);
+
+  // Załaduj cached data i wyrenderuj kategorie
+  const cached = getCachedData(selectedChild.id);
+  if (cached.categories) {
+    setCategories(cached.categories);
+    renderCategories();
+  }
+  if (cached.rewards) {
+    setRewards(cached.rewards);
+  }
+
+  // Załaduj aktualne dane z Firebase
+  setupRealtimeListener(selectedChild.id);
+  listenRewardsForUser(selectedChild.id);
+
   // Opóźnione sprawdzanie pustych stanów - dopiero po załadowaniu danych
   setTimeout(() => {
     dataLoaded = true;
@@ -182,15 +198,15 @@ setupAuthListener((user) => {
     // Poczekaj na załadowanie dzieci z małym opóźnieniem
     const waitForChildren = setInterval(() => {
       const children = state.children;
-      
-      // Sprawdź czy dzieci zostały załadowane
-      if (children && children.length >= 0) {
+
+      // Sprawdź czy dzieci zostały faktycznie załadowane (tablica nie jest pusta)
+      if (children && children.length > 0) {
         clearInterval(waitForChildren);
         childrenLoaded = true;
-        
+
         // Zaktualizuj przyciski użytkowników
         updateUserButtons();
-        
+
         // Automatycznie załaduj profil dziecka
         setTimeout(() => {
           autoLoadChildProfile();
@@ -202,6 +218,11 @@ setupAuthListener((user) => {
     setTimeout(() => {
       if (!childrenLoaded) {
         clearInterval(waitForChildren);
+        childrenLoaded = true;
+
+        // Zaktualizuj przyciski (pokaże pusty stan jeśli brak dzieci)
+        updateUserButtons();
+
         dataLoaded = true;
         checkEmptyStates();
         hideLoader();
