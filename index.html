@@ -101,14 +101,24 @@
         <button id="authLogoutBtn" style="background: none; border: none; color: #6a11cb; cursor: pointer; text-decoration: underline; margin-left: 0.5rem; font-size: 0.9rem;">Wyloguj</button>
       </div>
       
-      <div class="user-selector">
-        <div class="user-buttons-row"></div>
-      </div>
+      <nav class="main-nav">
+        <button id="adminBtn" class="nav-btn admin-btn">
+          <span class="nav-icon">⚙️</span>
+          <span class="nav-label">Panel admina</span>
+        </button>
+        <button id="rankingBtn" class="nav-btn ranking-btn">
+          <span class="nav-icon">🏆</span>
+          <span class="nav-label">Ranking</span>
+        </button>
+        <button id="pendingRewardsBtn" class="nav-btn pending-btn">
+          <span class="nav-icon">📋</span>
+          <span class="nav-label">Zaległe nagrody</span>
+        </button>
+      </nav>
 
-      <div style="display:flex;gap:.75rem;flex-wrap:wrap;justify-content:center">
-        <button id="adminBtn" class="admin-button">⚙️ Panel admina</button>
-        <button id="rankingBtn" class="ranking-button">🏆 Ranking</button>
-        <button id="pendingRewardsBtn" class="pending-rewards-button">📋 Zaległe nagrody</button>
+      <div class="children-selector">
+        <h3 class="children-selector-title">Wybierz dziecko:</h3>
+        <div class="user-buttons-row"></div>
       </div>
     </div>
 
@@ -161,6 +171,7 @@
           <input type="text" id="categoryNameInput" placeholder="Nazwa kategorii">
           <button id="addCategoryBtn" class="add-btn">Dodaj</button>
         </div>
+        <div id="categorySuggestions" class="suggestions-container"></div>
       </div>
 
       <div class="admin-section">
@@ -174,6 +185,7 @@
           <input type="text" id="rewardNameInput" placeholder="Nazwa nagrody">
           <button id="addRewardBtn" class="add-btn">Dodaj</button>
         </div>
+        <div id="rewardSuggestions" class="suggestions-container"></div>
         <ul id="rewardList"></ul>
       </div>
 
@@ -187,12 +199,10 @@
 
       <div class="admin-section">
         <h3>Zmień avatara</h3>
+        <p style="font-size:0.9rem;color:#666;margin:0 0 0.75rem 0;">Avatar zostanie ustawiony dla obecnie wybranego dziecka</p>
         <div class="form-grid" style="grid-template-columns:1fr">
           <input type="url" id="avatarUrlInput" placeholder="URL avatara">
-          <div style="display:flex;gap:.5rem">
-            <button id="setAvatarMaksBtn" class="set-avatar-btn">Avatar Maksa</button>
-            <button id="setAvatarNinaBtn" class="set-avatar-btn">Avatar Niny</button>
-          </div>
+          <button id="setAvatarBtn" class="set-avatar-btn">Ustaw avatar</button>
         </div>
       </div>
 
@@ -231,23 +241,25 @@
   </div>
 
   <div id="editModal" class="modal">
-    <div class="modal-content">
+    <div class="modal-content edit-modal-content">
       <span class="close-btn">&times;</span>
-      <h2>Edytuj kategorię</h2>
-      
-      <label>Nazwa:</label>
-      <input type="text" id="editCategoryName">
-      
-      <label>Cel (liczba kryształków):</label>
-      <input type="number" id="editCategoryGoal" min="1">
-      
-      <label>Obrazek (URL):</label>
-      <input type="url" id="editCategoryImage" placeholder="https://...">
+      <h2 style="font-size: 1.75rem; margin-bottom: 1.5rem;">Edytuj kategorię</h2>
+
+      <label style="font-size: 1.05rem; margin-top: 0.75rem;">Nazwa:</label>
+      <input type="text" id="editCategoryName" style="font-size: 1.1rem; padding: 0.9rem 1rem;">
+
+      <div id="currentCrystalsInfo" style="margin: 1rem 0; padding: 1rem; background: linear-gradient(135deg, rgba(106, 17, 203, 0.08), rgba(138, 43, 226, 0.08)); border: 2px solid rgba(106, 17, 203, 0.2); border-radius: 0.75rem; font-size: 1rem; font-weight: 600; color: #6a11cb; text-align: center;"></div>
+
+      <label style="font-size: 1.05rem; margin-top: 0.75rem;">Cel (liczba kryształków):</label>
+      <input type="number" id="editCategoryGoal" min="1" style="font-size: 1.1rem; padding: 0.9rem 1rem;">
+
+      <label style="font-size: 1.05rem; margin-top: 0.75rem;">Obrazek (URL):</label>
+      <input type="url" id="editCategoryImage" placeholder="https://..." style="font-size: 1.05rem; padding: 0.9rem 1rem;">
       <div id="imagePreviewsEdit" class="image-previews"></div>
-      
-      <div style="margin-top:1rem;display:flex;gap:.5rem">
-        <button id="saveEditBtn" class="submit-btn">Zapisz</button>
-        <button id="backToAdminBtn" class="cancel-btn">Anuluj</button>
+
+      <div style="margin-top:1.5rem;display:flex;gap:.75rem">
+        <button id="saveEditBtn" class="submit-btn" style="font-size: 1.1rem; padding: 0.9rem 1.75rem;">Zapisz</button>
+        <button id="backToAdminBtn" class="cancel-btn" style="font-size: 1.1rem; padding: 0.9rem 1.75rem;">Anuluj</button>
       </div>
     </div>
   </div>
@@ -264,7 +276,7 @@
       <input type="url" id="editRewardImage" placeholder="https://...">
 
       <label>Szansa wylosowania (%):</label>
-      <input type="number" id="editRewardProbability" min="1" max="100" value="50" placeholder="50">
+      <input type="number" id="editRewardProbability" min="0.01" max="100" step="0.01" value="50" placeholder="50">
       <div id="probabilityInfo" class="probability-info"></div>
 
       <div id="rewardImagePreview" class="reward-preview-container"></div>
@@ -305,6 +317,28 @@
       <div id="rewardActions" class="reward-actions" style="display: none;">
         <button id="realizeLaterBtn" class="realize-later-btn">📋 Zrealizuj później</button>
       </div>
+    </div>
+  </div>
+
+  <div id="resetRankingPasswordModal" class="modal">
+    <div class="modal-content password-modal-content">
+      <span class="close-btn">&times;</span>
+      <h2>⚠️ Resetowanie rankingu</h2>
+      <p style="color: #666; margin: 0.5rem 0 1rem 0; font-size: 0.95rem;">Ta operacja usunie wszystkie zwycięstwa dla wszystkich dzieci we wszystkich kategoriach.</p>
+      <p style="color: #e74c3c; font-weight: 600; margin: 0 0 1.5rem 0; font-size: 0.95rem;">Tej operacji nie można cofnąć!</p>
+      <label>Podaj hasło do konta, aby potwierdzić:</label>
+      <input type="password" id="resetRankingPasswordInput" placeholder="Twoje hasło">
+      <button id="confirmResetRankingBtn" class="submit-btn" style="width: 100%; margin-top: 1rem; background: #e74c3c;">Resetuj ranking</button>
+    </div>
+  </div>
+
+  <div id="resetRankingSuccessModal" class="modal">
+    <div class="modal-content password-modal-content" style="text-align: center;">
+      <span class="close-btn">&times;</span>
+      <div style="font-size: 4rem; margin-bottom: 1rem;">✅</div>
+      <h2 style="color: #2ecc71 !important; margin-bottom: 1rem;">Ranking został zresetowany!</h2>
+      <p style="color: #666; margin: 0; font-size: 1rem;">Wszystkie zwycięstwa zostały usunięte.</p>
+      <button id="closeResetSuccessBtn" class="submit-btn" style="width: 100%; margin-top: 1.5rem;">OK</button>
     </div>
   </div>
 </body>

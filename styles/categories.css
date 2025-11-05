@@ -145,15 +145,17 @@
 .category-card.reward-ready.reward-crown::before,
 .category-card.reward-won.reward-crown::before {
   font-size: 3rem;
-  animation: crownSpin 3s linear infinite;
+  animation: crownPulse 2s ease-in-out infinite;
 }
 
-@keyframes crownSpin {
-  0% {
-    transform: rotate(0deg);
+@keyframes crownPulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.6));
   }
-  100% {
-    transform: rotate(360deg);
+  50% {
+    transform: scale(1.15);
+    filter: drop-shadow(0 0 15px rgba(255, 215, 0, 1));
   }
 }
 

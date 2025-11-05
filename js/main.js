@@ -37,7 +37,9 @@ import {
   handleEditReward,
   handleSaveRewardEdit,
   updateRewardPreview,
-  updateProbabilityInfo
+  updateProbabilityInfo,
+  renderCategorySuggestions,
+  renderRewardSuggestions
 } from './admin.js';
 import { getAvatar } from './database.js';
 import { setupAuthListener, loginUser, registerUser, logoutUser, getCurrentAuthUser } from './auth.js';
@@ -61,8 +63,7 @@ const saveEditBtn = document.getElementById('saveEditBtn');
 const backToAdminBtn = document.getElementById('backToAdminBtn');
 const changePasswordBtn = document.getElementById('changePasswordBtn');
 const addRewardBtn = document.getElementById('addRewardBtn');
-const setAvatarMaksBtn = document.getElementById('setAvatarMaksBtn');
-const setAvatarNinaBtn = document.getElementById('setAvatarNinaBtn');
+const setAvatarBtn = document.getElementById('setAvatarBtn');
 const resetRankingBtn = document.getElementById('resetRankingBtn');
 const addChildBtn = document.getElementById('addChildBtn');
 const saveChildBtn = document.getElementById('saveChildBtn');
@@ -397,6 +398,8 @@ elements.adminBtn.addEventListener('click', () => {
     renderChildrenList();
     initializeSortable();
     updateAdminHeaderInfo();
+    renderCategorySuggestions();
+    renderRewardSuggestions();
   } else {
     passwordModal.style.display = 'flex';
     adminPasswordInput.focus();
@@ -437,6 +440,8 @@ submitPassword.addEventListener('click', async () => {
     renderChildrenList();
     initializeSortable();
     updateAdminHeaderInfo();
+    renderCategorySuggestions();
+    renderRewardSuggestions();
   } else {
     alert('Nieprawidłowe hasło!');
   }
@@ -582,11 +587,8 @@ changePasswordBtn.addEventListener('click', async () => {
   changePasswordBtn.textContent = 'Zmień';
 });
 
-if (setAvatarMaksBtn) {
-  setAvatarMaksBtn.addEventListener('click', () => handleSetAvatar('maks'));
-}
-if (setAvatarNinaBtn) {
-  setAvatarNinaBtn.addEventListener('click', () => handleSetAvatar('nina'));
+if (setAvatarBtn) {
+  setAvatarBtn.addEventListener('click', handleSetAvatar);
 }
 
 if (resetRankingBtn) {
@@ -613,9 +615,75 @@ if (pendingRewardsBtn) {
   });
 }
 
+// Reset rankingu - weryfikacja hasła i potwierdzenie
+const resetRankingPasswordModal = document.getElementById('resetRankingPasswordModal');
+const resetRankingPasswordInput = document.getElementById('resetRankingPasswordInput');
+const confirmResetRankingBtn = document.getElementById('confirmResetRankingBtn');
+const resetRankingSuccessModal = document.getElementById('resetRankingSuccessModal');
+const closeResetSuccessBtn = document.getElementById('closeResetSuccessBtn');
+
+if (confirmResetRankingBtn && resetRankingPasswordInput) {
+  confirmResetRankingBtn.addEventListener('click', async () => {
+    const password = resetRankingPasswordInput.value;
+    const user = getCurrentAuthUser();
+
+    if (!password) {
+      alert('Wprowadź hasło!');
+      return;
+    }
+
+    if (!user) {
+      alert('Błąd: Nie jesteś zalogowany!');
+      return;
+    }
+
+    confirmResetRankingBtn.disabled = true;
+    confirmResetRankingBtn.textContent = 'Sprawdzanie...';
+
+    const email = user.email;
+    const result = await loginUser(email, password);
+
+    if (result.success) {
+      // Hasło poprawne - resetuj ranking
+      confirmResetRankingBtn.textContent = 'Resetuję...';
+
+      const success = await resetAllRankings();
+
+      confirmResetRankingBtn.disabled = false;
+      confirmResetRankingBtn.textContent = 'Resetuj ranking';
+      resetRankingPasswordInput.value = '';
+      resetRankingPasswordModal.style.display = 'none';
+
+      if (success) {
+        // Pokaż modal sukcesu
+        resetRankingSuccessModal.style.display = 'flex';
+      } else {
+        alert('❌ Błąd podczas resetowania rankingu!');
+      }
+    } else {
+      alert('❌ Nieprawidłowe hasło!');
+      confirmResetRankingBtn.disabled = false;
+      confirmResetRankingBtn.textContent = 'Resetuj ranking';
+    }
+  });
+
+  // Enter w input hasła resetowania
+  resetRankingPasswordInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      confirmResetRankingBtn.click();
+    }
+  });
+}
+
+if (closeResetSuccessBtn) {
+  closeResetSuccessBtn.addEventListener('click', () => {
+    resetRankingSuccessModal.style.display = 'none';
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   document.body.classList.add('maks-bg');
-  
+
   if (localStorage.getItem(state.ADMIN_FLAG) === '1') {
     setLoggedInUi(true);
   }

@@ -94,30 +94,39 @@ export const hideProfileLoader = () => {
 
 export const renderCategories = () => {
   if (renderScheduled) return;
-  
+
   renderScheduled = true;
   requestAnimationFrame(() => {
     const categories = getCategories();
     const user = getCurrentUser();
     const fragment = document.createDocumentFragment();
-    
+
     // Preloaduj obrazki
     preloadCategoryImages(categories);
-    
+
     categories.forEach(cat => {
       const card = createCategoryCard(cat, user);
       fragment.appendChild(card);
     });
-    
+
     elements.container.innerHTML = '';
     elements.container.appendChild(fragment);
     renderScheduled = false;
-    
+
     // Sprawdź czy pokazać wskazówki
     showEmptyStateGuide();
-    
+
     // Ukryj loader profilu po wyrenderowaniu
     hideProfileLoader();
+
+    // Przywróć modal nagród, jeśli kategoria ma pendingReset
+    const pendingCategory = categories.find(cat => cat.pendingReset === true);
+    if (pendingCategory) {
+      // Opóźnij otwarcie modalu, żeby UI się zdążyło załadować
+      setTimeout(() => {
+        openRewardModal(pendingCategory.id);
+      }, 500);
+    }
   });
 };
 
@@ -254,56 +263,58 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
   let touchStartY = 0;
   let touchStartTime = 0;
   let isHolding = false;
+  let touchDelayTimer = null;
   const SCROLL_THRESHOLD = 10;
-  
+  const TOUCH_DELAY_MS = 500;
+
   const vibrate = (pattern) => {
     if ('vibrate' in navigator) {
       navigator.vibrate(pattern);
     }
   };
-  
+
   const startHold = () => {
     if (isHolding) return;
-    
+
     if (isReady && !pendingReset) {
       return;
     }
-    
+
     isHolding = true;
-    
+
     card.classList.add('active-hold');
-    
+
     vibrate(50);
-    
+
     if (pendingReset) {
       card.classList.add('reset-filling');
     } else {
       card.classList.add('filling');
     }
-    
+
     fillAnimTimeout = setTimeout(() => {
       card.classList.remove('filling', 'reset-filling');
       card.classList.add('filling-complete');
     }, 500);
-    
+
     holdTimer = setTimeout(async () => {
       vibrate([100, 50, 100]);
-      
+
       if (pendingReset) {
         await resetCategory(categoryId);
       } else {
         const newCount = currentCount + 1;
         const willComplete = newCount >= goal;
-        
+
         const success = await addCrystal(categoryId);
-        
+
         if (!success) {
           return;
         }
-        
+
         if (willComplete) {
           vibrate([200, 100, 200, 100, 200]);
-          
+
           setTimeout(() => {
             openRewardModal(categoryId);
           }, 1000);
@@ -313,10 +324,12 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
   };
   
   const cancelHold = () => {
-    if (!isHolding) return;
-    
+    if (!isHolding && !touchDelayTimer) return;
+
     clearTimeout(holdTimer);
     clearTimeout(fillAnimTimeout);
+    clearTimeout(touchDelayTimer);
+    touchDelayTimer = null;
     card.classList.remove('active-hold', 'filling', 'filling-complete', 'reset-filling');
     isHolding = false;
   };
@@ -329,8 +342,12 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
     isTouchMoved = false;
     touchStartY = e.touches[0].clientY;
     touchStartTime = Date.now();
-    
-    startHold();
+
+    // Dodaj 500ms opóźnienie na mobile, aby uniknąć przypadkowego dodania podczas scrollowania
+    touchDelayTimer = setTimeout(() => {
+      touchDelayTimer = null;
+      startHold();
+    }, TOUCH_DELAY_MS);
   }, { passive: true });
   
   card.addEventListener('touchmove', (e) => {
@@ -349,17 +366,25 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
       isTouchMoved = false;
       return;
     }
-    
+
     const holdDuration = Date.now() - touchStartTime;
-    
-    if (holdDuration < 500) {
+
+    // Użytkownik musi trzymać przez (delay + animacja) = 1000ms
+    if (holdDuration < TOUCH_DELAY_MS + 500) {
       cancelHold();
     }
-    
+
     isTouchMoved = false;
   });
   
   card.addEventListener('touchcancel', cancelHold);
+
+  // Blokada menu kontekstowego na mobile podczas trzymania
+  card.addEventListener('contextmenu', (e) => {
+    if (isHolding || touchDelayTimer) {
+      e.preventDefault();
+    }
+  });
 };
 
 export const fireConfetti = () => {

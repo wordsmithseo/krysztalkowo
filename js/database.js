@@ -481,19 +481,35 @@ export const getAvatar = (user, callback) => {
   });
 };
 
+// Oznacz kategorię jako oczekującą na reset (gdy modal się otwiera)
+export const markCategoryPendingReset = async (categoryId) => {
+  const user = getCurrentUser();
+
+  try {
+    const updates = {};
+    updates[`users/${user}/categories/${categoryId}/pendingReset`] = true;
+
+    await update(ref(db), updates);
+    return true;
+  } catch (error) {
+    console.error('Błąd oznaczania kategorii jako pendingReset:', error);
+    return false;
+  }
+};
+
 export const finalizeReward = async (categoryId, rewardName) => {
   const user = getCurrentUser();
-  
+
   try {
     const winsRef = ref(db, `users/${user}/categories/${categoryId}/wins/${user}`);
     const snapshot = await get(winsRef);
     const currentWins = snapshot.exists() ? snapshot.val() : 0;
-    
+
     const updates = {};
     updates[`users/${user}/categories/${categoryId}/wins/${user}`] = currentWins + 1;
     updates[`users/${user}/categories/${categoryId}/lastReward`] = rewardName;
     updates[`users/${user}/categories/${categoryId}/pendingReset`] = true;
-    
+
     await update(ref(db), updates);
     return true;
   } catch (error) {
@@ -505,11 +521,11 @@ export const finalizeReward = async (categoryId, rewardName) => {
 // Dodawanie nagrody do zaległych
 export const addPendingReward = async (categoryId, categoryName, rewardName) => {
   const user = getCurrentUser();
-  
+
   try {
     const pendingRewardsRef = ref(db, 'pendingRewards');
     const newRewardRef = push(pendingRewardsRef);
-    
+
     await set(newRewardRef, {
       childId: user,
       categoryId,
@@ -517,19 +533,27 @@ export const addPendingReward = async (categoryId, categoryName, rewardName) => 
       rewardName,
       timestamp: Date.now()
     });
-    
-    // Finalizuj nagrodę w kategorii
+
+    // Finalizuj nagrodę w kategorii i usuń pendingReset
     const winsRef = ref(db, `users/${user}/categories/${categoryId}/wins/${user}`);
     const snapshot = await get(winsRef);
     const currentWins = snapshot.exists() ? snapshot.val() : 0;
-    
+
     const updates = {};
     updates[`users/${user}/categories/${categoryId}/wins/${user}`] = currentWins + 1;
     updates[`users/${user}/categories/${categoryId}/lastReward`] = rewardName;
-    updates[`users/${user}/categories/${categoryId}/pendingReset`] = true;
-    
+    updates[`users/${user}/categories/${categoryId}/pendingReset`] = null; // Usuń flagę, nagroda zapisana jako zaległa
+    updates[`users/${user}/categories/${categoryId}/count`] = 0; // Zresetuj licznik kryształków
+    updates[`users/${user}/categories/${categoryId}/lastAddTimestamp`] = null; // Zresetuj cooldown
+
+    // Wygeneruj nowe kolory dla karty
+    const { generateCategoryColors } = await import('./state.js');
+    const colors = generateCategoryColors();
+    updates[`users/${user}/categories/${categoryId}/color`] = colors.color;
+    updates[`users/${user}/categories/${categoryId}/borderColor`] = colors.borderColor;
+
     await update(ref(db), updates);
-    
+
     return true;
   } catch (error) {
     console.error('Błąd dodawania zaległej nagrody:', error);
@@ -613,13 +637,132 @@ export const deleteChild = async (childId) => {
   try {
     // Usuwamy dziecko z listy children
     await remove(ref(db, `children/${childId}`));
-    
+
     // Usuwamy wszystkie dane użytkownika (kategorie, nagrody, ranking itp.)
     await remove(ref(db, `users/${childId}`));
-    
+
     return true;
   } catch (error) {
     console.error('Błąd usuwania dziecka:', error);
     return false;
+  }
+};
+
+// Pobierz sugestie kategorii z innych dzieci
+export const getSuggestedCategories = async (currentChildId) => {
+  try {
+    const childrenRef = ref(db, 'children');
+    const childrenSnapshot = await get(childrenRef);
+    const childrenData = childrenSnapshot.val();
+
+    if (!childrenData) return [];
+
+    const suggestions = new Map(); // Używamy Map aby uniknąć duplikatów
+
+    // Przeiteruj po wszystkich dzieciach
+    for (const childId in childrenData) {
+      // Pomiń aktualne dziecko
+      if (childId === currentChildId) continue;
+
+      // Pobierz kategorie tego dziecka
+      const categoriesRef = ref(db, `users/${childId}/categories`);
+      const categoriesSnapshot = await get(categoriesRef);
+      const categoriesData = categoriesSnapshot.val();
+
+      if (categoriesData) {
+        Object.values(categoriesData).forEach(cat => {
+          if (cat.name && !suggestions.has(cat.name)) {
+            suggestions.set(cat.name, {
+              name: cat.name,
+              goal: cat.goal || 10,
+              image: cat.image || ''
+            });
+          }
+        });
+      }
+    }
+
+    return Array.from(suggestions.values());
+  } catch (error) {
+    console.error('Błąd pobierania sugestii kategorii:', error);
+    return [];
+  }
+};
+
+// Pobierz sugestie nagród z innych dzieci
+export const getSuggestedRewards = async (currentChildId) => {
+  try {
+    const childrenRef = ref(db, 'children');
+    const childrenSnapshot = await get(childrenRef);
+    const childrenData = childrenSnapshot.val();
+
+    if (!childrenData) return [];
+
+    const suggestions = new Map(); // Używamy Map aby uniknąć duplikatów
+
+    // Przeiteruj po wszystkich dzieciach
+    for (const childId in childrenData) {
+      // Pomiń aktualne dziecko
+      if (childId === currentChildId) continue;
+
+      // Pobierz nagrody tego dziecka
+      const rewardsRef = ref(db, `users/${childId}/rewards`);
+      const rewardsSnapshot = await get(rewardsRef);
+      const rewardsData = rewardsSnapshot.val();
+
+      if (rewardsData) {
+        Object.values(rewardsData).forEach(reward => {
+          if (reward.name && !suggestions.has(reward.name)) {
+            suggestions.set(reward.name, {
+              name: reward.name,
+              image: reward.image || '',
+              probability: reward.probability || 50
+            });
+          }
+        });
+      }
+    }
+
+    return Array.from(suggestions.values());
+  } catch (error) {
+    console.error('Błąd pobierania sugestii nagród:', error);
+    return [];
+  }
+};
+
+// Pobierz obrazki używane przez inne dzieci
+export const getCategoryImagesFromOtherChildren = async (currentChildId) => {
+  try {
+    const childrenRef = ref(db, 'children');
+    const childrenSnapshot = await get(childrenRef);
+    const childrenData = childrenSnapshot.val();
+
+    if (!childrenData) return [];
+
+    const images = new Set(); // Używamy Set aby uniknąć duplikatów
+
+    // Przeiteruj po wszystkich dzieciach
+    for (const childId in childrenData) {
+      // Pomiń aktualne dziecko
+      if (childId === currentChildId) continue;
+
+      // Pobierz kategorie tego dziecka
+      const categoriesRef = ref(db, `users/${childId}/categories`);
+      const categoriesSnapshot = await get(categoriesRef);
+      const categoriesData = categoriesSnapshot.val();
+
+      if (categoriesData) {
+        Object.values(categoriesData).forEach(cat => {
+          if (cat.image && cat.image.trim()) {
+            images.add(cat.image.trim());
+          }
+        });
+      }
+    }
+
+    return Array.from(images);
+  } catch (error) {
+    console.error('Błąd pobierania obrazków z innych profili:', error);
+    return [];
   }
 };

@@ -1,8 +1,8 @@
 // ===== PANEL ADMINISTRACYJNY =====
 import { getCategories, getRewards, getChildren, setIsLoggedIn, state, getCurrentUser } from './state.js';
-import { 
-  addCategory, 
-  deleteCategory, 
+import {
+  addCategory,
+  deleteCategory,
   updateCategory,
   updateCategoryOrder,
   addReward,
@@ -14,7 +14,10 @@ import {
   addChild,
   updateChild,
   deleteChild,
-  changeUserPassword
+  changeUserPassword,
+  getSuggestedCategories,
+  getSuggestedRewards,
+  getCategoryImagesFromOtherChildren
 } from './database.js';
 import { getCurrentAuthUser } from './auth.js';
 
@@ -72,7 +75,7 @@ export const updateAdminHeaderInfo = () => {
 
 export const renderAdminCategories = () => {
   const categories = getCategories();
-  
+
   categoryList.innerHTML = categories.map(cat => `
     <li data-id="${cat.id}">
       <div class="left">
@@ -82,7 +85,7 @@ export const renderAdminCategories = () => {
       <div style="display:flex;gap:0.5rem;align-items:center;">
         <div class="crystal-controls">
           <button onclick="window.modifyCrystalsHandler('${cat.id}', -1)" title="Odejmij kryształek">−</button>
-          <span class="count">${cat.count || 0}</span>
+          <span class="count">${cat.count || 0} / ${cat.goal || 10}</span>
           <button onclick="window.modifyCrystalsHandler('${cat.id}', 1)" title="Dodaj kryształek">+</button>
         </div>
         <div class="action-buttons">
@@ -196,17 +199,30 @@ export const handleDeleteCategory = async (categoryId) => {
 export const handleEditCategory = (categoryId) => {
   const categories = getCategories();
   const cat = categories.find(c => c.id === categoryId);
-  
+
   if (!cat) return;
-  
+
   document.getElementById('editCategoryName').value = cat.name || '';
   document.getElementById('editCategoryGoal').value = cat.goal || 10;
   document.getElementById('editCategoryImage').value = cat.image || '';
-  
+
+  // Wyświetl aktualną liczbę kryształków i maksimum
+  const currentCount = cat.count || 0;
+  const currentGoal = cat.goal || 10;
+  const currentCrystalsInfo = document.getElementById('currentCrystalsInfo');
+  if (currentCrystalsInfo) {
+    currentCrystalsInfo.innerHTML = `
+      💎 Postęp: <strong>${currentCount} / ${currentGoal}</strong> kryształków<br>
+      <span style="font-size: 0.9rem; opacity: 0.85; margin-top: 0.25rem; display: inline-block;">
+        (Maksimum obecnie wynosi: <strong>${currentGoal}</strong>)
+      </span>
+    `;
+  }
+
   editModal.dataset.editingId = categoryId;
-  
+
   renderImagePreviews(cat.image);
-  
+
   adminModal.style.display = 'none';
   editModal.style.display = 'flex';
 };
@@ -236,10 +252,10 @@ export const handleSaveEdit = async () => {
   }
 };
 
-const renderImagePreviews = (currentImage) => {
+const renderImagePreviews = async (currentImage) => {
   const previewContainer = document.getElementById('imagePreviewsEdit');
-  
-  const images = [
+
+  const defaultImages = [
     'https://em-content.zobj.net/source/google/387/avocado_1f951.png',
     'https://em-content.zobj.net/source/google/387/artist-palette_1f3a8.png',
     'https://em-content.zobj.net/source/google/387/open-book_1f4d6.png',
@@ -253,10 +269,37 @@ const renderImagePreviews = (currentImage) => {
     'https://em-content.zobj.net/source/google/387/flexed-biceps_1f4aa.png',
     'https://em-content.zobj.net/source/google/387/water-wave_1f30a.png'
   ];
-  
-  previewContainer.innerHTML = images.map(url => 
+
+  // Pobierz obrazki z innych dzieci
+  const currentChildId = getCurrentUser();
+  const otherChildrenImages = await getCategoryImagesFromOtherChildren(currentChildId);
+
+  // Połącz domyślne obrazki z obrazkami innych dzieci (unikalne)
+  const allImages = [...new Set([...defaultImages, ...otherChildrenImages])];
+
+  let html = '';
+
+  // Jeśli są obrazki z innych dzieci, pokaż je w osobnej sekcji
+  if (otherChildrenImages.length > 0) {
+    html += '<div style="margin-bottom: 1rem;">';
+    html += '<div style="font-size: 0.85rem; font-weight: 600; color: #6a11cb; margin-bottom: 0.5rem;">💡 Obrazki z innych profili:</div>';
+    html += '<div class="image-previews">';
+    html += otherChildrenImages.map(url =>
+      `<img src="${url}" class="image-preview" onclick="window.selectImageHandler('${url}')" alt="Preview">`
+    ).join('');
+    html += '</div></div>';
+  }
+
+  // Dodaj domyślne obrazki
+  html += '<div>';
+  html += '<div style="font-size: 0.85rem; font-weight: 600; color: #666; margin-bottom: 0.5rem;">Domyślne obrazki:</div>';
+  html += '<div class="image-previews">';
+  html += defaultImages.map(url =>
     `<img src="${url}" class="image-preview" onclick="window.selectImageHandler('${url}')" alt="Preview">`
   ).join('');
+  html += '</div></div>';
+
+  previewContainer.innerHTML = html;
 };
 
 export const handleSelectImage = (url) => {
@@ -298,19 +341,24 @@ export const getRarityClass = (probability) => {
   if (!probability || probability >= 60) return 'rarity-common';
   if (probability >= 30) return 'rarity-uncommon';
   if (probability >= 10) return 'rarity-rare';
-  return 'rarity-epic';
+  if (probability >= 1) return 'rarity-epic';
+  return 'rarity-legendary';
 };
 
 export const getRarityName = (probability) => {
   if (!probability || probability >= 60) return 'Częsta';
   if (probability >= 30) return 'Rzadsza';
   if (probability >= 10) return 'Rzadka';
-  return 'Epicka';
+  if (probability >= 1) return 'Epicka';
+  return 'Legendarna';
 };
 
 export const calculateFrequency = (probability) => {
   if (!probability || probability <= 0) return '';
   const frequency = Math.round(100 / probability);
+  if (frequency > 1000) {
+    return `~1 na ${(frequency / 1000).toFixed(1)}k losowań`;
+  }
   return `~1 na ${frequency} losowań`;
 };
 
@@ -347,7 +395,7 @@ export const handleSaveRewardEdit = async () => {
   const data = {
     name: document.getElementById('editRewardName').value.trim(),
     image: document.getElementById('editRewardImage').value.trim(),
-    probability: parseInt(document.getElementById('editRewardProbability').value) || 50
+    probability: parseFloat(document.getElementById('editRewardProbability').value) || 50
   };
 
   if (!data.name) {
@@ -355,8 +403,8 @@ export const handleSaveRewardEdit = async () => {
     return;
   }
 
-  if (data.probability < 1 || data.probability > 100) {
-    alert('Szansa musi być między 1% a 100%!');
+  if (data.probability < 0.01 || data.probability > 100) {
+    alert('Szansa musi być między 0.01% a 100%!');
     return;
   }
 
@@ -373,7 +421,7 @@ export const handleSaveRewardEdit = async () => {
 // Funkcja aktualizacji podglądu nagrody
 export const updateRewardPreview = () => {
   const imageUrl = document.getElementById('editRewardImage').value.trim();
-  const probability = parseInt(document.getElementById('editRewardProbability').value) || 50;
+  const probability = parseFloat(document.getElementById('editRewardProbability').value) || 50;
   const previewContainer = document.getElementById('rewardImagePreview');
 
   if (!imageUrl) {
@@ -394,7 +442,7 @@ export const updateRewardPreview = () => {
 
 // Funkcja aktualizacji informacji o częstotliwości
 export const updateProbabilityInfo = () => {
-  const probability = parseInt(document.getElementById('editRewardProbability').value) || 0;
+  const probability = parseFloat(document.getElementById('editRewardProbability').value) || 0;
   const probabilityInfo = document.getElementById('probabilityInfo');
 
   if (probability <= 0 || probability > 100) {
@@ -408,19 +456,15 @@ export const updateProbabilityInfo = () => {
   probabilityInfo.innerHTML = `📊 ${frequency} <span style="font-weight:400;opacity:0.8;">(${probability}% szansy)</span>`;
 };
 
-export const handleResetRanking = async () => {
-  showConfirmModal(
-    '⚠️ Resetowanie rankingu',
-    'Czy na pewno zresetować CAŁY ranking?\n\nSpowoduje to usunięcie wszystkich zwycięstw dla wszystkich dzieci we wszystkich kategoriach.\n\nTej operacji nie można cofnąć!',
-    async () => {
-      const success = await resetAllRankings();
-      if (success) {
-        alert('✅ Ranking został zresetowany!');
-      } else {
-        alert('❌ Błąd podczas resetowania rankingu!');
-      }
-    }
-  );
+export const handleResetRanking = () => {
+  const resetPasswordModal = document.getElementById('resetRankingPasswordModal');
+  const resetPasswordInput = document.getElementById('resetRankingPasswordInput');
+
+  if (resetPasswordModal && resetPasswordInput) {
+    resetPasswordInput.value = '';
+    resetPasswordModal.style.display = 'flex';
+    resetPasswordInput.focus();
+  }
 };
 
 export const setLoggedInUi = (isLoggedIn) => {
@@ -435,20 +479,34 @@ export const setLoggedInUi = (isLoggedIn) => {
   setIsLoggedIn(isLoggedIn);
 };
 
-export const handleSetAvatar = async (user) => {
+export const handleSetAvatar = async () => {
   const input = document.getElementById('avatarUrlInput');
   const url = input.value.trim();
-  
+
   if (!url) {
     alert('Podaj URL avatara!');
     return;
   }
-  
-  const success = await setAvatar(user, url);
-  
+
+  // Pobierz obecnie wybrane dziecko
+  const currentUserId = getCurrentUser();
+  const children = getChildren();
+  const currentChild = children.find(c => c.id === currentUserId);
+
+  if (!currentChild) {
+    alert('Wybierz dziecko, dla którego chcesz ustawić avatar!');
+    return;
+  }
+
+  const success = await setAvatar(currentUserId, url);
+
   if (success) {
     input.value = '';
-    alert(`Avatar dla ${user} został zaktualizowany!`);
+    alert(`Avatar dla ${currentChild.name} został zaktualizowany!`);
+    // Odśwież przyciski użytkowników, aby pokazać nowy avatar
+    if (window.updateUserButtons) {
+      window.updateUserButtons();
+    }
   }
 };
 
@@ -602,6 +660,80 @@ const showConfirmModal = (title, message, onConfirm) => {
   modal.style.display = 'flex';
 };
 
+// Renderowanie sugestii kategorii
+export const renderCategorySuggestions = async () => {
+  const currentChildId = getCurrentUser();
+  const suggestionsContainer = document.getElementById('categorySuggestions');
+
+  if (!suggestionsContainer) return;
+
+  const suggestions = await getSuggestedCategories(currentChildId);
+
+  if (suggestions.length === 0) {
+    suggestionsContainer.innerHTML = '';
+    return;
+  }
+
+  suggestionsContainer.innerHTML = `
+    <div style="margin-top: 0.75rem; padding: 0.75rem; background: rgba(106, 17, 203, 0.05); border-radius: 0.75rem; border: 1px solid rgba(106, 17, 203, 0.1);">
+      <div style="font-size: 0.85rem; font-weight: 600; color: #6a11cb; margin-bottom: 0.5rem;">💡 Kategorie z innych profili:</div>
+      <div class="suggestions-list">
+        ${suggestions.map(cat => `
+          <button class="suggestion-btn" onclick="window.fillCategoryFromSuggestion('${cat.name.replace(/'/g, "\\'")}', ${cat.goal}, '${(cat.image || '').replace(/'/g, "\\'")}')">
+            ${cat.name}
+          </button>
+        `).join('')}
+      </div>
+    </div>
+  `;
+};
+
+// Renderowanie sugestii nagród
+export const renderRewardSuggestions = async () => {
+  const currentChildId = getCurrentUser();
+  const suggestionsContainer = document.getElementById('rewardSuggestions');
+
+  if (!suggestionsContainer) return;
+
+  const suggestions = await getSuggestedRewards(currentChildId);
+
+  if (suggestions.length === 0) {
+    suggestionsContainer.innerHTML = '';
+    return;
+  }
+
+  suggestionsContainer.innerHTML = `
+    <div style="margin-top: 0.75rem; padding: 0.75rem; background: rgba(106, 17, 203, 0.05); border-radius: 0.75rem; border: 1px solid rgba(106, 17, 203, 0.1);">
+      <div style="font-size: 0.85rem; font-weight: 600; color: #6a11cb; margin-bottom: 0.5rem;">💡 Nagrody z innych profili:</div>
+      <div class="suggestions-list">
+        ${suggestions.map(reward => `
+          <button class="suggestion-btn" onclick="window.fillRewardFromSuggestion('${reward.name.replace(/'/g, "\\'")}', '${(reward.image || '').replace(/'/g, "\\'")}', ${reward.probability})">
+            ${reward.name}
+          </button>
+        `).join('')}
+      </div>
+    </div>
+  `;
+};
+
+// Wypełnianie inputu kategorii z sugestii
+export const fillCategoryFromSuggestion = (name, goal, image) => {
+  const nameInput = document.getElementById('categoryNameInput');
+  if (nameInput) {
+    nameInput.value = name;
+    nameInput.focus();
+  }
+};
+
+// Wypełnianie inputu nagrody z sugestii
+export const fillRewardFromSuggestion = (name, image, probability) => {
+  const nameInput = document.getElementById('rewardNameInput');
+  if (nameInput) {
+    nameInput.value = name;
+    nameInput.focus();
+  }
+};
+
 if (typeof window !== 'undefined') {
   window.editCategoryHandler = handleEditCategory;
   window.deleteCategoryHandler = handleDeleteCategory;
@@ -611,4 +743,6 @@ if (typeof window !== 'undefined') {
   window.modifyCrystalsHandler = handleModifyCrystals;
   window.editChildHandler = openEditChildModal;
   window.deleteChildHandler = handleDeleteChild;
+  window.fillCategoryFromSuggestion = fillCategoryFromSuggestion;
+  window.fillRewardFromSuggestion = fillRewardFromSuggestion;
 }

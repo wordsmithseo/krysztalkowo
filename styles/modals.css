@@ -926,6 +926,153 @@
   }
 }
 
+/* ===== TŁA RZADKOŚCI DLA WYŚWIETLANIA NAGRÓD ===== */
+.reward-reveal-content.rarity-common {
+  background: linear-gradient(135deg,
+    rgba(34, 197, 94, 0.95) 0%,
+    rgba(22, 163, 74, 0.95) 50%,
+    rgba(34, 197, 94, 0.95) 100%
+  ) !important;
+  border-color: #16a34a !important;
+  box-shadow:
+    0 0 40px rgba(34, 197, 94, 0.8),
+    inset 0 0 30px rgba(255, 255, 255, 0.3) !important;
+  color: #fff !important;
+}
+
+.reward-reveal-content.rarity-common * {
+  color: #fff !important;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+}
+
+.reward-reveal-content.rarity-uncommon {
+  background: linear-gradient(135deg,
+    rgba(59, 130, 246, 0.95) 0%,
+    rgba(37, 99, 235, 0.95) 50%,
+    rgba(59, 130, 246, 0.95) 100%
+  ) !important;
+  border-color: #2563eb !important;
+  box-shadow:
+    0 0 40px rgba(59, 130, 246, 0.8),
+    inset 0 0 30px rgba(255, 255, 255, 0.3) !important;
+  color: #fff !important;
+}
+
+.reward-reveal-content.rarity-uncommon * {
+  color: #fff !important;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+}
+
+.reward-reveal-content.rarity-rare {
+  background: linear-gradient(135deg,
+    rgba(168, 85, 247, 0.95) 0%,
+    rgba(147, 51, 234, 0.95) 50%,
+    rgba(168, 85, 247, 0.95) 100%
+  ) !important;
+  border-color: #9333ea !important;
+  box-shadow:
+    0 0 40px rgba(168, 85, 247, 0.8),
+    inset 0 0 30px rgba(255, 255, 255, 0.3) !important;
+  color: #fff !important;
+}
+
+.reward-reveal-content.rarity-rare * {
+  color: #fff !important;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+}
+
+.reward-reveal-content.rarity-epic {
+  background: linear-gradient(135deg,
+    rgba(251, 191, 36, 0.95) 0%,
+    rgba(245, 158, 11, 0.95) 50%,
+    rgba(251, 191, 36, 0.95) 100%
+  ) !important;
+  border-color: #f59e0b !important;
+  box-shadow:
+    0 0 40px rgba(251, 191, 36, 0.8),
+    inset 0 0 30px rgba(255, 255, 255, 0.3) !important;
+  animation: revealPulse 0.8s ease-out, epicRevealGlow 2s ease-in-out infinite !important;
+  color: #5b3b00 !important;
+}
+
+.reward-reveal-content.rarity-epic * {
+  color: #5b3b00 !important;
+  text-shadow: 0 1px 3px rgba(255, 255, 255, 0.6) !important;
+}
+
+@keyframes epicRevealGlow {
+  0%, 100% {
+    box-shadow:
+      0 0 40px rgba(251, 191, 36, 0.8),
+      inset 0 0 30px rgba(255, 255, 255, 0.3);
+  }
+  50% {
+    box-shadow:
+      0 0 60px rgba(251, 191, 36, 1),
+      inset 0 0 40px rgba(255, 255, 255, 0.5);
+  }
+}
+
+.reward-reveal-content.rarity-legendary {
+  background: linear-gradient(135deg,
+    rgba(255, 0, 255, 0.95) 0%,
+    rgba(138, 43, 226, 0.95) 25%,
+    rgba(0, 255, 255, 0.95) 50%,
+    rgba(138, 43, 226, 0.95) 75%,
+    rgba(255, 0, 255, 0.95) 100%
+  ) !important;
+  background-size: 200% 200% !important;
+  border: 4px solid transparent !important;
+  border-image: linear-gradient(90deg,
+    #ff0000 0%,
+    #ff7f00 14%,
+    #ffff00 28%,
+    #00ff00 42%,
+    #0000ff 57%,
+    #4b0082 71%,
+    #9400d3 85%,
+    #ff0000 100%
+  ) 1 !important;
+  box-shadow:
+    0 0 50px rgba(255, 0, 255, 0.9),
+    0 0 100px rgba(0, 255, 255, 0.7),
+    inset 0 0 40px rgba(255, 255, 255, 0.4) !important;
+  animation: revealPulse 0.8s ease-out, legendaryRevealGlow 3s ease-in-out infinite, legendaryRevealShift 5s linear infinite !important;
+  color: #fff !important;
+}
+
+.reward-reveal-content.rarity-legendary * {
+  color: #fff !important;
+  text-shadow:
+    0 0 10px rgba(255, 0, 255, 0.8),
+    0 0 20px rgba(0, 255, 255, 0.6),
+    0 2px 8px rgba(0, 0, 0, 0.5) !important;
+}
+
+@keyframes legendaryRevealGlow {
+  0%, 100% {
+    box-shadow:
+      0 0 50px rgba(255, 0, 255, 0.9),
+      0 0 100px rgba(0, 255, 255, 0.7),
+      inset 0 0 40px rgba(255, 255, 255, 0.4);
+  }
+  50% {
+    box-shadow:
+      0 0 80px rgba(255, 0, 255, 1),
+      0 0 150px rgba(0, 255, 255, 0.9),
+      inset 0 0 60px rgba(255, 255, 255, 0.6);
+  }
+}
+
+@keyframes legendaryRevealShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
 .reward-reveal img {
   max-width: 12rem;
   max-height: 12rem;
@@ -1599,6 +1746,47 @@
   }
 }
 
+.rarity-legendary .reward-preview-image,
+.rarity-legendary .reward-img {
+  border: 4px solid transparent;
+  background: linear-gradient(#fff, #fff) padding-box,
+              linear-gradient(90deg,
+                #ff0000 0%,
+                #ff7f00 14%,
+                #ffff00 28%,
+                #00ff00 42%,
+                #0000ff 57%,
+                #4b0082 71%,
+                #9400d3 85%,
+                #ff0000 100%
+              ) border-box;
+  box-shadow: 0 0 30px rgba(255, 0, 255, 0.6),
+               0 0 60px rgba(0, 255, 255, 0.4);
+  animation: legendaryRainbowGlow 3s linear infinite, legendaryPulse 2s ease-in-out infinite;
+}
+
+@keyframes legendaryRainbowGlow {
+  0% {
+    filter: hue-rotate(0deg);
+  }
+  100% {
+    filter: hue-rotate(360deg);
+  }
+}
+
+@keyframes legendaryPulse {
+  0%, 100% {
+    box-shadow: 0 0 30px rgba(255, 0, 255, 0.6),
+                 0 0 60px rgba(0, 255, 255, 0.4);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 50px rgba(255, 0, 255, 0.9),
+                 0 0 100px rgba(0, 255, 255, 0.7);
+    transform: scale(1.02);
+  }
+}
+
 .rarity-label {
   position: absolute;
   top: -10px;
@@ -1636,5 +1824,84 @@
   }
   50% {
     box-shadow: 0 6px 20px rgba(251, 191, 36, 0.8);
+  }
+}
+
+.rarity-legendary .rarity-label {
+  background: linear-gradient(90deg,
+    #ff0000 0%,
+    #ff7f00 14%,
+    #ffff00 28%,
+    #00ff00 42%,
+    #0000ff 57%,
+    #4b0082 71%,
+    #9400d3 85%,
+    #ff0000 100%
+  );
+  background-size: 200% 100%;
+  animation: legendaryLabelGlow 2s ease-in-out infinite, legendaryLabelSlide 3s linear infinite;
+}
+
+@keyframes legendaryLabelGlow {
+  0%, 100% {
+    box-shadow: 0 4px 12px rgba(255, 0, 255, 0.6);
+  }
+  50% {
+    box-shadow: 0 8px 24px rgba(255, 0, 255, 0.9);
+  }
+}
+
+@keyframes legendaryLabelSlide {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+/* ===== SUGESTIE KATEGORII I NAGRÓD ===== */
+.suggestions-container {
+  margin-top: 0.75rem;
+}
+
+.suggestions-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.suggestion-btn {
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, rgba(106, 17, 203, 0.1), rgba(138, 43, 226, 0.1));
+  border: 1px solid rgba(106, 17, 203, 0.3);
+  border-radius: 1rem;
+  color: #6a11cb;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.suggestion-btn:hover {
+  background: linear-gradient(135deg, rgba(106, 17, 203, 0.2), rgba(138, 43, 226, 0.2));
+  border-color: rgba(106, 17, 203, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(106, 17, 203, 0.2);
+}
+
+.suggestion-btn:active {
+  transform: translateY(0);
+}
+
+/* ===== MODAL EDYCJI KATEGORII ===== */
+.edit-modal-content {
+  max-width: 42rem;
+}
+
+@media (max-width: 768px) {
+  .edit-modal-content {
+    max-width: 100%;
   }
 }

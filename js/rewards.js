@@ -1,7 +1,8 @@
 // ===== SYSTEM NAGRÓD =====
 import { getRewards, setRewardFlowLock, setPendingCategoryId, randInt, state, getCategories } from './state.js';
-import { finalizeReward, addPendingReward } from './database.js';
+import { finalizeReward, addPendingReward, markCategoryPendingReset } from './database.js';
 import { fireConfetti } from './ui.js';
+import { getRarityClass, getRarityName } from './admin.js';
 
 // Elementy DOM
 const rewardModal = document.getElementById('rewardModal');
@@ -13,40 +14,43 @@ const realizeLaterBtn = document.getElementById('realizeLaterBtn');
 let selectedReward = null;
 
 // Otwieranie modala z nagrodami
-export const openRewardModal = (categoryId) => {
+export const openRewardModal = async (categoryId) => {
   const rewards = getRewards();
-  
+
   if (!rewards.length) {
     alert('Brawo! Cel osiągnięty. (Brak zdefiniowanych nagród dla tego profilu) – ustawiam nagrodę „nieustawiona".');
     finalizeReward(categoryId, 'Nagroda nieustawiona');
     return;
   }
-  
+
+  // WAŻNE: Oznacz kategorię jako pendingReset od razu, żeby po odświeżeniu strony karta była kliklana
+  await markCategoryPendingReset(categoryId);
+
   setPendingCategoryId(categoryId);
   setRewardFlowLock(false);
   selectedReward = null;
-  
+
   rewardReveal.textContent = '';
   rewardReveal.innerHTML = '';
   rewardActions.style.display = 'none';
   rewardModal.style.display = 'flex';
-  
+
   // Blokada zamykania modala
   blockModalClosing();
-  
+
   // Reset skrzynek
   const chests = rewardModal.querySelectorAll('#chestsRow .reward-chest');
   chests.forEach(chest => {
     chest.classList.remove('opening', 'opened');
     chest.style.pointerEvents = 'auto';
   });
-  
+
   // Losowa kolejność skrzynek
   const order = [0, 1, 2].sort(() => Math.random() - 0.5);
   Array.from(chestsRow.children).forEach((chest, i) => {
     chest.style.order = order[i];
   });
-  
+
   // Ustawienie obsługi kliknięć
   setupChestHandlers(chests, rewards, categoryId);
 };
@@ -111,16 +115,24 @@ const setupChestHandlers = (chests, rewards, categoryId) => {
     
     // Wyświetlenie nagrody po 420ms
     setTimeout(() => {
+      // Oblicz rzadkość nagrody
+      const rarityClass = getRarityClass(reward.probability);
+      const rarityName = getRarityName(reward.probability);
+
+      // Dodaj klasę rzadkości do kontenera
+      rewardReveal.className = `reward-reveal-content ${rarityClass}`;
+
       let imageHtml = '';
       if (reward.image) {
         imageHtml = `<img src="${reward.image}" alt="Nagroda" style="max-width:12rem;max-height:12rem;border-radius:0.75rem;box-shadow:0 6px 12px rgba(0,0,0,0.15);" onerror="this.style.display='none'">`;
       }
-      
+
       rewardReveal.innerHTML = `
         ${imageHtml}
-        <div style="font-weight:800;font-size:1.5rem;margin-top:1rem">🎁 ${reward.name}</div>
+        <div style="font-size:1.1rem;font-weight:600;margin-top:1rem;opacity:0.9;">✨ ${rarityName}</div>
+        <div style="font-weight:800;font-size:1.5rem;margin-top:0.5rem">🎁 ${reward.name}</div>
       `;
-      
+
       // Pokaż przyciski akcji
       rewardActions.style.display = 'flex';
     }, 420);
@@ -189,10 +201,16 @@ export const closeRewardModal = () => {
   rewardModal.style.display = 'none';
   selectedReward = null;
   rewardActions.style.display = 'none';
-  
+
   // Przywróć normalny stan modala
   const closeBtn = rewardModal.querySelector('.close-btn');
   if (closeBtn) {
     closeBtn.style.display = 'block';
+  }
+
+  // Zresetuj przycisk "Zrealizuj później"
+  if (realizeLaterBtn) {
+    realizeLaterBtn.disabled = false;
+    realizeLaterBtn.textContent = '📋 Zrealizuj później';
   }
 };
