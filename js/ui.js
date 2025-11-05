@@ -257,15 +257,6 @@ const createCategoryCard = (cat, user) => {
 };
 
 const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCount, goal) => {
-  // Jeśli karta ma pendingReset, dodaj specjalny handler dla kliknięcia
-  if (pendingReset) {
-    card.style.cursor = 'pointer';
-    card.addEventListener('click', () => {
-      openRewardModal(categoryId);
-    });
-    return; // Nie dodawaj standardowej interakcji hold
-  }
-
   let holdTimer = null;
   let fillAnimTimeout = null;
   let isTouchMoved = false;
@@ -273,55 +264,55 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
   let touchStartTime = 0;
   let isHolding = false;
   const SCROLL_THRESHOLD = 10;
-  
+
   const vibrate = (pattern) => {
     if ('vibrate' in navigator) {
       navigator.vibrate(pattern);
     }
   };
-  
+
   const startHold = () => {
     if (isHolding) return;
-    
+
     if (isReady && !pendingReset) {
       return;
     }
-    
+
     isHolding = true;
-    
+
     card.classList.add('active-hold');
-    
+
     vibrate(50);
-    
+
     if (pendingReset) {
       card.classList.add('reset-filling');
     } else {
       card.classList.add('filling');
     }
-    
+
     fillAnimTimeout = setTimeout(() => {
       card.classList.remove('filling', 'reset-filling');
       card.classList.add('filling-complete');
     }, 500);
-    
+
     holdTimer = setTimeout(async () => {
       vibrate([100, 50, 100]);
-      
+
       if (pendingReset) {
         await resetCategory(categoryId);
       } else {
         const newCount = currentCount + 1;
         const willComplete = newCount >= goal;
-        
+
         const success = await addCrystal(categoryId);
-        
+
         if (!success) {
           return;
         }
-        
+
         if (willComplete) {
           vibrate([200, 100, 200, 100, 200]);
-          
+
           setTimeout(() => {
             openRewardModal(categoryId);
           }, 1000);

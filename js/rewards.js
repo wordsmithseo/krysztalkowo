@@ -201,10 +201,16 @@ export const closeRewardModal = () => {
   rewardModal.style.display = 'none';
   selectedReward = null;
   rewardActions.style.display = 'none';
-  
+
   // Przywróć normalny stan modala
   const closeBtn = rewardModal.querySelector('.close-btn');
   if (closeBtn) {
     closeBtn.style.display = 'block';
+  }
+
+  // Zresetuj przycisk "Zrealizuj później"
+  if (realizeLaterBtn) {
+    realizeLaterBtn.disabled = false;
+    realizeLaterBtn.textContent = '📋 Zrealizuj później';
   }
 };

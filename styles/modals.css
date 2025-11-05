@@ -937,6 +937,12 @@
   box-shadow:
     0 0 40px rgba(34, 197, 94, 0.8),
     inset 0 0 30px rgba(255, 255, 255, 0.3) !important;
+  color: #fff !important;
+}
+
+.reward-reveal-content.rarity-common * {
+  color: #fff !important;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
 }
 
 .reward-reveal-content.rarity-uncommon {
@@ -949,6 +955,12 @@
   box-shadow:
     0 0 40px rgba(59, 130, 246, 0.8),
     inset 0 0 30px rgba(255, 255, 255, 0.3) !important;
+  color: #fff !important;
+}
+
+.reward-reveal-content.rarity-uncommon * {
+  color: #fff !important;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
 }
 
 .reward-reveal-content.rarity-rare {
@@ -961,6 +973,12 @@
   box-shadow:
     0 0 40px rgba(168, 85, 247, 0.8),
     inset 0 0 30px rgba(255, 255, 255, 0.3) !important;
+  color: #fff !important;
+}
+
+.reward-reveal-content.rarity-rare * {
+  color: #fff !important;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
 }
 
 .reward-reveal-content.rarity-epic {
@@ -974,6 +992,12 @@
     0 0 40px rgba(251, 191, 36, 0.8),
     inset 0 0 30px rgba(255, 255, 255, 0.3) !important;
   animation: revealPulse 0.8s ease-out, epicRevealGlow 2s ease-in-out infinite !important;
+  color: #5b3b00 !important;
+}
+
+.reward-reveal-content.rarity-epic * {
+  color: #5b3b00 !important;
+  text-shadow: 0 1px 3px rgba(255, 255, 255, 0.6) !important;
 }
 
 @keyframes epicRevealGlow {
@@ -1014,6 +1038,15 @@
     0 0 100px rgba(0, 255, 255, 0.7),
     inset 0 0 40px rgba(255, 255, 255, 0.4) !important;
   animation: revealPulse 0.8s ease-out, legendaryRevealGlow 3s ease-in-out infinite, legendaryRevealShift 5s linear infinite !important;
+  color: #fff !important;
+}
+
+.reward-reveal-content.rarity-legendary * {
+  color: #fff !important;
+  text-shadow:
+    0 0 10px rgba(255, 0, 255, 0.8),
+    0 0 20px rgba(0, 255, 255, 0.6),
+    0 2px 8px rgba(0, 0, 0, 0.5) !important;
 }
 
 @keyframes legendaryRevealGlow {

@@ -257,11 +257,6 @@ body.nina-bg {
   width: 100%;
   max-width: 48rem;
   padding: 1.5rem;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-radius: 1.5rem;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
 .children-selector-title {
