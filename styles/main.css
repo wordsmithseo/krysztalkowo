@@ -570,7 +570,7 @@ body.nina-bg {
 .container {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
-  gap: 1.25rem;
+  gap: 1.75rem;
   width: 100%;
   max-width: 75rem;
   justify-items: center;
@@ -726,8 +726,8 @@ body.nina-bg {
   }
 
   .container {
-    grid-template-columns: repeat(auto-fill, minmax(14.5rem, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(15.5rem, 1fr));
+    gap: 2rem;
   }
 }
 
