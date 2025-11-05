@@ -481,19 +481,35 @@ export const getAvatar = (user, callback) => {
   });
 };
 
+// Oznacz kategorię jako oczekującą na reset (gdy modal się otwiera)
+export const markCategoryPendingReset = async (categoryId) => {
+  const user = getCurrentUser();
+
+  try {
+    const updates = {};
+    updates[`users/${user}/categories/${categoryId}/pendingReset`] = true;
+
+    await update(ref(db), updates);
+    return true;
+  } catch (error) {
+    console.error('Błąd oznaczania kategorii jako pendingReset:', error);
+    return false;
+  }
+};
+
 export const finalizeReward = async (categoryId, rewardName) => {
   const user = getCurrentUser();
-  
+
   try {
     const winsRef = ref(db, `users/${user}/categories/${categoryId}/wins/${user}`);
     const snapshot = await get(winsRef);
     const currentWins = snapshot.exists() ? snapshot.val() : 0;
-    
+
     const updates = {};
     updates[`users/${user}/categories/${categoryId}/wins/${user}`] = currentWins + 1;
     updates[`users/${user}/categories/${categoryId}/lastReward`] = rewardName;
     updates[`users/${user}/categories/${categoryId}/pendingReset`] = true;
-    
+
     await update(ref(db), updates);
     return true;
   } catch (error) {

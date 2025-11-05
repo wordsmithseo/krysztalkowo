@@ -203,12 +203,17 @@ export const handleEditCategory = (categoryId) => {
   document.getElementById('editCategoryGoal').value = cat.goal || 10;
   document.getElementById('editCategoryImage').value = cat.image || '';
 
-  // Wyświetl aktualną liczbę kryształków
+  // Wyświetl aktualną liczbę kryształków i maksimum
   const currentCount = cat.count || 0;
   const currentGoal = cat.goal || 10;
   const currentCrystalsInfo = document.getElementById('currentCrystalsInfo');
   if (currentCrystalsInfo) {
-    currentCrystalsInfo.innerHTML = `💎 Obecnie: <strong>${currentCount} / ${currentGoal}</strong> kryształków`;
+    currentCrystalsInfo.innerHTML = `
+      💎 Postęp: <strong>${currentCount} / ${currentGoal}</strong> kryształków<br>
+      <span style="font-size: 0.9rem; opacity: 0.85; margin-top: 0.25rem; display: inline-block;">
+        (Maksimum obecnie wynosi: <strong>${currentGoal}</strong>)
+      </span>
+    `;
   }
 
   editModal.dataset.editingId = categoryId;

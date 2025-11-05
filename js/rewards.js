@@ -1,6 +1,6 @@
 // ===== SYSTEM NAGRÓD =====
 import { getRewards, setRewardFlowLock, setPendingCategoryId, randInt, state, getCategories } from './state.js';
-import { finalizeReward, addPendingReward } from './database.js';
+import { finalizeReward, addPendingReward, markCategoryPendingReset } from './database.js';
 import { fireConfetti } from './ui.js';
 import { getRarityClass, getRarityName } from './admin.js';
 
@@ -14,40 +14,43 @@ const realizeLaterBtn = document.getElementById('realizeLaterBtn');
 let selectedReward = null;
 
 // Otwieranie modala z nagrodami
-export const openRewardModal = (categoryId) => {
+export const openRewardModal = async (categoryId) => {
   const rewards = getRewards();
-  
+
   if (!rewards.length) {
     alert('Brawo! Cel osiągnięty. (Brak zdefiniowanych nagród dla tego profilu) – ustawiam nagrodę „nieustawiona".');
     finalizeReward(categoryId, 'Nagroda nieustawiona');
     return;
   }
-  
+
+  // WAŻNE: Oznacz kategorię jako pendingReset od razu, żeby po odświeżeniu strony karta była kliklana
+  await markCategoryPendingReset(categoryId);
+
   setPendingCategoryId(categoryId);
   setRewardFlowLock(false);
   selectedReward = null;
-  
+
   rewardReveal.textContent = '';
   rewardReveal.innerHTML = '';
   rewardActions.style.display = 'none';
   rewardModal.style.display = 'flex';
-  
+
   // Blokada zamykania modala
   blockModalClosing();
-  
+
   // Reset skrzynek
   const chests = rewardModal.querySelectorAll('#chestsRow .reward-chest');
   chests.forEach(chest => {
     chest.classList.remove('opening', 'opened');
     chest.style.pointerEvents = 'auto';
   });
-  
+
   // Losowa kolejność skrzynek
   const order = [0, 1, 2].sort(() => Math.random() - 0.5);
   Array.from(chestsRow.children).forEach((chest, i) => {
     chest.style.order = order[i];
   });
-  
+
   // Ustawienie obsługi kliknięć
   setupChestHandlers(chests, rewards, categoryId);
 };

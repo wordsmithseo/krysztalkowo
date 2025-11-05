@@ -101,14 +101,24 @@
         <button id="authLogoutBtn" style="background: none; border: none; color: #6a11cb; cursor: pointer; text-decoration: underline; margin-left: 0.5rem; font-size: 0.9rem;">Wyloguj</button>
       </div>
       
-      <div class="user-selector">
-        <div class="user-buttons-row"></div>
-      </div>
+      <nav class="main-nav">
+        <button id="adminBtn" class="nav-btn admin-btn">
+          <span class="nav-icon">⚙️</span>
+          <span class="nav-label">Panel admina</span>
+        </button>
+        <button id="rankingBtn" class="nav-btn ranking-btn">
+          <span class="nav-icon">🏆</span>
+          <span class="nav-label">Ranking</span>
+        </button>
+        <button id="pendingRewardsBtn" class="nav-btn pending-btn">
+          <span class="nav-icon">📋</span>
+          <span class="nav-label">Zaległe nagrody</span>
+        </button>
+      </nav>
 
-      <div style="display:flex;gap:.75rem;flex-wrap:wrap;justify-content:center">
-        <button id="adminBtn" class="admin-button">⚙️ Panel admina</button>
-        <button id="rankingBtn" class="ranking-button">🏆 Ranking</button>
-        <button id="pendingRewardsBtn" class="pending-rewards-button">📋 Zaległe nagrody</button>
+      <div class="children-selector">
+        <h3 class="children-selector-title">Wybierz dziecko:</h3>
+        <div class="user-buttons-row"></div>
       </div>
     </div>
 
