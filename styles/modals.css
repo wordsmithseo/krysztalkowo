@@ -1866,6 +1866,63 @@
     flex: 1;
   }
 
+  /* Zmiana layoutu dzieci na mobile - pionowy układ */
+  #childrenList li {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+
+  #childrenList .child-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  #childrenList .child-name {
+    font-size: 1.15rem;
+  }
+
+  #childrenList .action-buttons {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  #childrenList .action-buttons button {
+    flex: 1;
+  }
+
+  /* Zmiana layoutu nagród na mobile - pionowy układ */
+  #rewardList li {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+
+  #rewardList li .reward-left {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  #rewardList li .reward-left .reward-name {
+    font-size: 1.1rem;
+    white-space: normal;
+    overflow: visible;
+    word-break: break-word;
+  }
+
+  #rewardList .action-buttons {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  #rewardList .action-buttons button {
+    flex: 1;
+  }
+
   /* Sugestie kategorii - pozwól zawijanie długich nazw */
   .suggestion-btn {
     white-space: normal;
