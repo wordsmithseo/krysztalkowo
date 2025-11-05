@@ -521,11 +521,11 @@ export const finalizeReward = async (categoryId, rewardName) => {
 // Dodawanie nagrody do zaległych
 export const addPendingReward = async (categoryId, categoryName, rewardName) => {
   const user = getCurrentUser();
-  
+
   try {
     const pendingRewardsRef = ref(db, 'pendingRewards');
     const newRewardRef = push(pendingRewardsRef);
-    
+
     await set(newRewardRef, {
       childId: user,
       categoryId,
@@ -533,19 +533,27 @@ export const addPendingReward = async (categoryId, categoryName, rewardName) => 
       rewardName,
       timestamp: Date.now()
     });
-    
-    // Finalizuj nagrodę w kategorii
+
+    // Finalizuj nagrodę w kategorii i usuń pendingReset
     const winsRef = ref(db, `users/${user}/categories/${categoryId}/wins/${user}`);
     const snapshot = await get(winsRef);
     const currentWins = snapshot.exists() ? snapshot.val() : 0;
-    
+
     const updates = {};
     updates[`users/${user}/categories/${categoryId}/wins/${user}`] = currentWins + 1;
     updates[`users/${user}/categories/${categoryId}/lastReward`] = rewardName;
-    updates[`users/${user}/categories/${categoryId}/pendingReset`] = true;
-    
+    updates[`users/${user}/categories/${categoryId}/pendingReset`] = null; // Usuń flagę, nagroda zapisana jako zaległa
+    updates[`users/${user}/categories/${categoryId}/count`] = 0; // Zresetuj licznik kryształków
+    updates[`users/${user}/categories/${categoryId}/lastAddTimestamp`] = null; // Zresetuj cooldown
+
+    // Wygeneruj nowe kolory dla karty
+    const { generateCategoryColors } = await import('./state.js');
+    const colors = generateCategoryColors();
+    updates[`users/${user}/categories/${categoryId}/color`] = colors.color;
+    updates[`users/${user}/categories/${categoryId}/borderColor`] = colors.borderColor;
+
     await update(ref(db), updates);
-    
+
     return true;
   } catch (error) {
     console.error('Błąd dodawania zaległej nagrody:', error);
