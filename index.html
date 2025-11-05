@@ -34,60 +34,98 @@
 
   <!-- Modal uwierzytelniania -->
   <div id="authModal" class="modal auth-modal" style="display: flex;">
-    <div class="modal-content auth-modal-content">
-      <h1 style="text-align: center; margin: 0 0 1rem 0; font-family: 'Balsamiq Sans', cursive; font-size: 2.5rem;">✨ Kryształki ✨</h1>
-      
-      <div class="auth-description">
-        <p style="text-align: center; margin: 0 0 2rem 0; color: #666; font-size: 0.95rem; line-height: 1.5;">
-          Aplikacja do zarządzania zadaniami i nagrodami dla dzieci. 
-          Zbieraj kryształki za wykonane zadania i odbieraj nagrody! 🎁
-        </p>
+    <div class="auth-container">
+      <!-- Sekcja z opisem aplikacji -->
+      <div class="auth-welcome-section">
+        <div class="auth-welcome-content">
+          <h1 class="auth-welcome-title">✨ Kryształkowo ✨</h1>
+          <p class="auth-welcome-subtitle">Motywuj swoje dzieci w zabawny sposób!</p>
+
+          <div class="auth-features">
+            <div class="auth-feature-item">
+              <div class="auth-feature-icon">💎</div>
+              <div class="auth-feature-text">
+                <h3>Zbieraj kryształki</h3>
+                <p>Nagradzaj dzieci kryształkami za wykonane zadania</p>
+              </div>
+            </div>
+
+            <div class="auth-feature-item">
+              <div class="auth-feature-icon">🎁</div>
+              <div class="auth-feature-text">
+                <h3>Losuj nagrody</h3>
+                <p>System nagród z różnymi poziomami rzadkości</p>
+              </div>
+            </div>
+
+            <div class="auth-feature-item">
+              <div class="auth-feature-icon">🏆</div>
+              <div class="auth-feature-text">
+                <h3>Rywalizacja</h3>
+                <p>Ranking i system rywalizacji między dziećmi</p>
+              </div>
+            </div>
+
+            <div class="auth-feature-item">
+              <div class="auth-feature-icon">👨‍👩‍👧‍👦</div>
+              <div class="auth-feature-text">
+                <h3>Wiele profili</h3>
+                <p>Osobne profile dla każdego dziecka</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      
-      <!-- Formularz logowania -->
-      <div id="loginForm" style="display: block;">
-        <h2 style="text-align: center; margin-bottom: 1.5rem;">Zaloguj się</h2>
-        
-        <label>Email:</label>
-        <input type="email" id="loginEmail" placeholder="twoj@email.pl">
-        
-        <label>Hasło:</label>
-        <input type="password" id="loginPassword" placeholder="Hasło">
-        
-        <div id="loginError" class="auth-error" style="display: none;"></div>
-        
-        <button id="loginSubmitBtn" class="submit-btn" style="width: 100%; margin-top: 1rem;">Zaloguj się</button>
-        
-        <p style="text-align: center; margin-top: 1.5rem; color: #666;">
-          Nie masz konta? 
-          <a href="#" id="showRegisterBtn" style="color: #6a11cb; font-weight: 600; text-decoration: none;">Zarejestruj się</a>
-        </p>
-      </div>
-      
-      <!-- Formularz rejestracji -->
-      <div id="registerForm" style="display: none;">
-        <h2 style="text-align: center; margin-bottom: 1.5rem;">Zarejestruj się</h2>
-        
-        <label>Imię:</label>
-        <input type="text" id="registerName" placeholder="Twoje imię">
-        
-        <label>Email:</label>
-        <input type="email" id="registerEmail" placeholder="twoj@email.pl">
-        
-        <label>Hasło:</label>
-        <input type="password" id="registerPassword" placeholder="Hasło (min. 6 znaków)">
-        
-        <label>Powtórz hasło:</label>
-        <input type="password" id="registerConfirmPassword" placeholder="Powtórz hasło">
-        
-        <div id="registerError" class="auth-error" style="display: none;"></div>
-        
-        <button id="registerSubmitBtn" class="submit-btn" style="width: 100%; margin-top: 1rem;">Zarejestruj się</button>
-        
-        <p style="text-align: center; margin-top: 1.5rem; color: #666;">
-          Masz już konto? 
-          <a href="#" id="showLoginBtn" style="color: #6a11cb; font-weight: 600; text-decoration: none;">Zaloguj się</a>
-        </p>
+
+      <!-- Sekcja z formularzem -->
+      <div class="auth-form-section">
+        <div class="modal-content auth-modal-content">
+          <!-- Formularz logowania -->
+          <div id="loginForm" style="display: block;">
+            <h2 style="text-align: center; margin-bottom: 1.5rem;">Zaloguj się</h2>
+
+            <label>Email:</label>
+            <input type="email" id="loginEmail" placeholder="twoj@email.pl">
+
+            <label>Hasło:</label>
+            <input type="password" id="loginPassword" placeholder="Hasło">
+
+            <div id="loginError" class="auth-error" style="display: none;"></div>
+
+            <button id="loginSubmitBtn" class="submit-btn" style="width: 100%; margin-top: 1rem;">Zaloguj się</button>
+
+            <p style="text-align: center; margin-top: 1.5rem; color: #666;">
+              Nie masz konta?
+              <a href="#" id="showRegisterBtn" style="color: #6a11cb; font-weight: 600; text-decoration: none;">Zarejestruj się</a>
+            </p>
+          </div>
+
+          <!-- Formularz rejestracji -->
+          <div id="registerForm" style="display: none;">
+            <h2 style="text-align: center; margin-bottom: 1.5rem;">Zarejestruj się</h2>
+
+            <label>Imię:</label>
+            <input type="text" id="registerName" placeholder="Twoje imię">
+
+            <label>Email:</label>
+            <input type="email" id="registerEmail" placeholder="twoj@email.pl">
+
+            <label>Hasło:</label>
+            <input type="password" id="registerPassword" placeholder="Hasło (min. 6 znaków)">
+
+            <label>Powtórz hasło:</label>
+            <input type="password" id="registerConfirmPassword" placeholder="Powtórz hasło">
+
+            <div id="registerError" class="auth-error" style="display: none;"></div>
+
+            <button id="registerSubmitBtn" class="submit-btn" style="width: 100%; margin-top: 1rem;">Zarejestruj się</button>
+
+            <p style="text-align: center; margin-top: 1.5rem; color: #666;">
+              Masz już konto?
+              <a href="#" id="showLoginBtn" style="color: #6a11cb; font-weight: 600; text-decoration: none;">Zaloguj się</a>
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -95,12 +133,21 @@
   <div class="crystal-app" style="display: none;">
     <div class="header">
       <h1>✨ Kryształki ✨</h1>
-      
-      <div class="user-info" style="text-align: center; margin-bottom: 0.5rem;">
-        <span style="color: #666; font-size: 0.9rem;">Zalogowany jako: <strong id="userEmail"></strong></span>
-        <button id="authLogoutBtn" style="background: none; border: none; color: #6a11cb; cursor: pointer; text-decoration: underline; margin-left: 0.5rem; font-size: 0.9rem;">Wyloguj</button>
+
+      <div class="user-info-bar">
+        <div class="user-info-content">
+          <div class="user-info-icon">👤</div>
+          <div class="user-info-text">
+            <div class="user-info-label">Zalogowany jako:</div>
+            <div class="user-info-email" id="userEmail"></div>
+          </div>
+        </div>
+        <button id="authLogoutBtn" class="logout-btn">
+          <span class="logout-icon">🚪</span>
+          <span class="logout-text">Wyloguj</span>
+        </button>
       </div>
-      
+
       <nav class="main-nav">
         <button id="adminBtn" class="nav-btn admin-btn">
           <span class="nav-icon">⚙️</span>
