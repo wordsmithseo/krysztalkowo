@@ -65,6 +65,7 @@
   background-clip: text;
   text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
+  white-space: nowrap;
 }
 
 .auth-welcome-subtitle {
@@ -405,6 +406,7 @@
 
 .admin-header-info h2 {
   margin: 0 0 1rem 0;
+  padding-right: 140px; /* Zrób miejsce dla przycisku logout */
   font-size: 1.8rem;
   font-weight: 700;
   text-align: center;
@@ -592,21 +594,29 @@
 
 .admin-logout-btn {
   position: absolute;
-  top: 0.6rem;
-  right: 3.25rem;
-  background: #e0e7ff;
-  color: #1f2a5a;
-  border: none;
-  border-radius: 0.6rem;
-  padding: 0.5rem 0.9rem;
+  top: 1.5rem;
+  right: 3.5rem;
+  background: linear-gradient(135deg, rgba(231, 76, 60, 0.1), rgba(192, 57, 43, 0.1));
+  border: 2px solid rgba(231, 76, 60, 0.2);
+  color: #e74c3c;
+  border-radius: 0.875rem;
+  padding: 0.65rem 1.1rem;
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 0.95rem;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 6px rgba(231, 76, 60, 0.15);
+  transition: all 0.25s ease;
 }
 
 .admin-logout-btn:hover {
-  filter: brightness(1.05);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.25);
+  background: linear-gradient(135deg, rgba(231, 76, 60, 0.15), rgba(192, 57, 43, 0.15));
+  border-color: rgba(231, 76, 60, 0.3);
+}
+
+.admin-logout-btn:active {
+  transform: translateY(0);
 }
 
 .admin-section {
@@ -1818,8 +1828,108 @@
   
   #categoryList li > .left .name {
     font-size: 1rem;
+    white-space: normal;
+    overflow: visible;
+    word-break: break-word;
   }
-  
+
+  /* Zmiana layoutu kategorii na mobile - pionowy układ */
+  #categoryList li {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+
+  #categoryList li > .left {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  #categoryList li > .left .name {
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .crystal-controls {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .action-buttons {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .crystal-app .action-buttons button {
+    flex: 1;
+  }
+
+  /* Zmiana layoutu dzieci na mobile - pionowy układ */
+  #childrenList li {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+
+  #childrenList .child-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  #childrenList .child-name {
+    font-size: 1.15rem;
+  }
+
+  #childrenList .action-buttons {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  #childrenList .action-buttons button {
+    flex: 1;
+  }
+
+  /* Zmiana layoutu nagród na mobile - pionowy układ */
+  #rewardList li {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+
+  #rewardList li .reward-left {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  #rewardList li .reward-left .reward-name {
+    font-size: 1.1rem;
+    white-space: normal;
+    overflow: visible;
+    word-break: break-word;
+  }
+
+  #rewardList .action-buttons {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  #rewardList .action-buttons button {
+    flex: 1;
+  }
+
+  /* Sugestie kategorii - pozwól zawijanie długich nazw */
+  .suggestion-btn {
+    white-space: normal;
+    word-break: break-word;
+    text-align: left;
+  }
+
   .crystal-controls button {
     width: 1.8rem !important;
     height: 1.8rem !important;

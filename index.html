@@ -148,7 +148,8 @@
         </button>
       </div>
 
-      <nav class="main-nav">
+      <!-- Nawigacja desktop -->
+      <nav class="main-nav main-nav-desktop">
         <button id="adminBtn" class="nav-btn admin-btn">
           <span class="nav-icon">⚙️</span>
           <span class="nav-label">Panel admina</span>
@@ -162,6 +163,29 @@
           <span class="nav-label">Zaległe nagrody</span>
         </button>
       </nav>
+
+      <!-- Nawigacja mobile (dropdown) -->
+      <div class="main-nav-mobile">
+        <button id="mobileMenuBtn" class="mobile-menu-btn">
+          <span class="mobile-menu-icon">☰</span>
+          <span class="mobile-menu-label">Menu</span>
+          <span class="mobile-menu-arrow">▼</span>
+        </button>
+        <div id="mobileMenuDropdown" class="mobile-menu-dropdown">
+          <button id="adminBtnMobile" class="mobile-menu-item">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-label">Panel admina</span>
+          </button>
+          <button id="rankingBtnMobile" class="mobile-menu-item">
+            <span class="nav-icon">🏆</span>
+            <span class="nav-label">Ranking</span>
+          </button>
+          <button id="pendingRewardsBtnMobile" class="mobile-menu-item">
+            <span class="nav-icon">📋</span>
+            <span class="nav-label">Zaległe nagrody</span>
+          </button>
+        </div>
+      </div>
 
       <div class="children-selector">
         <h3 class="children-selector-title">Wybierz dziecko:</h3>
@@ -312,25 +336,25 @@
   </div>
 
   <div id="editRewardModal" class="modal">
-    <div class="modal-content">
+    <div class="modal-content edit-modal-content">
       <span class="close-btn">&times;</span>
-      <h2>Edytuj nagrodę</h2>
+      <h2 style="font-size: 1.75rem; margin-bottom: 1.5rem;">Edytuj nagrodę</h2>
 
-      <label>Nazwa:</label>
-      <input type="text" id="editRewardName">
+      <label style="font-size: 1.05rem; margin-top: 0.75rem;">Nazwa:</label>
+      <input type="text" id="editRewardName" style="font-size: 1.1rem; padding: 0.9rem 1rem;">
 
-      <label>Obrazek (URL):</label>
-      <input type="url" id="editRewardImage" placeholder="https://...">
+      <label style="font-size: 1.05rem; margin-top: 0.75rem;">Obrazek (URL):</label>
+      <input type="url" id="editRewardImage" placeholder="https://..." style="font-size: 1.05rem; padding: 0.9rem 1rem;">
 
-      <label>Szansa wylosowania (%):</label>
-      <input type="number" id="editRewardProbability" min="0.01" max="100" step="0.01" value="50" placeholder="50">
+      <label style="font-size: 1.05rem; margin-top: 0.75rem;">Szansa wylosowania (%):</label>
+      <input type="number" id="editRewardProbability" min="0.01" max="100" step="0.01" value="50" placeholder="50" style="font-size: 1.1rem; padding: 0.9rem 1rem;">
       <div id="probabilityInfo" class="probability-info"></div>
 
       <div id="rewardImagePreview" class="reward-preview-container"></div>
 
-      <div style="margin-top:1rem;display:flex;gap:.5rem">
-        <button id="saveRewardEditBtn" class="submit-btn">Zapisz</button>
-        <button id="cancelRewardEditBtn" class="cancel-btn">Anuluj</button>
+      <div style="margin-top:1.5rem;display:flex;gap:.75rem">
+        <button id="saveRewardEditBtn" class="submit-btn" style="font-size: 1.1rem; padding: 0.9rem 1.75rem;">Zapisz</button>
+        <button id="cancelRewardEditBtn" class="cancel-btn" style="font-size: 1.1rem; padding: 0.9rem 1.75rem;">Anuluj</button>
       </div>
     </div>
   </div>
@@ -388,5 +412,17 @@
       <button id="closeResetSuccessBtn" class="submit-btn" style="width: 100%; margin-top: 1.5rem;">OK</button>
     </div>
   </div>
+
+  <!-- Stopka -->
+  <footer class="app-footer">
+    <div class="footer-content">
+      <p class="footer-text">
+        © 2025 <a href="https://wordsmithseo.pl" target="_blank" rel="noopener noreferrer" class="footer-link">wordsmithseo.pl</a>
+        <span class="footer-separator">|</span>
+        <strong>Sławomir Sprawski</strong>
+      </p>
+      <p class="footer-rights">Wszelkie prawa zastrzeżone</p>
+    </div>
+  </footer>
 </body>
 </html>

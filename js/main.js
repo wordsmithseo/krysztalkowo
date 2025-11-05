@@ -51,6 +51,9 @@ const rankingModal = document.getElementById('rankingModal');
 const childModal = document.getElementById('childModal');
 const authModal = document.getElementById('authModal');
 const pendingRewardsModal = document.getElementById('pendingRewardsModal');
+const editRewardModal = document.getElementById('editRewardModal');
+const resetRankingPasswordModal = document.getElementById('resetRankingPasswordModal');
+const resetRankingSuccessModal = document.getElementById('resetRankingSuccessModal');
 const appLoader = document.getElementById('appLoader');
 
 const adminPasswordInput = document.getElementById('adminPasswordInput');
@@ -472,7 +475,10 @@ closeButtons.forEach(btn => {
     rankingModal.style.display = 'none';
     childModal.style.display = 'none';
     pendingRewardsModal.style.display = 'none';
-    
+    editRewardModal.style.display = 'none';
+    resetRankingPasswordModal.style.display = 'none';
+    resetRankingSuccessModal.style.display = 'none';
+
     const rewardModal = document.getElementById('rewardModal');
     if (rewardModal && rewardModal.style.display === 'flex') {
       const closeBtn = rewardModal.querySelector('.close-btn');
@@ -485,18 +491,21 @@ closeButtons.forEach(btn => {
 
 document.addEventListener('click', (e) => {
   const modals = [
-    passwordModal, 
-    adminModal, 
-    editModal, 
+    passwordModal,
+    adminModal,
+    editModal,
     rankingModal,
     childModal,
-    pendingRewardsModal
+    pendingRewardsModal,
+    editRewardModal,
+    resetRankingPasswordModal,
+    resetRankingSuccessModal
   ];
-  
+
   if (modals.includes(e.target)) {
     e.target.style.display = 'none';
   }
-  
+
   const rewardModal = document.getElementById('rewardModal');
   if (e.target === rewardModal) {
     const closeBtn = rewardModal.querySelector('.close-btn');
@@ -615,11 +624,70 @@ if (pendingRewardsBtn) {
   });
 }
 
+// Mobile menu dropdown
+const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+const mobileMenuDropdown = document.getElementById('mobileMenuDropdown');
+const adminBtnMobile = document.getElementById('adminBtnMobile');
+const rankingBtnMobile = document.getElementById('rankingBtnMobile');
+const pendingRewardsBtnMobile = document.getElementById('pendingRewardsBtnMobile');
+
+if (mobileMenuBtn && mobileMenuDropdown) {
+  mobileMenuBtn.addEventListener('click', () => {
+    mobileMenuBtn.classList.toggle('active');
+    mobileMenuDropdown.classList.toggle('active');
+  });
+
+  // Zamknij dropdown po kliknięciu gdziekolwiek poza nim
+  document.addEventListener('click', (e) => {
+    if (!mobileMenuBtn.contains(e.target) && !mobileMenuDropdown.contains(e.target)) {
+      mobileMenuBtn.classList.remove('active');
+      mobileMenuDropdown.classList.remove('active');
+    }
+  });
+}
+
+if (adminBtnMobile) {
+  adminBtnMobile.addEventListener('click', () => {
+    mobileMenuDropdown.classList.remove('active');
+    mobileMenuBtn.classList.remove('active');
+
+    if (state.isLoggedIn) {
+      adminModal.style.display = 'flex';
+      renderAdminCategories();
+      renderAdminRewards();
+      renderChildrenList();
+      initializeSortable();
+      updateAdminHeaderInfo();
+      renderCategorySuggestions();
+      renderRewardSuggestions();
+    } else {
+      passwordModal.style.display = 'flex';
+      adminPasswordInput.focus();
+    }
+  });
+}
+
+if (rankingBtnMobile) {
+  rankingBtnMobile.addEventListener('click', () => {
+    mobileMenuDropdown.classList.remove('active');
+    mobileMenuBtn.classList.remove('active');
+    displayRanking();
+    rankingModal.style.display = 'flex';
+  });
+}
+
+if (pendingRewardsBtnMobile) {
+  pendingRewardsBtnMobile.addEventListener('click', () => {
+    mobileMenuDropdown.classList.remove('active');
+    mobileMenuBtn.classList.remove('active');
+    displayPendingRewards();
+    pendingRewardsModal.style.display = 'flex';
+  });
+}
+
 // Reset rankingu - weryfikacja hasła i potwierdzenie
-const resetRankingPasswordModal = document.getElementById('resetRankingPasswordModal');
 const resetRankingPasswordInput = document.getElementById('resetRankingPasswordInput');
 const confirmResetRankingBtn = document.getElementById('confirmResetRankingBtn');
-const resetRankingSuccessModal = document.getElementById('resetRankingSuccessModal');
 const closeResetSuccessBtn = document.getElementById('closeResetSuccessBtn');
 
 if (confirmResetRankingBtn && resetRankingPasswordInput) {
