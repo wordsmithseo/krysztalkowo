@@ -13,6 +13,7 @@ import {
   resetAllRankings,
   addChild,
   updateChild,
+  updateChildOrder,
   deleteChild,
   changeUserPassword,
   getSuggestedCategories,
@@ -24,15 +25,18 @@ import { getCurrentAuthUser } from './auth.js';
 const adminModal = document.getElementById('adminModal');
 const editModal = document.getElementById('editModal');
 const categoryList = document.getElementById('categoryList');
+const childrenListEl = document.getElementById('childrenList');
 const rewardList = document.getElementById('rewardList');
 
 let sortableInstance = null;
+let sortableChildrenInstance = null;
 
 export const initializeSortable = () => {
+  // Sortable dla kategorii
   if (sortableInstance) {
     sortableInstance.destroy();
   }
-  
+
   if (categoryList) {
     sortableInstance = Sortable.create(categoryList, {
       animation: 150,
@@ -40,12 +44,35 @@ export const initializeSortable = () => {
       ghostClass: 'sortable-ghost',
       onEnd: async (evt) => {
         const items = Array.from(categoryList.children);
-        
+
         const updates = items.map((item, index) => {
           const id = item.dataset.id;
           return updateCategoryOrder(id, index);
         });
-        
+
+        await Promise.all(updates);
+      }
+    });
+  }
+
+  // Sortable dla dzieci
+  if (sortableChildrenInstance) {
+    sortableChildrenInstance.destroy();
+  }
+
+  if (childrenListEl) {
+    sortableChildrenInstance = Sortable.create(childrenListEl, {
+      animation: 150,
+      handle: '.drag-handle',
+      ghostClass: 'sortable-ghost',
+      onEnd: async (evt) => {
+        const items = Array.from(childrenListEl.children);
+
+        const updates = items.map((item, index) => {
+          const id = item.dataset.id;
+          return updateChildOrder(id, index);
+        });
+
         await Promise.all(updates);
       }
     });
@@ -146,12 +173,13 @@ export const renderAdminRewards = () => {
 export const renderChildrenList = () => {
   const children = getChildren();
   const childrenList = document.getElementById('childrenList');
-  
+
   if (!childrenList) return;
-  
+
   childrenList.innerHTML = children.map(child => `
-    <li>
+    <li data-id="${child.id}">
       <div class="child-info">
+        <span class="drag-handle">☰</span>
         <span class="child-gender-icon">${child.gender === 'male' ? '👦' : '👧'}</span>
         <span class="child-name">${child.name}</span>
         <span class="child-gender-label">${child.gender === 'male' ? 'Chłopiec' : 'Dziewczynka'}</span>
