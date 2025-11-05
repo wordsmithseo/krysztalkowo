@@ -1253,7 +1253,7 @@
   align-items: center;
   justify-content: center;
   gap: 1.5rem;
-  padding: 3rem 2rem;
+  padding: 2rem;
   background: linear-gradient(135deg,
     rgba(255, 215, 0, 0.95) 0%,
     rgba(255, 165, 0, 0.95) 50%,
@@ -1919,7 +1919,7 @@
   }
 
   .reward-reveal {
-    padding: 2.25rem 1rem;
+    padding: 1.5rem 1rem;
     font-size: 1.3rem;
   }
 
