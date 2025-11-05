@@ -818,7 +818,8 @@ body.nina-bg {
   border-top: 2px solid rgba(106, 17, 203, 0.1);
   box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
   padding: 0.75rem 1rem;
-  z-index: 100;
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  z-index: 1100;
 }
 
 .footer-content {
@@ -864,12 +865,31 @@ body.nina-bg {
 
 /* Dodaj padding-bottom do body, żeby stopka nie zakrywała treści */
 body {
-  padding-bottom: 4.5rem;
+  padding-bottom: 5rem;
+}
+
+.main-content {
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 768px) {
+  body {
+    padding-bottom: 6rem;
+  }
 }
 
 @media (max-width: 480px) {
+  body {
+    padding-bottom: calc(6.5rem + env(safe-area-inset-bottom));
+  }
+
+  .main-content {
+    margin-bottom: 3rem;
+  }
+
   .app-footer {
     padding: 0.6rem 0.75rem;
+    padding-bottom: max(0.6rem, env(safe-area-inset-bottom));
   }
 
   .footer-text {
