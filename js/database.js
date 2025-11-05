@@ -633,6 +633,16 @@ export const updateChild = async (childId, data) => {
   }
 };
 
+export const updateChildOrder = async (childId, newOrder) => {
+  try {
+    await set(ref(db, `children/${childId}/order`), newOrder);
+    return true;
+  } catch (error) {
+    console.error('Błąd aktualizacji kolejności dziecka:', error);
+    return false;
+  }
+};
+
 export const deleteChild = async (childId) => {
   try {
     // Usuwamy dziecko z listy children

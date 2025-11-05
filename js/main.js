@@ -5,7 +5,8 @@ import {
   listenRewardsForUser,
   listenChildren,
   listenAllChildrenData,
-  changeUserPassword
+  changeUserPassword,
+  resetAllRankings
 } from './database.js';
 import {
   elements,
