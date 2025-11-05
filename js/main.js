@@ -615,9 +615,75 @@ if (pendingRewardsBtn) {
   });
 }
 
+// Reset rankingu - weryfikacja hasła i potwierdzenie
+const resetRankingPasswordModal = document.getElementById('resetRankingPasswordModal');
+const resetRankingPasswordInput = document.getElementById('resetRankingPasswordInput');
+const confirmResetRankingBtn = document.getElementById('confirmResetRankingBtn');
+const resetRankingSuccessModal = document.getElementById('resetRankingSuccessModal');
+const closeResetSuccessBtn = document.getElementById('closeResetSuccessBtn');
+
+if (confirmResetRankingBtn && resetRankingPasswordInput) {
+  confirmResetRankingBtn.addEventListener('click', async () => {
+    const password = resetRankingPasswordInput.value;
+    const user = getCurrentAuthUser();
+
+    if (!password) {
+      alert('Wprowadź hasło!');
+      return;
+    }
+
+    if (!user) {
+      alert('Błąd: Nie jesteś zalogowany!');
+      return;
+    }
+
+    confirmResetRankingBtn.disabled = true;
+    confirmResetRankingBtn.textContent = 'Sprawdzanie...';
+
+    const email = user.email;
+    const result = await loginUser(email, password);
+
+    if (result.success) {
+      // Hasło poprawne - resetuj ranking
+      confirmResetRankingBtn.textContent = 'Resetuję...';
+
+      const success = await resetAllRankings();
+
+      confirmResetRankingBtn.disabled = false;
+      confirmResetRankingBtn.textContent = 'Resetuj ranking';
+      resetRankingPasswordInput.value = '';
+      resetRankingPasswordModal.style.display = 'none';
+
+      if (success) {
+        // Pokaż modal sukcesu
+        resetRankingSuccessModal.style.display = 'flex';
+      } else {
+        alert('❌ Błąd podczas resetowania rankingu!');
+      }
+    } else {
+      alert('❌ Nieprawidłowe hasło!');
+      confirmResetRankingBtn.disabled = false;
+      confirmResetRankingBtn.textContent = 'Resetuj ranking';
+    }
+  });
+
+  // Enter w input hasła resetowania
+  resetRankingPasswordInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      confirmResetRankingBtn.click();
+    }
+  });
+}
+
+if (closeResetSuccessBtn) {
+  closeResetSuccessBtn.addEventListener('click', () => {
+    resetRankingSuccessModal.style.display = 'none';
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   document.body.classList.add('maks-bg');
-  
+
   if (localStorage.getItem(state.ADMIN_FLAG) === '1') {
     setLoggedInUi(true);
   }

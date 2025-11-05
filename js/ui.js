@@ -263,7 +263,9 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
   let touchStartY = 0;
   let touchStartTime = 0;
   let isHolding = false;
+  let touchDelayTimer = null;
   const SCROLL_THRESHOLD = 10;
+  const TOUCH_DELAY_MS = 500;
 
   const vibrate = (pattern) => {
     if ('vibrate' in navigator) {
@@ -322,10 +324,12 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
   };
   
   const cancelHold = () => {
-    if (!isHolding) return;
-    
+    if (!isHolding && !touchDelayTimer) return;
+
     clearTimeout(holdTimer);
     clearTimeout(fillAnimTimeout);
+    clearTimeout(touchDelayTimer);
+    touchDelayTimer = null;
     card.classList.remove('active-hold', 'filling', 'filling-complete', 'reset-filling');
     isHolding = false;
   };
@@ -338,8 +342,12 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
     isTouchMoved = false;
     touchStartY = e.touches[0].clientY;
     touchStartTime = Date.now();
-    
-    startHold();
+
+    // Dodaj 500ms opóźnienie na mobile, aby uniknąć przypadkowego dodania podczas scrollowania
+    touchDelayTimer = setTimeout(() => {
+      touchDelayTimer = null;
+      startHold();
+    }, TOUCH_DELAY_MS);
   }, { passive: true });
   
   card.addEventListener('touchmove', (e) => {
@@ -358,17 +366,25 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
       isTouchMoved = false;
       return;
     }
-    
+
     const holdDuration = Date.now() - touchStartTime;
-    
-    if (holdDuration < 500) {
+
+    // Użytkownik musi trzymać przez (delay + animacja) = 1000ms
+    if (holdDuration < TOUCH_DELAY_MS + 500) {
       cancelHold();
     }
-    
+
     isTouchMoved = false;
   });
   
   card.addEventListener('touchcancel', cancelHold);
+
+  // Blokada menu kontekstowego na mobile podczas trzymania
+  card.addEventListener('contextmenu', (e) => {
+    if (isHolding || touchDelayTimer) {
+      e.preventDefault();
+    }
+  });
 };
 
 export const fireConfetti = () => {

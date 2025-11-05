@@ -319,5 +319,27 @@
       </div>
     </div>
   </div>
+
+  <div id="resetRankingPasswordModal" class="modal">
+    <div class="modal-content password-modal-content">
+      <span class="close-btn">&times;</span>
+      <h2>⚠️ Resetowanie rankingu</h2>
+      <p style="color: #666; margin: 0.5rem 0 1rem 0; font-size: 0.95rem;">Ta operacja usunie wszystkie zwycięstwa dla wszystkich dzieci we wszystkich kategoriach.</p>
+      <p style="color: #e74c3c; font-weight: 600; margin: 0 0 1.5rem 0; font-size: 0.95rem;">Tej operacji nie można cofnąć!</p>
+      <label>Podaj hasło do konta, aby potwierdzić:</label>
+      <input type="password" id="resetRankingPasswordInput" placeholder="Twoje hasło">
+      <button id="confirmResetRankingBtn" class="submit-btn" style="width: 100%; margin-top: 1rem; background: #e74c3c;">Resetuj ranking</button>
+    </div>
+  </div>
+
+  <div id="resetRankingSuccessModal" class="modal">
+    <div class="modal-content password-modal-content" style="text-align: center;">
+      <span class="close-btn">&times;</span>
+      <div style="font-size: 4rem; margin-bottom: 1rem;">✅</div>
+      <h2 style="color: #2ecc71 !important; margin-bottom: 1rem;">Ranking został zresetowany!</h2>
+      <p style="color: #666; margin: 0; font-size: 1rem;">Wszystkie zwycięstwa zostały usunięte.</p>
+      <button id="closeResetSuccessBtn" class="submit-btn" style="width: 100%; margin-top: 1.5rem;">OK</button>
+    </div>
+  </div>
 </body>
 </html>

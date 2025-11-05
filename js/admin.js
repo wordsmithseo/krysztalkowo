@@ -456,19 +456,15 @@ export const updateProbabilityInfo = () => {
   probabilityInfo.innerHTML = `📊 ${frequency} <span style="font-weight:400;opacity:0.8;">(${probability}% szansy)</span>`;
 };
 
-export const handleResetRanking = async () => {
-  showConfirmModal(
-    '⚠️ Resetowanie rankingu',
-    'Czy na pewno zresetować CAŁY ranking?\n\nSpowoduje to usunięcie wszystkich zwycięstw dla wszystkich dzieci we wszystkich kategoriach.\n\nTej operacji nie można cofnąć!',
-    async () => {
-      const success = await resetAllRankings();
-      if (success) {
-        alert('✅ Ranking został zresetowany!');
-      } else {
-        alert('❌ Błąd podczas resetowania rankingu!');
-      }
-    }
-  );
+export const handleResetRanking = () => {
+  const resetPasswordModal = document.getElementById('resetRankingPasswordModal');
+  const resetPasswordInput = document.getElementById('resetRankingPasswordInput');
+
+  if (resetPasswordModal && resetPasswordInput) {
+    resetPasswordInput.value = '';
+    resetPasswordModal.style.display = 'flex';
+    resetPasswordInput.focus();
+  }
 };
 
 export const setLoggedInUi = (isLoggedIn) => {
