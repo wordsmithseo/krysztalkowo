@@ -82,7 +82,7 @@ export const renderAdminCategories = () => {
         <span class="drag-handle">☰</span>
         <span class="name">${cat.name}</span>
       </div>
-      <div style="display:flex;gap:0.5rem;align-items:center;">
+      <div class="category-controls">
         <div class="crystal-controls">
           <button onclick="window.modifyCrystalsHandler('${cat.id}', -1)" title="Odejmij kryształek">−</button>
           <span class="count">${cat.count || 0} / ${cat.goal || 10}</span>
@@ -117,21 +117,21 @@ export const renderAdminRewards = () => {
     let imageHtml = '';
     if (reward.image) {
       imageHtml = `
-        <div class="reward-preview-wrapper ${rarityClass}" style="display:inline-block;">
-          <img src="${reward.image}" class="reward-img" alt="${reward.name}" style="width:45px;height:45px;object-fit:cover;border-radius:0.5rem;" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22 viewBox=%220 0 40 40%22%3E%3Crect width=%2240%22 height=%2240%22 fill=%22%23f0f0f0%22 rx=%225%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2220%22%3E🎁%3C/text%3E%3C/svg%3E'; this.onerror=null;">
+        <div class="reward-preview-wrapper ${rarityClass}">
+          <img src="${reward.image}" class="reward-img" alt="${reward.name}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22 viewBox=%220 0 40 40%22%3E%3Crect width=%2240%22 height=%2240%22 fill=%22%23f0f0f0%22 rx=%225%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2220%22%3E🎁%3C/text%3E%3C/svg%3E'; this.onerror=null;">
         </div>
       `;
     } else {
-      imageHtml = `<div style="width:45px;height:45px;background:#f0f0f0;border-radius:0.5rem;display:flex;align-items:center;justify-content:center;font-size:1.5rem;border:1px solid #ddd;">🎁</div>`;
+      imageHtml = `<div class="reward-img-placeholder">🎁</div>`;
     }
 
     return `
       <li>
         <div class="reward-left">
           ${imageHtml}
-          <div style="display:flex;flex-direction:column;gap:0.25rem;min-width:0;flex:1;">
+          <div class="reward-info">
             <span class="reward-name">${reward.name}</span>
-            <span style="font-size:0.8rem;color:#666;">${frequency || '~1 na 2 losowań'}</span>
+            <span class="reward-frequency">${frequency || '~1 na 2 losowań'}</span>
           </div>
         </div>
         <div class="action-buttons">
@@ -213,7 +213,7 @@ export const handleEditCategory = (categoryId) => {
   if (currentCrystalsInfo) {
     currentCrystalsInfo.innerHTML = `
       💎 Postęp: <strong>${currentCount} / ${currentGoal}</strong> kryształków<br>
-      <span style="font-size: 0.9rem; opacity: 0.85; margin-top: 0.25rem; display: inline-block;">
+      <span class="crystals-info-note">
         (Maksimum obecnie wynosi: <strong>${currentGoal}</strong>)
       </span>
     `;
@@ -281,8 +281,8 @@ const renderImagePreviews = async (currentImage) => {
 
   // Jeśli są obrazki z innych dzieci, pokaż je w osobnej sekcji
   if (otherChildrenImages.length > 0) {
-    html += '<div style="margin-bottom: 1rem;">';
-    html += '<div style="font-size: 0.85rem; font-weight: 600; color: #6a11cb; margin-bottom: 0.5rem;">💡 Obrazki z innych profili:</div>';
+    html += '<div class="image-section">';
+    html += '<div class="image-section-title image-section-title-highlight">💡 Obrazki z innych profili:</div>';
     html += '<div class="image-previews">';
     html += otherChildrenImages.map(url =>
       `<img src="${url}" class="image-preview" onclick="window.selectImageHandler('${url}')" alt="Preview">`
@@ -291,8 +291,8 @@ const renderImagePreviews = async (currentImage) => {
   }
 
   // Dodaj domyślne obrazki
-  html += '<div>';
-  html += '<div style="font-size: 0.85rem; font-weight: 600; color: #666; margin-bottom: 0.5rem;">Domyślne obrazki:</div>';
+  html += '<div class="image-section">';
+  html += '<div class="image-section-title">Domyślne obrazki:</div>';
   html += '<div class="image-previews">';
   html += defaultImages.map(url =>
     `<img src="${url}" class="image-preview" onclick="window.selectImageHandler('${url}')" alt="Preview">`
