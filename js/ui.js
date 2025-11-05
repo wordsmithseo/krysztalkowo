@@ -257,6 +257,15 @@ const createCategoryCard = (cat, user) => {
 };
 
 const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCount, goal) => {
+  // Jeśli karta ma pendingReset, dodaj specjalny handler dla kliknięcia
+  if (pendingReset) {
+    card.style.cursor = 'pointer';
+    card.addEventListener('click', () => {
+      openRewardModal(categoryId);
+    });
+    return; // Nie dodawaj standardowej interakcji hold
+  }
+
   let holdTimer = null;
   let fillAnimTimeout = null;
   let isTouchMoved = false;

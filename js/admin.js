@@ -360,7 +360,7 @@ export const handleSaveRewardEdit = async () => {
   const data = {
     name: document.getElementById('editRewardName').value.trim(),
     image: document.getElementById('editRewardImage').value.trim(),
-    probability: parseInt(document.getElementById('editRewardProbability').value) || 50
+    probability: parseFloat(document.getElementById('editRewardProbability').value) || 50
   };
 
   if (!data.name) {
@@ -368,8 +368,8 @@ export const handleSaveRewardEdit = async () => {
     return;
   }
 
-  if (data.probability < 1 || data.probability > 100) {
-    alert('Szansa musi być między 1% a 100%!');
+  if (data.probability < 0.01 || data.probability > 100) {
+    alert('Szansa musi być między 0.01% a 100%!');
     return;
   }
 
@@ -386,7 +386,7 @@ export const handleSaveRewardEdit = async () => {
 // Funkcja aktualizacji podglądu nagrody
 export const updateRewardPreview = () => {
   const imageUrl = document.getElementById('editRewardImage').value.trim();
-  const probability = parseInt(document.getElementById('editRewardProbability').value) || 50;
+  const probability = parseFloat(document.getElementById('editRewardProbability').value) || 50;
   const previewContainer = document.getElementById('rewardImagePreview');
 
   if (!imageUrl) {
@@ -407,7 +407,7 @@ export const updateRewardPreview = () => {
 
 // Funkcja aktualizacji informacji o częstotliwości
 export const updateProbabilityInfo = () => {
-  const probability = parseInt(document.getElementById('editRewardProbability').value) || 0;
+  const probability = parseFloat(document.getElementById('editRewardProbability').value) || 0;
   const probabilityInfo = document.getElementById('probabilityInfo');
 
   if (probability <= 0 || probability > 100) {
