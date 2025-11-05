@@ -51,6 +51,9 @@ const rankingModal = document.getElementById('rankingModal');
 const childModal = document.getElementById('childModal');
 const authModal = document.getElementById('authModal');
 const pendingRewardsModal = document.getElementById('pendingRewardsModal');
+const editRewardModal = document.getElementById('editRewardModal');
+const resetRankingPasswordModal = document.getElementById('resetRankingPasswordModal');
+const resetRankingSuccessModal = document.getElementById('resetRankingSuccessModal');
 const appLoader = document.getElementById('appLoader');
 
 const adminPasswordInput = document.getElementById('adminPasswordInput');
@@ -472,7 +475,10 @@ closeButtons.forEach(btn => {
     rankingModal.style.display = 'none';
     childModal.style.display = 'none';
     pendingRewardsModal.style.display = 'none';
-    
+    editRewardModal.style.display = 'none';
+    resetRankingPasswordModal.style.display = 'none';
+    resetRankingSuccessModal.style.display = 'none';
+
     const rewardModal = document.getElementById('rewardModal');
     if (rewardModal && rewardModal.style.display === 'flex') {
       const closeBtn = rewardModal.querySelector('.close-btn');
@@ -485,18 +491,21 @@ closeButtons.forEach(btn => {
 
 document.addEventListener('click', (e) => {
   const modals = [
-    passwordModal, 
-    adminModal, 
-    editModal, 
+    passwordModal,
+    adminModal,
+    editModal,
     rankingModal,
     childModal,
-    pendingRewardsModal
+    pendingRewardsModal,
+    editRewardModal,
+    resetRankingPasswordModal,
+    resetRankingSuccessModal
   ];
-  
+
   if (modals.includes(e.target)) {
     e.target.style.display = 'none';
   }
-  
+
   const rewardModal = document.getElementById('rewardModal');
   if (e.target === rewardModal) {
     const closeBtn = rewardModal.querySelector('.close-btn');

@@ -592,21 +592,29 @@
 
 .admin-logout-btn {
   position: absolute;
-  top: 0.6rem;
-  right: 3.25rem;
-  background: #e0e7ff;
-  color: #1f2a5a;
-  border: none;
-  border-radius: 0.6rem;
-  padding: 0.5rem 0.9rem;
+  top: 1.5rem;
+  right: 3.5rem;
+  background: linear-gradient(135deg, rgba(231, 76, 60, 0.1), rgba(192, 57, 43, 0.1));
+  border: 2px solid rgba(231, 76, 60, 0.2);
+  color: #e74c3c;
+  border-radius: 0.875rem;
+  padding: 0.65rem 1.1rem;
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 0.95rem;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 6px rgba(231, 76, 60, 0.15);
+  transition: all 0.25s ease;
 }
 
 .admin-logout-btn:hover {
-  filter: brightness(1.05);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.25);
+  background: linear-gradient(135deg, rgba(231, 76, 60, 0.15), rgba(192, 57, 43, 0.15));
+  border-color: rgba(231, 76, 60, 0.3);
+}
+
+.admin-logout-btn:active {
+  transform: translateY(0);
 }
 
 .admin-section {
@@ -1818,8 +1826,18 @@
   
   #categoryList li > .left .name {
     font-size: 1rem;
+    white-space: normal;
+    overflow: visible;
+    word-break: break-word;
   }
-  
+
+  /* Sugestie kategorii - pozwól zawijanie długich nazw */
+  .suggestion-btn {
+    white-space: normal;
+    word-break: break-word;
+    text-align: left;
+  }
+
   .crystal-controls button {
     width: 1.8rem !important;
     height: 1.8rem !important;
