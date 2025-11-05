@@ -615,6 +615,67 @@ if (pendingRewardsBtn) {
   });
 }
 
+// Mobile menu dropdown
+const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+const mobileMenuDropdown = document.getElementById('mobileMenuDropdown');
+const adminBtnMobile = document.getElementById('adminBtnMobile');
+const rankingBtnMobile = document.getElementById('rankingBtnMobile');
+const pendingRewardsBtnMobile = document.getElementById('pendingRewardsBtnMobile');
+
+if (mobileMenuBtn && mobileMenuDropdown) {
+  mobileMenuBtn.addEventListener('click', () => {
+    mobileMenuBtn.classList.toggle('active');
+    mobileMenuDropdown.classList.toggle('active');
+  });
+
+  // Zamknij dropdown po kliknięciu gdziekolwiek poza nim
+  document.addEventListener('click', (e) => {
+    if (!mobileMenuBtn.contains(e.target) && !mobileMenuDropdown.contains(e.target)) {
+      mobileMenuBtn.classList.remove('active');
+      mobileMenuDropdown.classList.remove('active');
+    }
+  });
+}
+
+if (adminBtnMobile) {
+  adminBtnMobile.addEventListener('click', () => {
+    mobileMenuDropdown.classList.remove('active');
+    mobileMenuBtn.classList.remove('active');
+
+    if (state.isLoggedIn) {
+      adminModal.style.display = 'flex';
+      renderAdminCategories();
+      renderAdminRewards();
+      renderChildrenList();
+      initializeSortable();
+      updateAdminHeaderInfo();
+      renderCategorySuggestions();
+      renderRewardSuggestions();
+    } else {
+      passwordModal.style.display = 'flex';
+      adminPasswordInput.focus();
+    }
+  });
+}
+
+if (rankingBtnMobile) {
+  rankingBtnMobile.addEventListener('click', () => {
+    mobileMenuDropdown.classList.remove('active');
+    mobileMenuBtn.classList.remove('active');
+    displayRanking();
+    rankingModal.style.display = 'flex';
+  });
+}
+
+if (pendingRewardsBtnMobile) {
+  pendingRewardsBtnMobile.addEventListener('click', () => {
+    mobileMenuDropdown.classList.remove('active');
+    mobileMenuBtn.classList.remove('active');
+    displayPendingRewards();
+    pendingRewardsModal.style.display = 'flex';
+  });
+}
+
 // Reset rankingu - weryfikacja hasła i potwierdzenie
 const resetRankingPasswordModal = document.getElementById('resetRankingPasswordModal');
 const resetRankingPasswordInput = document.getElementById('resetRankingPasswordInput');

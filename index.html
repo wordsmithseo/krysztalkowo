@@ -148,7 +148,8 @@
         </button>
       </div>
 
-      <nav class="main-nav">
+      <!-- Nawigacja desktop -->
+      <nav class="main-nav main-nav-desktop">
         <button id="adminBtn" class="nav-btn admin-btn">
           <span class="nav-icon">⚙️</span>
           <span class="nav-label">Panel admina</span>
@@ -162,6 +163,29 @@
           <span class="nav-label">Zaległe nagrody</span>
         </button>
       </nav>
+
+      <!-- Nawigacja mobile (dropdown) -->
+      <div class="main-nav-mobile">
+        <button id="mobileMenuBtn" class="mobile-menu-btn">
+          <span class="mobile-menu-icon">☰</span>
+          <span class="mobile-menu-label">Menu</span>
+          <span class="mobile-menu-arrow">▼</span>
+        </button>
+        <div id="mobileMenuDropdown" class="mobile-menu-dropdown">
+          <button id="adminBtnMobile" class="mobile-menu-item">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-label">Panel admina</span>
+          </button>
+          <button id="rankingBtnMobile" class="mobile-menu-item">
+            <span class="nav-icon">🏆</span>
+            <span class="nav-label">Ranking</span>
+          </button>
+          <button id="pendingRewardsBtnMobile" class="mobile-menu-item">
+            <span class="nav-icon">📋</span>
+            <span class="nav-label">Zaległe nagrody</span>
+          </button>
+        </div>
+      </div>
 
       <div class="children-selector">
         <h3 class="children-selector-title">Wybierz dziecko:</h3>
