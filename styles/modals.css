@@ -1288,6 +1288,10 @@
 }
 
 /* ===== TŁA RZADKOŚCI DLA WYŚWIETLANIA NAGRÓD ===== */
+.reward-reveal-content {
+  padding: 3rem 2rem !important;
+}
+
 .reward-reveal-content.rarity-common {
   background: linear-gradient(135deg,
     rgba(34, 197, 94, 0.95) 0%,
@@ -1917,6 +1921,10 @@
   .reward-reveal {
     padding: 2.25rem 1rem;
     font-size: 1.3rem;
+  }
+
+  .reward-reveal-content {
+    padding: 2.5rem 1.25rem !important;
   }
 
   .reward-reveal img {
