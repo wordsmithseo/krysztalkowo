@@ -686,10 +686,8 @@ if (pendingRewardsBtnMobile) {
 }
 
 // Reset rankingu - weryfikacja hasła i potwierdzenie
-const resetRankingPasswordModal = document.getElementById('resetRankingPasswordModal');
 const resetRankingPasswordInput = document.getElementById('resetRankingPasswordInput');
 const confirmResetRankingBtn = document.getElementById('confirmResetRankingBtn');
-const resetRankingSuccessModal = document.getElementById('resetRankingSuccessModal');
 const closeResetSuccessBtn = document.getElementById('closeResetSuccessBtn');
 
 if (confirmResetRankingBtn && resetRankingPasswordInput) {
