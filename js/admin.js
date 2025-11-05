@@ -1,8 +1,8 @@
 // ===== PANEL ADMINISTRACYJNY =====
 import { getCategories, getRewards, getChildren, setIsLoggedIn, state, getCurrentUser } from './state.js';
-import { 
-  addCategory, 
-  deleteCategory, 
+import {
+  addCategory,
+  deleteCategory,
   updateCategory,
   updateCategoryOrder,
   addReward,
@@ -14,7 +14,10 @@ import {
   addChild,
   updateChild,
   deleteChild,
-  changeUserPassword
+  changeUserPassword,
+  getSuggestedCategories,
+  getSuggestedRewards,
+  getCategoryImagesFromOtherChildren
 } from './database.js';
 import { getCurrentAuthUser } from './auth.js';
 
@@ -72,7 +75,7 @@ export const updateAdminHeaderInfo = () => {
 
 export const renderAdminCategories = () => {
   const categories = getCategories();
-  
+
   categoryList.innerHTML = categories.map(cat => `
     <li data-id="${cat.id}">
       <div class="left">
@@ -82,7 +85,7 @@ export const renderAdminCategories = () => {
       <div style="display:flex;gap:0.5rem;align-items:center;">
         <div class="crystal-controls">
           <button onclick="window.modifyCrystalsHandler('${cat.id}', -1)" title="Odejmij kryształek">−</button>
-          <span class="count">${cat.count || 0}</span>
+          <span class="count">${cat.count || 0} / ${cat.goal || 10}</span>
           <button onclick="window.modifyCrystalsHandler('${cat.id}', 1)" title="Dodaj kryształek">+</button>
         </div>
         <div class="action-buttons">
@@ -249,10 +252,10 @@ export const handleSaveEdit = async () => {
   }
 };
 
-const renderImagePreviews = (currentImage) => {
+const renderImagePreviews = async (currentImage) => {
   const previewContainer = document.getElementById('imagePreviewsEdit');
-  
-  const images = [
+
+  const defaultImages = [
     'https://em-content.zobj.net/source/google/387/avocado_1f951.png',
     'https://em-content.zobj.net/source/google/387/artist-palette_1f3a8.png',
     'https://em-content.zobj.net/source/google/387/open-book_1f4d6.png',
@@ -266,10 +269,37 @@ const renderImagePreviews = (currentImage) => {
     'https://em-content.zobj.net/source/google/387/flexed-biceps_1f4aa.png',
     'https://em-content.zobj.net/source/google/387/water-wave_1f30a.png'
   ];
-  
-  previewContainer.innerHTML = images.map(url => 
+
+  // Pobierz obrazki z innych dzieci
+  const currentChildId = getCurrentUser();
+  const otherChildrenImages = await getCategoryImagesFromOtherChildren(currentChildId);
+
+  // Połącz domyślne obrazki z obrazkami innych dzieci (unikalne)
+  const allImages = [...new Set([...defaultImages, ...otherChildrenImages])];
+
+  let html = '';
+
+  // Jeśli są obrazki z innych dzieci, pokaż je w osobnej sekcji
+  if (otherChildrenImages.length > 0) {
+    html += '<div style="margin-bottom: 1rem;">';
+    html += '<div style="font-size: 0.85rem; font-weight: 600; color: #6a11cb; margin-bottom: 0.5rem;">💡 Obrazki z innych profili:</div>';
+    html += '<div class="image-previews">';
+    html += otherChildrenImages.map(url =>
+      `<img src="${url}" class="image-preview" onclick="window.selectImageHandler('${url}')" alt="Preview">`
+    ).join('');
+    html += '</div></div>';
+  }
+
+  // Dodaj domyślne obrazki
+  html += '<div>';
+  html += '<div style="font-size: 0.85rem; font-weight: 600; color: #666; margin-bottom: 0.5rem;">Domyślne obrazki:</div>';
+  html += '<div class="image-previews">';
+  html += defaultImages.map(url =>
     `<img src="${url}" class="image-preview" onclick="window.selectImageHandler('${url}')" alt="Preview">`
   ).join('');
+  html += '</div></div>';
+
+  previewContainer.innerHTML = html;
 };
 
 export const handleSelectImage = (url) => {
@@ -634,6 +664,80 @@ const showConfirmModal = (title, message, onConfirm) => {
   modal.style.display = 'flex';
 };
 
+// Renderowanie sugestii kategorii
+export const renderCategorySuggestions = async () => {
+  const currentChildId = getCurrentUser();
+  const suggestionsContainer = document.getElementById('categorySuggestions');
+
+  if (!suggestionsContainer) return;
+
+  const suggestions = await getSuggestedCategories(currentChildId);
+
+  if (suggestions.length === 0) {
+    suggestionsContainer.innerHTML = '';
+    return;
+  }
+
+  suggestionsContainer.innerHTML = `
+    <div style="margin-top: 0.75rem; padding: 0.75rem; background: rgba(106, 17, 203, 0.05); border-radius: 0.75rem; border: 1px solid rgba(106, 17, 203, 0.1);">
+      <div style="font-size: 0.85rem; font-weight: 600; color: #6a11cb; margin-bottom: 0.5rem;">💡 Kategorie z innych profili:</div>
+      <div class="suggestions-list">
+        ${suggestions.map(cat => `
+          <button class="suggestion-btn" onclick="window.fillCategoryFromSuggestion('${cat.name.replace(/'/g, "\\'")}', ${cat.goal}, '${(cat.image || '').replace(/'/g, "\\'")}')">
+            ${cat.name}
+          </button>
+        `).join('')}
+      </div>
+    </div>
+  `;
+};
+
+// Renderowanie sugestii nagród
+export const renderRewardSuggestions = async () => {
+  const currentChildId = getCurrentUser();
+  const suggestionsContainer = document.getElementById('rewardSuggestions');
+
+  if (!suggestionsContainer) return;
+
+  const suggestions = await getSuggestedRewards(currentChildId);
+
+  if (suggestions.length === 0) {
+    suggestionsContainer.innerHTML = '';
+    return;
+  }
+
+  suggestionsContainer.innerHTML = `
+    <div style="margin-top: 0.75rem; padding: 0.75rem; background: rgba(106, 17, 203, 0.05); border-radius: 0.75rem; border: 1px solid rgba(106, 17, 203, 0.1);">
+      <div style="font-size: 0.85rem; font-weight: 600; color: #6a11cb; margin-bottom: 0.5rem;">💡 Nagrody z innych profili:</div>
+      <div class="suggestions-list">
+        ${suggestions.map(reward => `
+          <button class="suggestion-btn" onclick="window.fillRewardFromSuggestion('${reward.name.replace(/'/g, "\\'")}', '${(reward.image || '').replace(/'/g, "\\'")}', ${reward.probability})">
+            ${reward.name}
+          </button>
+        `).join('')}
+      </div>
+    </div>
+  `;
+};
+
+// Wypełnianie inputu kategorii z sugestii
+export const fillCategoryFromSuggestion = (name, goal, image) => {
+  const nameInput = document.getElementById('categoryNameInput');
+  if (nameInput) {
+    nameInput.value = name;
+    nameInput.focus();
+  }
+};
+
+// Wypełnianie inputu nagrody z sugestii
+export const fillRewardFromSuggestion = (name, image, probability) => {
+  const nameInput = document.getElementById('rewardNameInput');
+  if (nameInput) {
+    nameInput.value = name;
+    nameInput.focus();
+  }
+};
+
 if (typeof window !== 'undefined') {
   window.editCategoryHandler = handleEditCategory;
   window.deleteCategoryHandler = handleDeleteCategory;
@@ -643,4 +747,6 @@ if (typeof window !== 'undefined') {
   window.modifyCrystalsHandler = handleModifyCrystals;
   window.editChildHandler = openEditChildModal;
   window.deleteChildHandler = handleDeleteChild;
+  window.fillCategoryFromSuggestion = fillCategoryFromSuggestion;
+  window.fillRewardFromSuggestion = fillRewardFromSuggestion;
 }

@@ -637,13 +637,132 @@ export const deleteChild = async (childId) => {
   try {
     // Usuwamy dziecko z listy children
     await remove(ref(db, `children/${childId}`));
-    
+
     // Usuwamy wszystkie dane użytkownika (kategorie, nagrody, ranking itp.)
     await remove(ref(db, `users/${childId}`));
-    
+
     return true;
   } catch (error) {
     console.error('Błąd usuwania dziecka:', error);
     return false;
+  }
+};
+
+// Pobierz sugestie kategorii z innych dzieci
+export const getSuggestedCategories = async (currentChildId) => {
+  try {
+    const childrenRef = ref(db, 'children');
+    const childrenSnapshot = await get(childrenRef);
+    const childrenData = childrenSnapshot.val();
+
+    if (!childrenData) return [];
+
+    const suggestions = new Map(); // Używamy Map aby uniknąć duplikatów
+
+    // Przeiteruj po wszystkich dzieciach
+    for (const childId in childrenData) {
+      // Pomiń aktualne dziecko
+      if (childId === currentChildId) continue;
+
+      // Pobierz kategorie tego dziecka
+      const categoriesRef = ref(db, `users/${childId}/categories`);
+      const categoriesSnapshot = await get(categoriesRef);
+      const categoriesData = categoriesSnapshot.val();
+
+      if (categoriesData) {
+        Object.values(categoriesData).forEach(cat => {
+          if (cat.name && !suggestions.has(cat.name)) {
+            suggestions.set(cat.name, {
+              name: cat.name,
+              goal: cat.goal || 10,
+              image: cat.image || ''
+            });
+          }
+        });
+      }
+    }
+
+    return Array.from(suggestions.values());
+  } catch (error) {
+    console.error('Błąd pobierania sugestii kategorii:', error);
+    return [];
+  }
+};
+
+// Pobierz sugestie nagród z innych dzieci
+export const getSuggestedRewards = async (currentChildId) => {
+  try {
+    const childrenRef = ref(db, 'children');
+    const childrenSnapshot = await get(childrenRef);
+    const childrenData = childrenSnapshot.val();
+
+    if (!childrenData) return [];
+
+    const suggestions = new Map(); // Używamy Map aby uniknąć duplikatów
+
+    // Przeiteruj po wszystkich dzieciach
+    for (const childId in childrenData) {
+      // Pomiń aktualne dziecko
+      if (childId === currentChildId) continue;
+
+      // Pobierz nagrody tego dziecka
+      const rewardsRef = ref(db, `users/${childId}/rewards`);
+      const rewardsSnapshot = await get(rewardsRef);
+      const rewardsData = rewardsSnapshot.val();
+
+      if (rewardsData) {
+        Object.values(rewardsData).forEach(reward => {
+          if (reward.name && !suggestions.has(reward.name)) {
+            suggestions.set(reward.name, {
+              name: reward.name,
+              image: reward.image || '',
+              probability: reward.probability || 50
+            });
+          }
+        });
+      }
+    }
+
+    return Array.from(suggestions.values());
+  } catch (error) {
+    console.error('Błąd pobierania sugestii nagród:', error);
+    return [];
+  }
+};
+
+// Pobierz obrazki używane przez inne dzieci
+export const getCategoryImagesFromOtherChildren = async (currentChildId) => {
+  try {
+    const childrenRef = ref(db, 'children');
+    const childrenSnapshot = await get(childrenRef);
+    const childrenData = childrenSnapshot.val();
+
+    if (!childrenData) return [];
+
+    const images = new Set(); // Używamy Set aby uniknąć duplikatów
+
+    // Przeiteruj po wszystkich dzieciach
+    for (const childId in childrenData) {
+      // Pomiń aktualne dziecko
+      if (childId === currentChildId) continue;
+
+      // Pobierz kategorie tego dziecka
+      const categoriesRef = ref(db, `users/${childId}/categories`);
+      const categoriesSnapshot = await get(categoriesRef);
+      const categoriesData = categoriesSnapshot.val();
+
+      if (categoriesData) {
+        Object.values(categoriesData).forEach(cat => {
+          if (cat.image && cat.image.trim()) {
+            images.add(cat.image.trim());
+          }
+        });
+      }
+    }
+
+    return Array.from(images);
+  } catch (error) {
+    console.error('Błąd pobierania obrazków z innych profili:', error);
+    return [];
   }
 };

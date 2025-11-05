@@ -37,7 +37,9 @@ import {
   handleEditReward,
   handleSaveRewardEdit,
   updateRewardPreview,
-  updateProbabilityInfo
+  updateProbabilityInfo,
+  renderCategorySuggestions,
+  renderRewardSuggestions
 } from './admin.js';
 import { getAvatar } from './database.js';
 import { setupAuthListener, loginUser, registerUser, logoutUser, getCurrentAuthUser } from './auth.js';
@@ -396,6 +398,8 @@ elements.adminBtn.addEventListener('click', () => {
     renderChildrenList();
     initializeSortable();
     updateAdminHeaderInfo();
+    renderCategorySuggestions();
+    renderRewardSuggestions();
   } else {
     passwordModal.style.display = 'flex';
     adminPasswordInput.focus();
@@ -436,6 +440,8 @@ submitPassword.addEventListener('click', async () => {
     renderChildrenList();
     initializeSortable();
     updateAdminHeaderInfo();
+    renderCategorySuggestions();
+    renderRewardSuggestions();
   } else {
     alert('Nieprawidłowe hasło!');
   }

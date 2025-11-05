@@ -171,6 +171,7 @@
           <input type="text" id="categoryNameInput" placeholder="Nazwa kategorii">
           <button id="addCategoryBtn" class="add-btn">Dodaj</button>
         </div>
+        <div id="categorySuggestions" class="suggestions-container"></div>
       </div>
 
       <div class="admin-section">
@@ -184,6 +185,7 @@
           <input type="text" id="rewardNameInput" placeholder="Nazwa nagrody">
           <button id="addRewardBtn" class="add-btn">Dodaj</button>
         </div>
+        <div id="rewardSuggestions" class="suggestions-container"></div>
         <ul id="rewardList"></ul>
       </div>
 
@@ -239,25 +241,25 @@
   </div>
 
   <div id="editModal" class="modal">
-    <div class="modal-content">
+    <div class="modal-content edit-modal-content">
       <span class="close-btn">&times;</span>
-      <h2>Edytuj kategorię</h2>
+      <h2 style="font-size: 1.75rem; margin-bottom: 1.5rem;">Edytuj kategorię</h2>
 
-      <label>Nazwa:</label>
-      <input type="text" id="editCategoryName">
+      <label style="font-size: 1.05rem; margin-top: 0.75rem;">Nazwa:</label>
+      <input type="text" id="editCategoryName" style="font-size: 1.1rem; padding: 0.9rem 1rem;">
 
-      <div id="currentCrystalsInfo" style="margin: 0.75rem 0; padding: 0.75rem; background: linear-gradient(135deg, rgba(106, 17, 203, 0.08), rgba(138, 43, 226, 0.08)); border: 2px solid rgba(106, 17, 203, 0.2); border-radius: 0.75rem; font-size: 0.95rem; font-weight: 600; color: #6a11cb; text-align: center;"></div>
+      <div id="currentCrystalsInfo" style="margin: 1rem 0; padding: 1rem; background: linear-gradient(135deg, rgba(106, 17, 203, 0.08), rgba(138, 43, 226, 0.08)); border: 2px solid rgba(106, 17, 203, 0.2); border-radius: 0.75rem; font-size: 1rem; font-weight: 600; color: #6a11cb; text-align: center;"></div>
 
-      <label>Cel (liczba kryształków):</label>
-      <input type="number" id="editCategoryGoal" min="1">
+      <label style="font-size: 1.05rem; margin-top: 0.75rem;">Cel (liczba kryształków):</label>
+      <input type="number" id="editCategoryGoal" min="1" style="font-size: 1.1rem; padding: 0.9rem 1rem;">
 
-      <label>Obrazek (URL):</label>
-      <input type="url" id="editCategoryImage" placeholder="https://...">
+      <label style="font-size: 1.05rem; margin-top: 0.75rem;">Obrazek (URL):</label>
+      <input type="url" id="editCategoryImage" placeholder="https://..." style="font-size: 1.05rem; padding: 0.9rem 1rem;">
       <div id="imagePreviewsEdit" class="image-previews"></div>
 
-      <div style="margin-top:1rem;display:flex;gap:.5rem">
-        <button id="saveEditBtn" class="submit-btn">Zapisz</button>
-        <button id="backToAdminBtn" class="cancel-btn">Anuluj</button>
+      <div style="margin-top:1.5rem;display:flex;gap:.75rem">
+        <button id="saveEditBtn" class="submit-btn" style="font-size: 1.1rem; padding: 0.9rem 1.75rem;">Zapisz</button>
+        <button id="backToAdminBtn" class="cancel-btn" style="font-size: 1.1rem; padding: 0.9rem 1.75rem;">Anuluj</button>
       </div>
     </div>
   </div>
