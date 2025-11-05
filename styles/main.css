@@ -581,18 +581,20 @@ body.nina-bg {
 .crystal-app input[type="number"],
 .crystal-app input[type="url"] {
   width: 100%;
-  padding: 0.7rem 0.8rem;
+  padding: 0.9rem 1rem;
   margin: 0.2rem 0;
-  border: 2px solid #ddd;
-  border-radius: 0.625rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 0.875rem;
   font-size: 1rem;
   box-sizing: border-box;
   background: #fff;
+  transition: all 0.2s ease;
 }
 
 .crystal-app input:focus {
   border-color: #6a11cb;
   outline: none;
+  box-shadow: 0 0 0 3px rgba(106, 17, 203, 0.1);
 }
 
 .crystal-app label {
@@ -606,16 +608,16 @@ body.nina-bg {
 .add-btn,
 .change-btn,
 .set-avatar-btn {
-  padding: 0.7rem 1.5rem;
+  padding: 0.9rem 1.5rem;
   border: none;
-  border-radius: 0.625rem;
+  border-radius: 0.875rem;
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  background-color: #6a11cb;
+  background: linear-gradient(135deg, #6a11cb, #8a2be2);
   color: #fff;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 12px rgba(106, 17, 203, 0.3);
+  transition: all 0.2s ease;
 }
 
 .submit-btn:hover,
@@ -623,24 +625,26 @@ body.nina-bg {
 .change-btn:hover,
 .set-avatar-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 6px 16px rgba(106, 17, 203, 0.4);
 }
 
 .cancel-btn {
-  padding: 0.7rem 1.5rem;
+  padding: 0.9rem 1.5rem;
   border: none;
-  border-radius: 0.625rem;
+  border-radius: 0.875rem;
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  background-color: #ccc;
-  color: #333;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  transition: background-color 0.2s;
+  background: linear-gradient(135deg, #e0e0e0, #d0d0d0);
+  color: #555;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
 }
 
 .cancel-btn:hover {
-  background-color: #bbb;
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #d0d0d0, #c0c0c0);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
 }
 
 @media (min-width: 769px) {

@@ -158,14 +158,14 @@
 
 .auth-modal-content input {
   width: 100%;
-  padding: 0.8rem 1rem;
+  padding: 0.9rem 1rem;
   margin: 0.3rem 0 0 0;
   border: 2px solid #e0e0e0;
-  border-radius: 0.75rem;
+  border-radius: 0.875rem;
   font-size: 1rem;
   box-sizing: border-box;
   background: #fff;
-  transition: border-color 0.2s;
+  transition: all 0.2s ease;
 }
 
 .auth-modal-content input:focus {
@@ -177,12 +177,18 @@
 .auth-modal-content .submit-btn {
   padding: 0.9rem 1.5rem;
   font-size: 1.1rem;
-  border-radius: 0.75rem;
+  font-weight: 700;
+  border-radius: 0.875rem;
   background: linear-gradient(135deg, #6a11cb, #8a2be2);
+  border: none;
+  color: #fff;
   box-shadow: 0 6px 16px rgba(106, 17, 203, 0.3);
+  transition: all 0.2s ease;
+  cursor: pointer;
 }
 
 .auth-modal-content .submit-btn:hover {
+  transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(106, 17, 203, 0.4);
 }
 
@@ -375,10 +381,10 @@
   padding: 0.9rem 1rem;
   font-size: 1.05rem;
   border: 2px solid #e0e0e0;
-  border-radius: 0.75rem;
+  border-radius: 0.875rem;
   box-sizing: border-box;
   background: #fff;
-  transition: border-color 0.2s;
+  transition: all 0.2s ease;
 }
 
 .password-modal-content input[type="password"]:focus {
@@ -390,12 +396,18 @@
 .password-modal-content .submit-btn {
   padding: 0.9rem 1.5rem;
   font-size: 1.1rem;
-  border-radius: 0.75rem;
+  font-weight: 700;
+  border-radius: 0.875rem;
   background: linear-gradient(135deg, #6a11cb, #8a2be2);
+  border: none;
+  color: #fff;
   box-shadow: 0 6px 16px rgba(106, 17, 203, 0.3);
+  transition: all 0.2s ease;
+  cursor: pointer;
 }
 
 .password-modal-content .submit-btn:hover {
+  transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(106, 17, 203, 0.4);
 }
 
@@ -472,10 +484,10 @@
   padding: 0.9rem 1rem;
   font-size: 1.05rem;
   border: 2px solid #e0e0e0;
-  border-radius: 0.75rem;
+  border-radius: 0.875rem;
   box-sizing: border-box;
   background: #fff;
-  transition: border-color 0.2s;
+  transition: all 0.2s ease;
 }
 
 #childModal input[type="text"]:focus {
@@ -647,14 +659,19 @@
 .admin-section input[type="text"],
 .admin-section input[type="number"],
 .admin-section input[type="url"],
-.admin-section input[type="password"] {
+.admin-section input[type="password"],
+.admin-section select {
   padding: 0.9rem 1rem;
   font-size: 1.05rem;
-  border: 2px solid #ddd;
-  border-radius: 0.75rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 0.875rem;
+  background: #fff;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
 }
 
-.admin-section input:focus {
+.admin-section input:focus,
+.admin-section select:focus {
   border-color: #6a11cb;
   outline: none;
   box-shadow: 0 0 0 3px rgba(106, 17, 203, 0.1);
@@ -666,7 +683,22 @@
 .admin-section .submit-btn {
   padding: 0.9rem 1.5rem;
   font-size: 1.05rem;
-  border-radius: 0.75rem;
+  font-weight: 700;
+  border-radius: 0.875rem;
+  background: linear-gradient(135deg, #6a11cb, #8a2be2);
+  border: none;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(106, 17, 203, 0.3);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.admin-section .add-btn:hover,
+.admin-section .change-btn:hover,
+.admin-section .set-avatar-btn:hover,
+.admin-section .submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(106, 17, 203, 0.4);
 }
 
 @media (min-width: 769px) {
@@ -862,16 +894,18 @@
   display: flex;
   align-items: center;
   padding: 1rem 1.25rem;
-  border: 2px solid #ddd;
-  border-radius: 0.875rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 1rem;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   background: #fff;
 }
 
 .gender-option:hover {
-  background: #f8f8f8;
+  background: linear-gradient(135deg, rgba(106, 17, 203, 0.05), rgba(138, 43, 226, 0.05));
   border-color: #6a11cb;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(106, 17, 203, 0.1);
 }
 
 .gender-option input[type="radio"] {
@@ -883,9 +917,10 @@
 }
 
 .gender-option:has(input[type="radio"]:checked) {
-  background: #f0e7ff;
+  background: linear-gradient(135deg, rgba(106, 17, 203, 0.1), rgba(138, 43, 226, 0.1));
   border-color: #6a11cb;
-  box-shadow: 0 4px 12px rgba(106, 17, 203, 0.15);
+  box-shadow: 0 4px 12px rgba(106, 17, 203, 0.2);
+  transform: translateY(-2px);
 }
 
 .gender-label {
@@ -2199,13 +2234,13 @@
 }
 
 .suggestion-btn {
-  padding: 0.5rem 1rem;
+  padding: 0.65rem 1.1rem;
   background: linear-gradient(135deg, rgba(106, 17, 203, 0.1), rgba(138, 43, 226, 0.1));
-  border: 1px solid rgba(106, 17, 203, 0.3);
-  border-radius: 1rem;
+  border: 2px solid rgba(106, 17, 203, 0.25);
+  border-radius: 1.25rem;
   color: #6a11cb;
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
@@ -2215,11 +2250,12 @@
   background: linear-gradient(135deg, rgba(106, 17, 203, 0.2), rgba(138, 43, 226, 0.2));
   border-color: rgba(106, 17, 203, 0.5);
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(106, 17, 203, 0.2);
+  box-shadow: 0 6px 12px rgba(106, 17, 203, 0.25);
 }
 
 .suggestion-btn:active {
   transform: translateY(0);
+  box-shadow: 0 4px 8px rgba(106, 17, 203, 0.2);
 }
 
 /* ===== MODAL EDYCJI KATEGORII ===== */
