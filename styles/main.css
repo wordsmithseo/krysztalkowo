@@ -179,6 +179,99 @@ body.nina-bg {
   display: none;
 }
 
+/* ===== INFORMACJA O UŻYTKOWNIKU ===== */
+.user-info-bar {
+  width: 100%;
+  max-width: 48rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1rem;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 1.25rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: 2px solid rgba(106, 17, 203, 0.1);
+}
+
+.user-info-content {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.user-info-icon {
+  font-size: 2rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  flex-shrink: 0;
+}
+
+.user-info-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.user-info-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.user-info-email {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #6a11cb;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border: none;
+  border-radius: 0.875rem;
+  background: linear-gradient(135deg, rgba(231, 76, 60, 0.1), rgba(192, 57, 43, 0.1));
+  border: 2px solid rgba(231, 76, 60, 0.2);
+  color: #e74c3c;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  flex-shrink: 0;
+}
+
+.logout-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.25);
+  background: linear-gradient(135deg, rgba(231, 76, 60, 0.15), rgba(192, 57, 43, 0.15));
+  border-color: rgba(231, 76, 60, 0.3);
+}
+
+.logout-btn:active {
+  transform: translateY(0);
+}
+
+.logout-icon {
+  font-size: 1.25rem;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+.logout-text {
+  font-size: 0.95rem;
+}
+
 /* ===== NAWIGACJA ===== */
 .main-nav {
   display: flex;
@@ -442,6 +535,36 @@ body.nina-bg {
 }
 
 @media (max-width: 768px) {
+  .user-info-bar {
+    padding: 0.875rem 1.25rem;
+    gap: 0.75rem;
+  }
+
+  .user-info-icon {
+    font-size: 1.75rem;
+  }
+
+  .user-info-label {
+    font-size: 0.7rem;
+  }
+
+  .user-info-email {
+    font-size: 0.9rem;
+  }
+
+  .logout-btn {
+    padding: 0.65rem 1rem;
+    gap: 0.4rem;
+  }
+
+  .logout-icon {
+    font-size: 1.1rem;
+  }
+
+  .logout-text {
+    font-size: 0.85rem;
+  }
+
   .main-nav {
     padding: 0.5rem;
     gap: 0.5rem;
@@ -489,6 +612,35 @@ body.nina-bg {
 }
 
 @media (max-width: 480px) {
+  .user-info-bar {
+    padding: 0.75rem 1rem;
+    gap: 0.5rem;
+  }
+
+  .user-info-icon {
+    font-size: 1.5rem;
+  }
+
+  .user-info-label {
+    font-size: 0.65rem;
+  }
+
+  .user-info-email {
+    font-size: 0.85rem;
+  }
+
+  .logout-btn {
+    padding: 0.6rem 0.75rem;
+  }
+
+  .logout-text {
+    display: none;
+  }
+
+  .logout-icon {
+    font-size: 1.3rem;
+  }
+
   .main-nav {
     flex-direction: column;
     gap: 0.5rem;
