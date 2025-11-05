@@ -301,8 +301,11 @@
 
 @media (max-width: 768px) {
   .category-card {
-    width: 13rem;
+    width: 15.5rem;
     min-height: 20rem;
+    box-shadow:
+      0 15px 30px rgba(0, 0, 0, 0.25),
+      0 0 40px var(--card-glow-color, rgba(0, 0, 0, 0.1));
   }
 
   .category-name {
