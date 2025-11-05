@@ -196,17 +196,25 @@ export const handleDeleteCategory = async (categoryId) => {
 export const handleEditCategory = (categoryId) => {
   const categories = getCategories();
   const cat = categories.find(c => c.id === categoryId);
-  
+
   if (!cat) return;
-  
+
   document.getElementById('editCategoryName').value = cat.name || '';
   document.getElementById('editCategoryGoal').value = cat.goal || 10;
   document.getElementById('editCategoryImage').value = cat.image || '';
-  
+
+  // Wyświetl aktualną liczbę kryształków
+  const currentCount = cat.count || 0;
+  const currentGoal = cat.goal || 10;
+  const currentCrystalsInfo = document.getElementById('currentCrystalsInfo');
+  if (currentCrystalsInfo) {
+    currentCrystalsInfo.innerHTML = `💎 Obecnie: <strong>${currentCount} / ${currentGoal}</strong> kryształków`;
+  }
+
   editModal.dataset.editingId = categoryId;
-  
+
   renderImagePreviews(cat.image);
-  
+
   adminModal.style.display = 'none';
   editModal.style.display = 'flex';
 };
@@ -298,19 +306,24 @@ export const getRarityClass = (probability) => {
   if (!probability || probability >= 60) return 'rarity-common';
   if (probability >= 30) return 'rarity-uncommon';
   if (probability >= 10) return 'rarity-rare';
-  return 'rarity-epic';
+  if (probability >= 1) return 'rarity-epic';
+  return 'rarity-legendary';
 };
 
 export const getRarityName = (probability) => {
   if (!probability || probability >= 60) return 'Częsta';
   if (probability >= 30) return 'Rzadsza';
   if (probability >= 10) return 'Rzadka';
-  return 'Epicka';
+  if (probability >= 1) return 'Epicka';
+  return 'Legendarna';
 };
 
 export const calculateFrequency = (probability) => {
   if (!probability || probability <= 0) return '';
   const frequency = Math.round(100 / probability);
+  if (frequency > 1000) {
+    return `~1 na ${(frequency / 1000).toFixed(1)}k losowań`;
+  }
   return `~1 na ${frequency} losowań`;
 };
 
@@ -435,20 +448,34 @@ export const setLoggedInUi = (isLoggedIn) => {
   setIsLoggedIn(isLoggedIn);
 };
 
-export const handleSetAvatar = async (user) => {
+export const handleSetAvatar = async () => {
   const input = document.getElementById('avatarUrlInput');
   const url = input.value.trim();
-  
+
   if (!url) {
     alert('Podaj URL avatara!');
     return;
   }
-  
-  const success = await setAvatar(user, url);
-  
+
+  // Pobierz obecnie wybrane dziecko
+  const currentUserId = getCurrentUser();
+  const children = getChildren();
+  const currentChild = children.find(c => c.id === currentUserId);
+
+  if (!currentChild) {
+    alert('Wybierz dziecko, dla którego chcesz ustawić avatar!');
+    return;
+  }
+
+  const success = await setAvatar(currentUserId, url);
+
   if (success) {
     input.value = '';
-    alert(`Avatar dla ${user} został zaktualizowany!`);
+    alert(`Avatar dla ${currentChild.name} został zaktualizowany!`);
+    // Odśwież przyciski użytkowników, aby pokazać nowy avatar
+    if (window.updateUserButtons) {
+      window.updateUserButtons();
+    }
   }
 };
 

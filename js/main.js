@@ -61,8 +61,7 @@ const saveEditBtn = document.getElementById('saveEditBtn');
 const backToAdminBtn = document.getElementById('backToAdminBtn');
 const changePasswordBtn = document.getElementById('changePasswordBtn');
 const addRewardBtn = document.getElementById('addRewardBtn');
-const setAvatarMaksBtn = document.getElementById('setAvatarMaksBtn');
-const setAvatarNinaBtn = document.getElementById('setAvatarNinaBtn');
+const setAvatarBtn = document.getElementById('setAvatarBtn');
 const resetRankingBtn = document.getElementById('resetRankingBtn');
 const addChildBtn = document.getElementById('addChildBtn');
 const saveChildBtn = document.getElementById('saveChildBtn');
@@ -582,11 +581,8 @@ changePasswordBtn.addEventListener('click', async () => {
   changePasswordBtn.textContent = 'Zmień';
 });
 
-if (setAvatarMaksBtn) {
-  setAvatarMaksBtn.addEventListener('click', () => handleSetAvatar('maks'));
-}
-if (setAvatarNinaBtn) {
-  setAvatarNinaBtn.addEventListener('click', () => handleSetAvatar('nina'));
+if (setAvatarBtn) {
+  setAvatarBtn.addEventListener('click', handleSetAvatar);
 }
 
 if (resetRankingBtn) {

@@ -187,12 +187,10 @@
 
       <div class="admin-section">
         <h3>Zmień avatara</h3>
+        <p style="font-size:0.9rem;color:#666;margin:0 0 0.75rem 0;">Avatar zostanie ustawiony dla obecnie wybranego dziecka</p>
         <div class="form-grid" style="grid-template-columns:1fr">
           <input type="url" id="avatarUrlInput" placeholder="URL avatara">
-          <div style="display:flex;gap:.5rem">
-            <button id="setAvatarMaksBtn" class="set-avatar-btn">Avatar Maksa</button>
-            <button id="setAvatarNinaBtn" class="set-avatar-btn">Avatar Niny</button>
-          </div>
+          <button id="setAvatarBtn" class="set-avatar-btn">Ustaw avatar</button>
         </div>
       </div>
 
@@ -234,17 +232,19 @@
     <div class="modal-content">
       <span class="close-btn">&times;</span>
       <h2>Edytuj kategorię</h2>
-      
+
       <label>Nazwa:</label>
       <input type="text" id="editCategoryName">
-      
+
+      <div id="currentCrystalsInfo" style="margin: 0.75rem 0; padding: 0.75rem; background: linear-gradient(135deg, rgba(106, 17, 203, 0.08), rgba(138, 43, 226, 0.08)); border: 2px solid rgba(106, 17, 203, 0.2); border-radius: 0.75rem; font-size: 0.95rem; font-weight: 600; color: #6a11cb; text-align: center;"></div>
+
       <label>Cel (liczba kryształków):</label>
       <input type="number" id="editCategoryGoal" min="1">
-      
+
       <label>Obrazek (URL):</label>
       <input type="url" id="editCategoryImage" placeholder="https://...">
       <div id="imagePreviewsEdit" class="image-previews"></div>
-      
+
       <div style="margin-top:1rem;display:flex;gap:.5rem">
         <button id="saveEditBtn" class="submit-btn">Zapisz</button>
         <button id="backToAdminBtn" class="cancel-btn">Anuluj</button>
@@ -264,7 +264,7 @@
       <input type="url" id="editRewardImage" placeholder="https://...">
 
       <label>Szansa wylosowania (%):</label>
-      <input type="number" id="editRewardProbability" min="1" max="100" value="50" placeholder="50">
+      <input type="number" id="editRewardProbability" min="0.01" max="100" step="0.01" value="50" placeholder="50">
       <div id="probabilityInfo" class="probability-info"></div>
 
       <div id="rewardImagePreview" class="reward-preview-container"></div>

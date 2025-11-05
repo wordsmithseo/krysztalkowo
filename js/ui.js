@@ -94,30 +94,39 @@ export const hideProfileLoader = () => {
 
 export const renderCategories = () => {
   if (renderScheduled) return;
-  
+
   renderScheduled = true;
   requestAnimationFrame(() => {
     const categories = getCategories();
     const user = getCurrentUser();
     const fragment = document.createDocumentFragment();
-    
+
     // Preloaduj obrazki
     preloadCategoryImages(categories);
-    
+
     categories.forEach(cat => {
       const card = createCategoryCard(cat, user);
       fragment.appendChild(card);
     });
-    
+
     elements.container.innerHTML = '';
     elements.container.appendChild(fragment);
     renderScheduled = false;
-    
+
     // Sprawdź czy pokazać wskazówki
     showEmptyStateGuide();
-    
+
     // Ukryj loader profilu po wyrenderowaniu
     hideProfileLoader();
+
+    // Przywróć modal nagród, jeśli kategoria ma pendingReset
+    const pendingCategory = categories.find(cat => cat.pendingReset === true);
+    if (pendingCategory) {
+      // Opóźnij otwarcie modalu, żeby UI się zdążyło załadować
+      setTimeout(() => {
+        openRewardModal(pendingCategory.id);
+      }, 500);
+    }
   });
 };
 

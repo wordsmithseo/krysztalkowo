@@ -1599,6 +1599,47 @@
   }
 }
 
+.rarity-legendary .reward-preview-image,
+.rarity-legendary .reward-img {
+  border: 4px solid transparent;
+  background: linear-gradient(#fff, #fff) padding-box,
+              linear-gradient(90deg,
+                #ff0000 0%,
+                #ff7f00 14%,
+                #ffff00 28%,
+                #00ff00 42%,
+                #0000ff 57%,
+                #4b0082 71%,
+                #9400d3 85%,
+                #ff0000 100%
+              ) border-box;
+  box-shadow: 0 0 30px rgba(255, 0, 255, 0.6),
+               0 0 60px rgba(0, 255, 255, 0.4);
+  animation: legendaryRainbowGlow 3s linear infinite, legendaryPulse 2s ease-in-out infinite;
+}
+
+@keyframes legendaryRainbowGlow {
+  0% {
+    filter: hue-rotate(0deg);
+  }
+  100% {
+    filter: hue-rotate(360deg);
+  }
+}
+
+@keyframes legendaryPulse {
+  0%, 100% {
+    box-shadow: 0 0 30px rgba(255, 0, 255, 0.6),
+                 0 0 60px rgba(0, 255, 255, 0.4);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 50px rgba(255, 0, 255, 0.9),
+                 0 0 100px rgba(0, 255, 255, 0.7);
+    transform: scale(1.02);
+  }
+}
+
 .rarity-label {
   position: absolute;
   top: -10px;
@@ -1636,5 +1677,38 @@
   }
   50% {
     box-shadow: 0 6px 20px rgba(251, 191, 36, 0.8);
+  }
+}
+
+.rarity-legendary .rarity-label {
+  background: linear-gradient(90deg,
+    #ff0000 0%,
+    #ff7f00 14%,
+    #ffff00 28%,
+    #00ff00 42%,
+    #0000ff 57%,
+    #4b0082 71%,
+    #9400d3 85%,
+    #ff0000 100%
+  );
+  background-size: 200% 100%;
+  animation: legendaryLabelGlow 2s ease-in-out infinite, legendaryLabelSlide 3s linear infinite;
+}
+
+@keyframes legendaryLabelGlow {
+  0%, 100% {
+    box-shadow: 0 4px 12px rgba(255, 0, 255, 0.6);
+  }
+  50% {
+    box-shadow: 0 8px 24px rgba(255, 0, 255, 0.9);
+  }
+}
+
+@keyframes legendaryLabelSlide {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
   }
 }
