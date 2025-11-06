@@ -56,6 +56,7 @@ const editRewardModal = document.getElementById('editRewardModal');
 const resetRankingPasswordModal = document.getElementById('resetRankingPasswordModal');
 const resetRankingSuccessModal = document.getElementById('resetRankingSuccessModal');
 const deleteAccountPasswordModal = document.getElementById('deleteAccountPasswordModal');
+const galleryModal = document.getElementById('galleryModal');
 const appLoader = document.getElementById('appLoader');
 
 const adminPasswordInput = document.getElementById('adminPasswordInput');
@@ -518,6 +519,7 @@ closeButtons.forEach(btn => {
     resetRankingPasswordModal.style.display = 'none';
     resetRankingSuccessModal.style.display = 'none';
     deleteAccountPasswordModal.style.display = 'none';
+    galleryModal.style.display = 'none';
 
     const rewardModal = document.getElementById('rewardModal');
     if (rewardModal && rewardModal.style.display === 'flex') {
@@ -540,7 +542,8 @@ document.addEventListener('click', (e) => {
     editRewardModal,
     resetRankingPasswordModal,
     resetRankingSuccessModal,
-    deleteAccountPasswordModal
+    deleteAccountPasswordModal,
+    galleryModal
   ];
 
   if (modals.includes(e.target)) {
