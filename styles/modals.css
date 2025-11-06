@@ -2517,4 +2517,9 @@
     font-size: 1rem;
     padding: 0.85rem 0.9rem;
   }
+
+  /* Ukryj cursor help na mobile dla tooltipów */
+  .last-add-time {
+    cursor: default !important;
+  }
 }

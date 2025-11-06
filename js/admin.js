@@ -17,8 +17,7 @@ import {
   deleteChild,
   changeUserPassword,
   getSuggestedCategories,
-  getSuggestedRewards,
-  getCategoryImagesFromOtherChildren
+  getSuggestedRewards
 } from './database.js';
 import { getCurrentAuthUser } from './auth.js';
 import { uploadImage, compressImage, getAllUserImages, deleteImageByUrl } from './storage.js';
@@ -102,44 +101,51 @@ export const updateAdminHeaderInfo = () => {
 };
 
 const formatLastAddTime = (timestamp) => {
-  if (!timestamp) return 'Nigdy nie dodano';
+  if (!timestamp) return { text: 'Nigdy nie dodano', full: null };
 
   const date = new Date(timestamp);
   const now = new Date();
   const diff = now - date;
 
-  // Jeśli mniej niż minutę temu
-  if (diff < 60000) {
-    return 'Przed chwilą';
-  }
-
-  // Jeśli mniej niż godzinę temu
-  if (diff < 3600000) {
-    const minutes = Math.floor(diff / 60000);
-    return `${minutes} min temu`;
-  }
-
-  // Jeśli mniej niż 24 godziny temu
-  if (diff < 86400000) {
-    const hours = Math.floor(diff / 3600000);
-    return `${hours}h temu`;
-  }
-
-  // Jeśli więcej niż 24 godziny temu - pokaż datę i godzinę
+  // Pełna data i godzina dla tooltipa
   const day = date.getDate().toString().padStart(2, '0');
   const month = (date.getMonth() + 1).toString().padStart(2, '0');
   const year = date.getFullYear();
   const hours = date.getHours().toString().padStart(2, '0');
   const minutes = date.getMinutes().toString().padStart(2, '0');
+  const seconds = date.getSeconds().toString().padStart(2, '0');
+  const fullDate = `${day}.${month}.${year} ${hours}:${minutes}:${seconds}`;
 
-  return `${day}.${month}.${year} ${hours}:${minutes}`;
+  let text;
+
+  // Jeśli mniej niż minutę temu
+  if (diff < 60000) {
+    text = 'Przed chwilą';
+  }
+  // Jeśli mniej niż godzinę temu
+  else if (diff < 3600000) {
+    const minutes = Math.floor(diff / 60000);
+    text = `${minutes} min temu`;
+  }
+  // Jeśli mniej niż 24 godziny temu
+  else if (diff < 86400000) {
+    const hours = Math.floor(diff / 3600000);
+    text = `${hours}h temu`;
+  }
+  // Jeśli więcej niż 24 godziny temu - pokaż datę i godzinę
+  else {
+    text = `${day}.${month}.${year} ${hours}:${minutes}`;
+  }
+
+  return { text, full: fullDate };
 };
 
 export const renderAdminCategories = () => {
   const categories = getCategories();
 
   categoryList.innerHTML = categories.map(cat => {
-    const lastAddText = formatLastAddTime(cat.lastAddTimestamp);
+    const lastAddTime = formatLastAddTime(cat.lastAddTimestamp);
+    const tooltipAttr = lastAddTime.full ? `title="${lastAddTime.full}"` : '';
 
     return `
       <li data-id="${cat.id}">
@@ -147,7 +153,7 @@ export const renderAdminCategories = () => {
           <span class="drag-handle">☰</span>
           <div style="display: flex; flex-direction: column; gap: 0.25rem;">
             <span class="name">${cat.name}</span>
-            <span style="font-size: 0.75rem; color: #999;">🕐 Ostatni: ${lastAddText}</span>
+            <span class="last-add-time" style="font-size: 0.75rem; color: #999; cursor: help;" ${tooltipAttr}>🕐 Ostatni: ${lastAddTime.text}</span>
           </div>
         </div>
         <div class="category-controls">
@@ -395,9 +401,9 @@ let selectedRewardImageFromGallery = null;
 const renderImagePreviews = async (currentImage) => {
   const previewContainer = document.getElementById('imagePreviewsEdit');
 
-  // Pobierz wszystkie obrazki już wgrane na Firebase Storage
-  const currentChildId = getCurrentUser();
-  const uploadedImages = await getCategoryImagesFromOtherChildren(currentChildId);
+  // Pobierz wszystkie obrazki użytkownika z Firebase Storage
+  const result = await getAllUserImages();
+  const uploadedImages = result.success ? result.images.map(img => img.url) : [];
 
   let html = '';
 
@@ -434,26 +440,19 @@ export const handleSelectImage = (url) => {
 const renderRewardImagePreviews = async () => {
   const previewContainer = document.getElementById('imagePreviewsReward');
 
-  // Pobierz wszystkie obrazki już wgrane na Firebase Storage (z nagród)
-  const currentChildId = getCurrentUser();
-  const rewards = getRewards();
-  const uploadedImages = new Set();
-
-  rewards.forEach(reward => {
-    if (reward.image && reward.image.includes('firebasestorage.googleapis.com')) {
-      uploadedImages.add(reward.image);
-    }
-  });
+  // Pobierz wszystkie obrazki użytkownika z Firebase Storage
+  const result = await getAllUserImages();
+  const uploadedImages = result.success ? result.images.map(img => img.url) : [];
 
   let html = '';
 
   // Jeśli są wgrane obrazki, pokaż je w galerii
-  if (uploadedImages.size > 0) {
+  if (uploadedImages.length > 0) {
     html += '<div class="image-section">';
     html += '<div class="image-section-title image-section-title-highlight">📷 Galeria wgranych obrazków:</div>';
     html += '<div style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">Kliknij obrazek aby go użyć, lub wgraj nowy plik powyżej</div>';
     html += '<div class="image-previews">';
-    html += Array.from(uploadedImages).map(url =>
+    html += uploadedImages.map(url =>
       `<img src="${url}" class="image-preview ${url === selectedRewardImageFromGallery ? 'selected' : ''}" onclick="window.selectRewardImageHandler('${url}')" alt="Preview" style="cursor: pointer;">`
     ).join('');
     html += '</div></div>';
