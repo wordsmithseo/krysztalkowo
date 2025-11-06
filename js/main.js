@@ -294,26 +294,33 @@ if (loginSubmitBtn) {
       return;
     }
 
-    // Sprawdź reCAPTCHA
-    const captchaResponse = grecaptcha.getResponse(0); // 0 to ID pierwszej captchy (login)
-    if (!captchaResponse) {
-      showError(loginError, 'Proszę zaznacz pole "Nie jestem robotem"');
-      return;
-    }
-
     loginSubmitBtn.disabled = true;
-    loginSubmitBtn.textContent = 'Logowanie...';
+    loginSubmitBtn.textContent = 'Weryfikacja...';
 
-    const result = await loginUser(email, password);
+    try {
+      // Wykonaj reCAPTCHA v3
+      const token = await grecaptcha.execute('6Lc6LwQsAAAAACRvem7Pfl5U1-ST3TDaJ3Frtvj8', { action: 'login' });
 
-    if (result.success) {
-      document.getElementById('loginEmail').value = '';
-      document.getElementById('loginPassword').value = '';
-      hideError(loginError);
-      grecaptcha.reset(0); // Reset captchy
-    } else {
-      showError(loginError, result.error);
-      grecaptcha.reset(0); // Reset captchy także przy błędzie
+      if (!token) {
+        showError(loginError, 'Błąd weryfikacji reCAPTCHA. Spróbuj ponownie.');
+        loginSubmitBtn.disabled = false;
+        loginSubmitBtn.textContent = 'Zaloguj się';
+        return;
+      }
+
+      loginSubmitBtn.textContent = 'Logowanie...';
+      const result = await loginUser(email, password);
+
+      if (result.success) {
+        document.getElementById('loginEmail').value = '';
+        document.getElementById('loginPassword').value = '';
+        hideError(loginError);
+      } else {
+        showError(loginError, result.error);
+      }
+    } catch (error) {
+      console.error('Błąd reCAPTCHA:', error);
+      showError(loginError, 'Błąd weryfikacji. Spróbuj ponownie.');
     }
 
     loginSubmitBtn.disabled = false;
@@ -346,40 +353,47 @@ if (registerSubmitBtn) {
       return;
     }
 
-    // Sprawdź reCAPTCHA
-    const captchaResponse = grecaptcha.getResponse(1); // 1 to ID drugiej captchy (register)
-    if (!captchaResponse) {
-      showError(registerError, 'Proszę zaznacz pole "Nie jestem robotem"');
-      return;
-    }
-
     registerSubmitBtn.disabled = true;
-    registerSubmitBtn.textContent = 'Rejestracja...';
+    registerSubmitBtn.textContent = 'Weryfikacja...';
 
-    const result = await registerUser(email, password, name);
+    try {
+      // Wykonaj reCAPTCHA v3
+      const token = await grecaptcha.execute('6Lc6LwQsAAAAACRvem7Pfl5U1-ST3TDaJ3Frtvj8', { action: 'register' });
 
-    if (result.success) {
-      document.getElementById('registerName').value = '';
-      document.getElementById('registerEmail').value = '';
-      document.getElementById('registerPassword').value = '';
-      document.getElementById('registerConfirmPassword').value = '';
-      hideError(registerError);
-      grecaptcha.reset(1); // Reset captchy
+      if (!token) {
+        showError(registerError, 'Błąd weryfikacji reCAPTCHA. Spróbuj ponownie.');
+        registerSubmitBtn.disabled = false;
+        registerSubmitBtn.textContent = 'Zarejestruj się';
+        return;
+      }
 
-      // Pokaż komunikat sukcesu
-      const successMessage = document.createElement('div');
-      successMessage.textContent = 'Konto utworzone pomyślnie! Sprawdź swoją skrzynkę email aby zweryfikować konto.';
-      successMessage.style.cssText = 'padding: 0.75rem; margin: 0.75rem 0; background: #e8f5e9; border: 1px solid #4caf50; border-radius: 0.5rem; color: #2e7d32; font-size: 0.9rem;';
-      registerForm.insertBefore(successMessage, registerForm.firstChild);
+      registerSubmitBtn.textContent = 'Rejestracja...';
+      const result = await registerUser(email, password, name);
 
-      setTimeout(() => {
-        successMessage.remove();
-        loginForm.style.display = 'block';
-        registerForm.style.display = 'none';
-      }, 3000);
-    } else {
-      showError(registerError, result.error);
-      grecaptcha.reset(1); // Reset captchy także przy błędzie
+      if (result.success) {
+        document.getElementById('registerName').value = '';
+        document.getElementById('registerEmail').value = '';
+        document.getElementById('registerPassword').value = '';
+        document.getElementById('registerConfirmPassword').value = '';
+        hideError(registerError);
+
+        // Pokaż komunikat sukcesu
+        const successMessage = document.createElement('div');
+        successMessage.textContent = 'Konto utworzone pomyślnie! Sprawdź swoją skrzynkę email aby zweryfikować konto.';
+        successMessage.style.cssText = 'padding: 0.75rem; margin: 0.75rem 0; background: #e8f5e9; border: 1px solid #4caf50; border-radius: 0.5rem; color: #2e7d32; font-size: 0.9rem;';
+        registerForm.insertBefore(successMessage, registerForm.firstChild);
+
+        setTimeout(() => {
+          successMessage.remove();
+          loginForm.style.display = 'block';
+          registerForm.style.display = 'none';
+        }, 3000);
+      } else {
+        showError(registerError, result.error);
+      }
+    } catch (error) {
+      console.error('Błąd reCAPTCHA:', error);
+      showError(registerError, 'Błąd weryfikacji. Spróbuj ponownie.')
     }
     
     registerSubmitBtn.disabled = false;
