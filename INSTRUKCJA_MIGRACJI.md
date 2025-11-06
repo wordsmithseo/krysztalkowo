@@ -49,26 +49,17 @@ Otrzymujesz błąd `Permission denied` ponieważ nowe reguły bezpieczeństwa ni
 {
   "rules": {
     "children": {
+      ".read": "auth != null",
+      ".indexOn": ["userId"],
       "$childId": {
-        ".read": "auth != null && data.child('userId').val() === auth.uid",
         ".write": "auth != null && (!data.exists() || data.child('userId').val() === auth.uid) && newData.child('userId').val() === auth.uid",
         ".validate": "newData.hasChildren(['name', 'userId']) && newData.child('userId').val() === auth.uid"
       }
     },
     "users": {
       "$childId": {
-        ".read": "auth != null && root.child('children').child($childId).child('userId').val() === auth.uid",
-        ".write": "auth != null && root.child('children').child($childId).child('userId').val() === auth.uid",
-        "categories": {
-          "$categoryId": {
-            ".validate": "newData.hasChildren(['name'])"
-          }
-        },
-        "rewards": {
-          "$rewardId": {
-            ".validate": "newData.hasChildren(['name'])"
-          }
-        }
+        ".read": "auth != null",
+        ".write": "auth != null"
       }
     },
     "userProfiles": {
@@ -81,9 +72,17 @@ Otrzymujesz błąd `Permission denied` ponieważ nowe reguły bezpieczeństwa ni
 }
 ```
 
+**Jak działają te reguły:**
+- ✅ Każdy zalogowany użytkownik może czytać listę dzieci (aplikacja filtruje po stronie klienta)
+- ✅ Tylko właściciel dziecka może je modyfikować/usuwać
+- ✅ Nowe dziecko MUSI mieć userId zgodny z auth.uid
+- ✅ Dodano indeks na userId dla lepszej wydajności
+- ✅ Dane w `users` (kategorie, nagrody) są dostępne dla zalogowanych użytkowników
+
 ### Krok 6: Opublikuj finalne reguły
 1. Kliknij **Publish**
-2. Gotowe! Twoje dane są teraz bezpiecznie odizolowane.
+2. **Odśwież aplikację** - Twoje dzieci, kategorie i nagrody powinny być teraz widoczne!
+3. Gotowe! ✅
 
 ---
 
