@@ -13,7 +13,8 @@
   
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-  
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
   <script type="module" src="js/config.js"></script>
   <script type="module" src="js/auth.js"></script>
   <script type="module" src="js/state.js"></script>
@@ -92,6 +93,8 @@
 
             <div id="loginError" class="auth-error" style="display: none;"></div>
 
+            <div id="loginRecaptcha" class="g-recaptcha" data-sitekey="6Lc6LwQsAAAAACRvem7Pfl5U1-ST3TDaJ3Frtvj8" style="margin-top: 1rem;"></div>
+
             <button id="loginSubmitBtn" class="submit-btn" style="width: 100%; margin-top: 1rem;">Zaloguj się</button>
 
             <p style="text-align: center; margin-top: 1.5rem; color: #666;">
@@ -117,6 +120,8 @@
             <input type="password" id="registerConfirmPassword" placeholder="Powtórz hasło">
 
             <div id="registerError" class="auth-error" style="display: none;"></div>
+
+            <div id="registerRecaptcha" class="g-recaptcha" data-sitekey="6Lc6LwQsAAAAACRvem7Pfl5U1-ST3TDaJ3Frtvj8" style="margin-top: 1rem;"></div>
 
             <button id="registerSubmitBtn" class="submit-btn" style="width: 100%; margin-top: 1rem;">Zarejestruj się</button>
 
@@ -337,8 +342,12 @@
       <label style="font-size: 1.05rem; margin-top: 0.75rem;">Cel (liczba kryształków):</label>
       <input type="number" id="editCategoryGoal" min="1" style="font-size: 1.1rem; padding: 0.9rem 1rem;">
 
-      <label style="font-size: 1.05rem; margin-top: 0.75rem;">Obrazek (URL):</label>
-      <input type="url" id="editCategoryImage" placeholder="https://..." style="font-size: 1.05rem; padding: 0.9rem 1rem;">
+      <label style="font-size: 1.05rem; margin-top: 0.75rem;">Obrazek:</label>
+      <div style="display: flex; gap: 0.5rem; align-items: flex-start; flex-direction: column;">
+        <input type="file" id="editCategoryImageFile" accept="image/*" style="font-size: 1.05rem; padding: 0.6rem 1rem;">
+        <span style="font-size: 0.85rem; color: #666;">lub podaj URL:</span>
+        <input type="url" id="editCategoryImage" placeholder="https://..." style="font-size: 1.05rem; padding: 0.9rem 1rem; width: 100%;">
+      </div>
       <div id="imagePreviewsEdit" class="image-previews"></div>
 
       <div style="margin-top:1.5rem;display:flex;gap:.75rem">
@@ -356,8 +365,12 @@
       <label>Nazwa:</label>
       <input type="text" id="editRewardName">
 
-      <label>Obrazek (URL):</label>
-      <input type="url" id="editRewardImage" placeholder="https://...">
+      <label>Obrazek:</label>
+      <div style="display: flex; gap: 0.5rem; align-items: flex-start; flex-direction: column;">
+        <input type="file" id="editRewardImageFile" accept="image/*" style="font-size: 1.05rem; padding: 0.6rem 1rem;">
+        <span style="font-size: 0.85rem; color: #666;">lub podaj URL:</span>
+        <input type="url" id="editRewardImage" placeholder="https://..." style="width: 100%;">
+      </div>
 
       <label>Szansa wylosowania (%):</label>
       <input type="number" id="editRewardProbability" min="0.01" max="100" step="0.01" value="50" placeholder="50">

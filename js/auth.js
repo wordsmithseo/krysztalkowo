@@ -7,7 +7,8 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  deleteUser
+  deleteUser,
+  sendEmailVerification
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
 const firebaseConfig = {
@@ -64,10 +65,23 @@ export const loginUser = async (email, password) => {
 export const registerUser = async (email, password, name) => {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+
+    // Wyślij email weryfikacyjny
+    try {
+      await sendEmailVerification(userCredential.user, {
+        url: window.location.origin, // URL do przekierowania po weryfikacji
+        handleCodeInApp: false
+      });
+      console.log('Email weryfikacyjny został wysłany');
+    } catch (emailError) {
+      console.error('Błąd podczas wysyłania emaila weryfikacyjnego:', emailError);
+      // Nie blokujemy rejestracji jeśli email się nie wyśle
+    }
+
     return { success: true, user: userCredential.user };
   } catch (error) {
     let errorMessage = 'Błąd rejestracji';
-    
+
     switch (error.code) {
       case 'auth/email-already-in-use':
         errorMessage = 'Konto z tym adresem email już istnieje';
@@ -84,7 +98,7 @@ export const registerUser = async (email, password, name) => {
       default:
         errorMessage = `Błąd rejestracji: ${error.message}`;
     }
-    
+
     return { success: false, error: errorMessage };
   }
 };

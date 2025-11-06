@@ -21,6 +21,7 @@ import {
   getCategoryImagesFromOtherChildren
 } from './database.js';
 import { getCurrentAuthUser } from './auth.js';
+import { uploadImage, compressImage } from './storage.js';
 
 const adminModal = document.getElementById('adminModal');
 const editModal = document.getElementById('editModal');
@@ -257,26 +258,66 @@ export const handleEditCategory = (categoryId) => {
 
 export const handleSaveEdit = async () => {
   const categoryId = editModal.dataset.editingId;
-  
-  const data = {
-    name: document.getElementById('editCategoryName').value.trim(),
-    goal: parseInt(document.getElementById('editCategoryGoal').value) || 10,
-    image: document.getElementById('editCategoryImage').value.trim()
-  };
-  
-  if (!data.name) {
-    alert('Nazwa nie może być pusta!');
-    return;
-  }
-  
-  const success = await updateCategory(categoryId, data);
-  
-  if (success) {
-    editModal.style.display = 'none';
-    adminModal.style.display = 'flex';
-    renderAdminCategories();
-    initializeSortable();
-    updateAdminHeaderInfo();
+
+  const saveBtn = document.getElementById('saveEditBtn');
+  const originalText = saveBtn.textContent;
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'Zapisywanie...';
+
+  try {
+    let imageUrl = document.getElementById('editCategoryImage').value.trim();
+    const imageFile = document.getElementById('editCategoryImageFile').files[0];
+
+    // Jeśli wybrano plik, uploaduj go
+    if (imageFile) {
+      saveBtn.textContent = 'Przesyłanie obrazka...';
+
+      // Skompresuj obrazek przed uploadem
+      const compressedFile = await compressImage(imageFile);
+      const uploadResult = await uploadImage(compressedFile, 'category');
+
+      if (!uploadResult.success) {
+        alert(`Błąd podczas przesyłania obrazka: ${uploadResult.error}`);
+        saveBtn.disabled = false;
+        saveBtn.textContent = originalText;
+        return;
+      }
+
+      imageUrl = uploadResult.url;
+    }
+
+    const data = {
+      name: document.getElementById('editCategoryName').value.trim(),
+      goal: parseInt(document.getElementById('editCategoryGoal').value) || 10,
+      image: imageUrl
+    };
+
+    if (!data.name) {
+      alert('Nazwa nie może być pusta!');
+      saveBtn.disabled = false;
+      saveBtn.textContent = originalText;
+      return;
+    }
+
+    saveBtn.textContent = 'Zapisywanie danych...';
+    const success = await updateCategory(categoryId, data);
+
+    if (success) {
+      editModal.style.display = 'none';
+      adminModal.style.display = 'flex';
+      renderAdminCategories();
+      initializeSortable();
+      updateAdminHeaderInfo();
+
+      // Wyczyść input pliku
+      document.getElementById('editCategoryImageFile').value = '';
+    }
+  } catch (error) {
+    console.error('Błąd podczas zapisywania:', error);
+    alert('Wystąpił błąd podczas zapisywania. Spróbuj ponownie.');
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.textContent = originalText;
   }
 };
 
@@ -420,29 +461,81 @@ export const handleSaveRewardEdit = async () => {
   const editRewardModal = document.getElementById('editRewardModal');
   const rewardId = editRewardModal.dataset.editingId;
 
-  const data = {
-    name: document.getElementById('editRewardName').value.trim(),
-    image: document.getElementById('editRewardImage').value.trim(),
-    probability: parseFloat(document.getElementById('editRewardProbability').value) || 50
-  };
-
-  if (!data.name) {
-    alert('Nazwa nie może być pusta!');
-    return;
+  const saveBtn = document.querySelector('#editRewardModal .submit-btn');
+  const originalText = saveBtn ? saveBtn.textContent : 'Zapisz';
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Zapisywanie...';
   }
 
-  if (data.probability < 0.01 || data.probability > 100) {
-    alert('Szansa musi być między 0.01% a 100%!');
-    return;
-  }
+  try {
+    let imageUrl = document.getElementById('editRewardImage').value.trim();
+    const imageFile = document.getElementById('editRewardImageFile').files[0];
 
-  const success = await updateReward(rewardId, data);
+    // Jeśli wybrano plik, uploaduj go
+    if (imageFile) {
+      if (saveBtn) saveBtn.textContent = 'Przesyłanie obrazka...';
 
-  if (success) {
-    editRewardModal.style.display = 'none';
-    const adminModal = document.getElementById('adminModal');
-    adminModal.style.display = 'flex';
-    renderAdminRewards();
+      // Skompresuj obrazek przed uploadem
+      const compressedFile = await compressImage(imageFile);
+      const uploadResult = await uploadImage(compressedFile, 'reward');
+
+      if (!uploadResult.success) {
+        alert(`Błąd podczas przesyłania obrazka: ${uploadResult.error}`);
+        if (saveBtn) {
+          saveBtn.disabled = false;
+          saveBtn.textContent = originalText;
+        }
+        return;
+      }
+
+      imageUrl = uploadResult.url;
+    }
+
+    const data = {
+      name: document.getElementById('editRewardName').value.trim(),
+      image: imageUrl,
+      probability: parseFloat(document.getElementById('editRewardProbability').value) || 50
+    };
+
+    if (!data.name) {
+      alert('Nazwa nie może być pusta!');
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = originalText;
+      }
+      return;
+    }
+
+    if (data.probability < 0.01 || data.probability > 100) {
+      alert('Szansa musi być między 0.01% a 100%!');
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = originalText;
+      }
+      return;
+    }
+
+    if (saveBtn) saveBtn.textContent = 'Zapisywanie danych...';
+    const success = await updateReward(rewardId, data);
+
+    if (success) {
+      editRewardModal.style.display = 'none';
+      const adminModal = document.getElementById('adminModal');
+      adminModal.style.display = 'flex';
+      renderAdminRewards();
+
+      // Wyczyść input pliku
+      document.getElementById('editRewardImageFile').value = '';
+    }
+  } catch (error) {
+    console.error('Błąd podczas zapisywania nagrody:', error);
+    alert('Wystąpił błąd podczas zapisywania. Spróbuj ponownie.');
+  } finally {
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.textContent = originalText;
+    }
   }
 };
 
