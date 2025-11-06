@@ -280,6 +280,12 @@
       </div>
 
       <div class="admin-section">
+        <h3>📷 Galeria obrazków</h3>
+        <p style="font-size:0.9rem;color:#666;margin:0 0 0.75rem 0;">Zarządzaj wszystkimi wgranymi obrazkami</p>
+        <button id="openGalleryBtn" class="submit-btn" style="width:100%;">Otwórz galerię</button>
+      </div>
+
+      <div class="admin-section">
         <h3>⚠️ Resetuj ranking</h3>
         <p style="margin:0.5rem 0;font-size:0.9rem;color:#666;">Uwaga: Usunie wszystkie zwycięstwa wszystkich dzieci we wszystkich kategoriach!</p>
         <button id="resetRankingBtn" class="cancel-btn" style="width:100%;background:#e74c3c;color:#fff;font-weight:700;">🗑️ Resetuj cały ranking</button>
@@ -371,6 +377,30 @@
       <div style="margin-top:1.5rem;display:flex;gap:0.85rem;">
         <button id="saveRewardEditBtn" class="submit-btn">Zapisz</button>
         <button id="cancelRewardEditBtn" class="cancel-btn">Anuluj</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="galleryModal" class="modal">
+    <div class="modal-content" style="max-width: 60rem;">
+      <span class="close-btn">&times;</span>
+      <h2>📷 Galeria obrazków</h2>
+
+      <div id="galleryStats" style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(106, 17, 203, 0.05); border-radius: 0.75rem; border: 1px solid rgba(106, 17, 203, 0.1);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+          <span style="font-weight: 600; color: #6a11cb;">Zajęte miejsce:</span>
+          <span id="totalSize" style="font-weight: 700; color: #6a11cb;">0 MB</span>
+        </div>
+        <div style="width: 100%; height: 20px; background: #e0e0e0; border-radius: 10px; overflow: hidden;">
+          <div id="storageBar" style="height: 100%; background: linear-gradient(90deg, #6a11cb, #8a2be2); width: 0%; transition: width 0.3s ease;"></div>
+        </div>
+        <div style="font-size: 0.85rem; color: #666; margin-top: 0.5rem;">
+          <span id="imageCount">0</span> obrazków
+        </div>
+      </div>
+
+      <div id="galleryGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; max-height: 60vh; overflow-y: auto;">
+        <!-- Obrazki będą renderowane tutaj -->
       </div>
     </div>
   </div>

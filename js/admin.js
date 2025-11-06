@@ -21,7 +21,7 @@ import {
   getCategoryImagesFromOtherChildren
 } from './database.js';
 import { getCurrentAuthUser } from './auth.js';
-import { uploadImage, compressImage } from './storage.js';
+import { uploadImage, compressImage, getAllUserImages, deleteImageByUrl } from './storage.js';
 
 const adminModal = document.getElementById('adminModal');
 const editModal = document.getElementById('editModal');
@@ -101,28 +101,69 @@ export const updateAdminHeaderInfo = () => {
   }
 };
 
+const formatLastAddTime = (timestamp) => {
+  if (!timestamp) return 'Nigdy nie dodano';
+
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diff = now - date;
+
+  // Jeśli mniej niż minutę temu
+  if (diff < 60000) {
+    return 'Przed chwilą';
+  }
+
+  // Jeśli mniej niż godzinę temu
+  if (diff < 3600000) {
+    const minutes = Math.floor(diff / 60000);
+    return `${minutes} min temu`;
+  }
+
+  // Jeśli mniej niż 24 godziny temu
+  if (diff < 86400000) {
+    const hours = Math.floor(diff / 3600000);
+    return `${hours}h temu`;
+  }
+
+  // Jeśli więcej niż 24 godziny temu - pokaż datę i godzinę
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear();
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+
+  return `${day}.${month}.${year} ${hours}:${minutes}`;
+};
+
 export const renderAdminCategories = () => {
   const categories = getCategories();
 
-  categoryList.innerHTML = categories.map(cat => `
-    <li data-id="${cat.id}">
-      <div class="left">
-        <span class="drag-handle">☰</span>
-        <span class="name">${cat.name}</span>
-      </div>
-      <div class="category-controls">
-        <div class="crystal-controls">
-          <button onclick="window.modifyCrystalsHandler('${cat.id}', -1)" title="Odejmij kryształek">−</button>
-          <span class="count">${cat.count || 0} / ${cat.goal || 10}</span>
-          <button onclick="window.modifyCrystalsHandler('${cat.id}', 1)" title="Dodaj kryształek">+</button>
+  categoryList.innerHTML = categories.map(cat => {
+    const lastAddText = formatLastAddTime(cat.lastAddTimestamp);
+
+    return `
+      <li data-id="${cat.id}">
+        <div class="left">
+          <span class="drag-handle">☰</span>
+          <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+            <span class="name">${cat.name}</span>
+            <span style="font-size: 0.75rem; color: #999;">🕐 Ostatni: ${lastAddText}</span>
+          </div>
         </div>
-        <div class="action-buttons">
-          <button onclick="window.editCategoryHandler('${cat.id}')">✏️</button>
-          <button onclick="window.deleteCategoryHandler('${cat.id}')">🗑️</button>
+        <div class="category-controls">
+          <div class="crystal-controls">
+            <button onclick="window.modifyCrystalsHandler('${cat.id}', -1)" title="Odejmij kryształek">−</button>
+            <span class="count">${cat.count || 0} / ${cat.goal || 10}</span>
+            <button onclick="window.modifyCrystalsHandler('${cat.id}', 1)" title="Dodaj kryształek">+</button>
+          </div>
+          <div class="action-buttons">
+            <button onclick="window.editCategoryHandler('${cat.id}')">✏️</button>
+            <button onclick="window.deleteCategoryHandler('${cat.id}')">🗑️</button>
+          </div>
         </div>
-      </div>
-    </li>
-  `).join('');
+      </li>
+    `;
+  }).join('');
 };
 
 export const handleModifyCrystals = async (categoryId, delta) => {
@@ -892,8 +933,9 @@ export const renderCategorySuggestions = async () => {
       <div style="font-size: 0.85rem; font-weight: 600; color: #6a11cb; margin-bottom: 0.5rem;">💡 Kategorie z innych profili:</div>
       <div class="suggestions-list">
         ${suggestions.map(cat => `
-          <button class="suggestion-btn" onclick="window.fillCategoryFromSuggestion('${cat.name.replace(/'/g, "\\'")}', ${cat.goal}, '${(cat.image || '').replace(/'/g, "\\'")}')">
-            ${cat.name}
+          <button class="suggestion-btn-with-image" onclick="window.fillCategoryFromSuggestion('${cat.name.replace(/'/g, "\\'")}', ${cat.goal}, '${(cat.image || '').replace(/'/g, "\\'")}')">
+            ${cat.image ? `<img src="${cat.image}" alt="${cat.name}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 0.25rem; margin-right: 0.5rem;">` : ''}
+            <span>${cat.name}</span>
           </button>
         `).join('')}
       </div>
@@ -920,8 +962,9 @@ export const renderRewardSuggestions = async () => {
       <div style="font-size: 0.85rem; font-weight: 600; color: #6a11cb; margin-bottom: 0.5rem;">💡 Nagrody z innych profili:</div>
       <div class="suggestions-list">
         ${suggestions.map(reward => `
-          <button class="suggestion-btn" onclick="window.fillRewardFromSuggestion('${reward.name.replace(/'/g, "\\'")}', '${(reward.image || '').replace(/'/g, "\\'")}', ${reward.probability})">
-            ${reward.name}
+          <button class="suggestion-btn-with-image" onclick="window.fillRewardFromSuggestion('${reward.name.replace(/'/g, "\\'")}', '${(reward.image || '').replace(/'/g, "\\'")}', ${reward.probability})">
+            ${reward.image ? `<img src="${reward.image}" alt="${reward.name}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 0.25rem; margin-right: 0.5rem;">` : ''}
+            <span>${reward.name}</span>
           </button>
         `).join('')}
       </div>
@@ -947,6 +990,81 @@ export const fillRewardFromSuggestion = (name, image, probability) => {
   }
 };
 
+// ===== GALERIA OBRAZKÓW =====
+export const openGalleryModal = async () => {
+  const galleryModal = document.getElementById('galleryModal');
+  galleryModal.style.display = 'flex';
+  await renderGallery();
+};
+
+export const renderGallery = async () => {
+  const galleryGrid = document.getElementById('galleryGrid');
+  const totalSizeEl = document.getElementById('totalSize');
+  const imageCountEl = document.getElementById('imageCount');
+  const storageBar = document.getElementById('storageBar');
+
+  galleryGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: #666;">Ładowanie...</div>';
+
+  const result = await getAllUserImages();
+
+  if (!result.success) {
+    galleryGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: #d32f2f;">Błąd ładowania obrazków</div>';
+    return;
+  }
+
+  if (result.images.length === 0) {
+    galleryGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: #666;">Brak wgranych obrazków</div>';
+    totalSizeEl.textContent = '0 MB';
+    imageCountEl.textContent = '0';
+    storageBar.style.width = '0%';
+    return;
+  }
+
+  // Aktualizuj statystyki
+  const totalMB = (result.totalSize / (1024 * 1024)).toFixed(2);
+  totalSizeEl.textContent = `${totalMB} MB`;
+  imageCountEl.textContent = result.count.toString();
+
+  // Ustaw pasek postępu (na razie bez limitu, więc użyjemy 100MB jako bazę dla wizualizacji)
+  const maxVisualization = 100; // MB dla wizualizacji
+  const percentage = Math.min((parseFloat(totalMB) / maxVisualization) * 100, 100);
+  storageBar.style.width = `${percentage}%`;
+
+  // Renderuj obrazki
+  galleryGrid.innerHTML = result.images.map(img => `
+    <div class="gallery-item" style="position: relative; border-radius: 0.5rem; overflow: hidden; border: 2px solid #e0e0e0;">
+      <img src="${img.url}" alt="${img.name}" style="width: 100%; height: 150px; object-fit: cover;">
+      <div style="position: absolute; top: 0; right: 0; padding: 0.25rem;">
+        <button
+          onclick="window.handleDeleteImageHandler('${img.url}')"
+          style="background: #d32f2f; color: white; border: none; border-radius: 0.25rem; padding: 0.25rem 0.5rem; cursor: pointer; font-size: 0.8rem; font-weight: 700;"
+          title="Usuń obrazek"
+        >
+          ❌
+        </button>
+      </div>
+      <div style="padding: 0.5rem; font-size: 0.75rem; color: #666; background: rgba(255,255,255,0.9);">
+        ${(img.size / 1024).toFixed(1)} KB
+      </div>
+    </div>
+  `).join('');
+};
+
+export const handleDeleteImage = async (imageUrl) => {
+  if (!confirm('Czy na pewno chcesz usunąć ten obrazek? Tej operacji nie można cofnąć.')) {
+    return;
+  }
+
+  const result = await deleteImageByUrl(imageUrl);
+
+  if (result.success) {
+    alert('Obrazek został usunięty');
+    await renderGallery();
+  } else {
+    alert(`Błąd podczas usuwania obrazka: ${result.error}`);
+  }
+};
+
 if (typeof window !== 'undefined') {
   window.editCategoryHandler = handleEditCategory;
   window.deleteCategoryHandler = handleDeleteCategory;
@@ -959,6 +1077,7 @@ if (typeof window !== 'undefined') {
   window.deleteChildHandler = handleDeleteChild;
   window.fillCategoryFromSuggestion = fillCategoryFromSuggestion;
   window.fillRewardFromSuggestion = fillRewardFromSuggestion;
+  window.handleDeleteImageHandler = handleDeleteImage;
 
   // Event listener dla file input - wyczyść wybrany obrazek z galerii gdy wybrano nowy plik
   const categoryFileInput = document.getElementById('editCategoryImageFile');

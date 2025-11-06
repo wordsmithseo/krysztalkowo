@@ -1,6 +1,6 @@
 // ===== FIREBASE STORAGE OPERATIONS =====
 import { storage } from './config.js';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
+import { ref, uploadBytes, getDownloadURL, deleteObject, listAll, getMetadata } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
 import { getCurrentAuthUser } from './auth.js';
 
 // Funkcja do uploadowania obrazka
@@ -126,4 +126,84 @@ export const compressImage = (file, maxWidth = 800, maxHeight = 800, quality = 0
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
+};
+
+// Funkcja do pobierania wszystkich obrazków użytkownika
+export const getAllUserImages = async () => {
+  try {
+    const user = getCurrentAuthUser();
+    if (!user) {
+      throw new Error('Użytkownik nie jest zalogowany');
+    }
+
+    const userFolderRef = ref(storage, `images/${user.uid}`);
+    const result = await listAll(userFolderRef);
+
+    const images = [];
+    let totalSize = 0;
+
+    // Przetwarzaj wszystkie pliki w folderze użytkownika (we wszystkich podfolderach)
+    for (const folderRef of result.prefixes) {
+      const folderResult = await listAll(folderRef);
+
+      for (const itemRef of folderResult.items) {
+        try {
+          const metadata = await getMetadata(itemRef);
+          const url = await getDownloadURL(itemRef);
+
+          images.push({
+            url,
+            path: itemRef.fullPath,
+            size: metadata.size,
+            name: metadata.name,
+            created: metadata.timeCreated
+          });
+
+          totalSize += metadata.size;
+        } catch (error) {
+          console.error('Błąd pobierania metadanych obrazka:', error);
+        }
+      }
+    }
+
+    return {
+      success: true,
+      images,
+      totalSize,
+      count: images.length
+    };
+  } catch (error) {
+    console.error('Błąd podczas pobierania obrazków:', error);
+    return {
+      success: false,
+      error: error.message,
+      images: [],
+      totalSize: 0,
+      count: 0
+    };
+  }
+};
+
+// Funkcja do usuwania obrazka po URL
+export const deleteImageByUrl = async (imageUrl) => {
+  try {
+    if (!imageUrl || !imageUrl.includes('firebase')) {
+      throw new Error('Nieprawidłowy URL obrazka');
+    }
+
+    // Wyciągnij ścieżkę z URL
+    const matches = imageUrl.match(/images%2F(.+?)\?/);
+    if (!matches || !matches[1]) {
+      throw new Error('Nie można wyciągnąć ścieżki z URL');
+    }
+
+    const path = decodeURIComponent(matches[1]);
+    const storageRef = ref(storage, `images/${path}`);
+    await deleteObject(storageRef);
+
+    return { success: true };
+  } catch (error) {
+    console.error('Błąd podczas usuwania obrazka:', error);
+    return { success: false, error: error.message };
+  }
 };

@@ -39,7 +39,8 @@ import {
   handleSaveRewardEdit,
   updateProbabilityInfo,
   renderCategorySuggestions,
-  renderRewardSuggestions
+  renderRewardSuggestions,
+  openGalleryModal
 } from './admin.js';
 import { getAvatar, deleteAllUserData } from './database.js';
 import { setupAuthListener, loginUser, registerUser, logoutUser, getCurrentAuthUser, deleteUserAccount } from './auth.js';
@@ -68,6 +69,7 @@ const backToAdminBtn = document.getElementById('backToAdminBtn');
 const changePasswordBtn = document.getElementById('changePasswordBtn');
 const addRewardBtn = document.getElementById('addRewardBtn');
 const setAvatarBtn = document.getElementById('setAvatarBtn');
+const openGalleryBtn = document.getElementById('openGalleryBtn');
 const resetRankingBtn = document.getElementById('resetRankingBtn');
 const addChildBtn = document.getElementById('addChildBtn');
 const saveChildBtn = document.getElementById('saveChildBtn');
@@ -630,6 +632,10 @@ changePasswordBtn.addEventListener('click', async () => {
 
 if (setAvatarBtn) {
   setAvatarBtn.addEventListener('click', handleSetAvatar);
+}
+
+if (openGalleryBtn) {
+  openGalleryBtn.addEventListener('click', openGalleryModal);
 }
 
 if (resetRankingBtn) {
