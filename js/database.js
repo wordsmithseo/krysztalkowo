@@ -8,13 +8,47 @@ import { updatePassword } from 'https://www.gstatic.com/firebasejs/10.7.1/fireba
 
 // Nasłuchiwanie zmian dzieci
 export const listenChildren = () => {
+  const user = getCurrentAuthUser();
+  if (!user) {
+    console.error('Użytkownik nie jest zalogowany');
+    setChildren([]);
+    return;
+  }
+
   const childrenRef = ref(db, 'children');
 
-  onValue(childrenRef, (snapshot) => {
+  onValue(childrenRef, async (snapshot) => {
     const data = snapshot.val();
-    const arr = data ? Object.keys(data).map(id => ({ id, ...data[id] })) : [];
-    arr.sort((a, b) => (a.order || 0) - (b.order || 0));
-    setChildren(arr);
+    const allChildren = data ? Object.keys(data).map(id => ({ id, ...data[id] })) : [];
+
+    // Filtruj dzieci należące do aktualnie zalogowanego użytkownika
+    const userChildren = allChildren.filter(child => child.userId === user.uid);
+
+    // MIGRACJA: Jeśli użytkownik nie ma żadnych dzieci z userId,
+    // ale są dzieci bez userId, przypisz je do tego użytkownika
+    const childrenWithoutUserId = allChildren.filter(child => !child.userId);
+
+    if (userChildren.length === 0 && childrenWithoutUserId.length > 0) {
+      console.log('Migracja danych: przypisywanie dzieci do użytkownika...');
+
+      // Przypisz wszystkie dzieci bez userId do tego użytkownika
+      const migrationPromises = childrenWithoutUserId.map(child =>
+        update(ref(db, `children/${child.id}`), { userId: user.uid })
+      );
+
+      try {
+        await Promise.all(migrationPromises);
+        console.log('Migracja zakończona pomyślnie');
+        // Funkcja zostanie wywołana ponownie automatycznie przez onValue
+      } catch (error) {
+        console.error('Błąd podczas migracji:', error);
+      }
+
+      return; // Funkcja zostanie wywołana ponownie po aktualizacji
+    }
+
+    userChildren.sort((a, b) => (a.order || 0) - (b.order || 0));
+    setChildren(userChildren);
 
     // Automatyczna aktualizacja przycisków użytkowników
     if (window.updateUserButtons) {
@@ -601,20 +635,30 @@ export const completePendingReward = async (rewardId) => {
 // Zarządzanie dziećmi
 export const addChild = async (name, gender) => {
   try {
+    const user = getCurrentAuthUser();
+    if (!user) {
+      console.error('Użytkownik nie jest zalogowany');
+      return false;
+    }
+
     const childrenRef = ref(db, 'children');
     const snapshot = await get(childrenRef);
     const data = snapshot.val() || {};
-    const maxOrder = Object.values(data).reduce((max, child) => 
+
+    // Oblicz maksymalną kolejność tylko dla dzieci tego użytkownika
+    const userChildren = Object.values(data).filter(child => child.userId === user.uid);
+    const maxOrder = userChildren.reduce((max, child) =>
       Math.max(max, child.order || 0), 0);
-    
+
     const newId = Date.now().toString();
-    
+
     const newChild = {
       name,
       gender,
-      order: maxOrder + 1
+      order: maxOrder + 1,
+      userId: user.uid  // Dodano powiązanie z użytkownikiem
     };
-    
+
     await set(ref(db, `children/${newId}`), newChild);
     return true;
   } catch (error) {
@@ -658,9 +702,21 @@ export const deleteChild = async (childId) => {
   }
 };
 
-// Pobierz sugestie kategorii z innych dzieci
+// Funkcja sprawdzająca czy URL to Firebase Storage
+const isFirebaseStorageUrl = (url) => {
+  if (!url) return false;
+  return url.includes('firebasestorage.googleapis.com') || url.includes('firebase');
+};
+
+// Pobierz sugestie kategorii z innych dzieci (tylko tego samego użytkownika, tylko Firebase Storage)
 export const getSuggestedCategories = async (currentChildId) => {
   try {
+    const user = getCurrentAuthUser();
+    if (!user) {
+      console.error('Użytkownik nie jest zalogowany');
+      return [];
+    }
+
     const childrenRef = ref(db, 'children');
     const childrenSnapshot = await get(childrenRef);
     const childrenData = childrenSnapshot.val();
@@ -669,10 +725,12 @@ export const getSuggestedCategories = async (currentChildId) => {
 
     const suggestions = new Map(); // Używamy Map aby uniknąć duplikatów
 
-    // Przeiteruj po wszystkich dzieciach
+    // Przeiteruj po wszystkich dzieciach TEGO użytkownika
     for (const childId in childrenData) {
-      // Pomiń aktualne dziecko
-      if (childId === currentChildId) continue;
+      const child = childrenData[childId];
+
+      // Pomiń dzieci innych użytkowników i aktualne dziecko
+      if (child.userId !== user.uid || childId === currentChildId) continue;
 
       // Pobierz kategorie tego dziecka
       const categoriesRef = ref(db, `users/${childId}/categories`);
@@ -681,11 +739,12 @@ export const getSuggestedCategories = async (currentChildId) => {
 
       if (categoriesData) {
         Object.values(categoriesData).forEach(cat => {
-          if (cat.name && !suggestions.has(cat.name)) {
+          // Tylko kategorie z Firebase Storage
+          if (cat.name && !suggestions.has(cat.name) && isFirebaseStorageUrl(cat.image)) {
             suggestions.set(cat.name, {
               name: cat.name,
               goal: cat.goal || 10,
-              image: cat.image || ''
+              image: cat.image
             });
           }
         });
@@ -699,9 +758,15 @@ export const getSuggestedCategories = async (currentChildId) => {
   }
 };
 
-// Pobierz sugestie nagród z innych dzieci
+// Pobierz sugestie nagród z innych dzieci (tylko tego samego użytkownika, tylko Firebase Storage)
 export const getSuggestedRewards = async (currentChildId) => {
   try {
+    const user = getCurrentAuthUser();
+    if (!user) {
+      console.error('Użytkownik nie jest zalogowany');
+      return [];
+    }
+
     const childrenRef = ref(db, 'children');
     const childrenSnapshot = await get(childrenRef);
     const childrenData = childrenSnapshot.val();
@@ -710,10 +775,12 @@ export const getSuggestedRewards = async (currentChildId) => {
 
     const suggestions = new Map(); // Używamy Map aby uniknąć duplikatów
 
-    // Przeiteruj po wszystkich dzieciach
+    // Przeiteruj po wszystkich dzieciach TEGO użytkownika
     for (const childId in childrenData) {
-      // Pomiń aktualne dziecko
-      if (childId === currentChildId) continue;
+      const child = childrenData[childId];
+
+      // Pomiń dzieci innych użytkowników i aktualne dziecko
+      if (child.userId !== user.uid || childId === currentChildId) continue;
 
       // Pobierz nagrody tego dziecka
       const rewardsRef = ref(db, `users/${childId}/rewards`);
@@ -722,10 +789,11 @@ export const getSuggestedRewards = async (currentChildId) => {
 
       if (rewardsData) {
         Object.values(rewardsData).forEach(reward => {
-          if (reward.name && !suggestions.has(reward.name)) {
+          // Tylko nagrody z Firebase Storage
+          if (reward.name && !suggestions.has(reward.name) && isFirebaseStorageUrl(reward.image)) {
             suggestions.set(reward.name, {
               name: reward.name,
-              image: reward.image || '',
+              image: reward.image,
               probability: reward.probability || 50
             });
           }
@@ -740,9 +808,15 @@ export const getSuggestedRewards = async (currentChildId) => {
   }
 };
 
-// Pobierz obrazki używane przez inne dzieci
+// Pobierz obrazki używane przez inne dzieci (tylko tego samego użytkownika, tylko Firebase Storage)
 export const getCategoryImagesFromOtherChildren = async (currentChildId) => {
   try {
+    const user = getCurrentAuthUser();
+    if (!user) {
+      console.error('Użytkownik nie jest zalogowany');
+      return [];
+    }
+
     const childrenRef = ref(db, 'children');
     const childrenSnapshot = await get(childrenRef);
     const childrenData = childrenSnapshot.val();
@@ -751,10 +825,12 @@ export const getCategoryImagesFromOtherChildren = async (currentChildId) => {
 
     const images = new Set(); // Używamy Set aby uniknąć duplikatów
 
-    // Przeiteruj po wszystkich dzieciach
+    // Przeiteruj po wszystkich dzieciach TEGO użytkownika
     for (const childId in childrenData) {
-      // Pomiń aktualne dziecko
-      if (childId === currentChildId) continue;
+      const child = childrenData[childId];
+
+      // Pomiń dzieci innych użytkowników i aktualne dziecko
+      if (child.userId !== user.uid || childId === currentChildId) continue;
 
       // Pobierz kategorie tego dziecka
       const categoriesRef = ref(db, `users/${childId}/categories`);
@@ -763,7 +839,8 @@ export const getCategoryImagesFromOtherChildren = async (currentChildId) => {
 
       if (categoriesData) {
         Object.values(categoriesData).forEach(cat => {
-          if (cat.image && cat.image.trim()) {
+          // Tylko obrazki z Firebase Storage
+          if (cat.image && cat.image.trim() && isFirebaseStorageUrl(cat.image)) {
             images.add(cat.image.trim());
           }
         });
@@ -774,5 +851,41 @@ export const getCategoryImagesFromOtherChildren = async (currentChildId) => {
   } catch (error) {
     console.error('Błąd pobierania obrazków z innych profili:', error);
     return [];
+  }
+};
+
+// Usuń wszystkie dane użytkownika z bazy danych
+export const deleteAllUserData = async () => {
+  try {
+    const user = getCurrentAuthUser();
+    if (!user) {
+      console.error('Użytkownik nie jest zalogowany');
+      return false;
+    }
+
+    // Pobierz wszystkie dzieci tego użytkownika
+    const childrenRef = ref(db, 'children');
+    const childrenSnapshot = await get(childrenRef);
+    const childrenData = childrenSnapshot.val();
+
+    if (childrenData) {
+      // Usuń każde dziecko i jego dane
+      const deletePromises = [];
+      for (const childId in childrenData) {
+        const child = childrenData[childId];
+        if (child.userId === user.uid) {
+          // Usuń dziecko z listy children
+          deletePromises.push(remove(ref(db, `children/${childId}`)));
+          // Usuń wszystkie dane dziecka (kategorie, nagrody, profil)
+          deletePromises.push(remove(ref(db, `users/${childId}`)));
+        }
+      }
+      await Promise.all(deletePromises);
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Błąd usuwania danych użytkownika:', error);
+    return false;
   }
 };

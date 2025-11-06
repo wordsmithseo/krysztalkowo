@@ -111,22 +111,27 @@
 }
 
 /* ===== RESET I PODSTAWY ===== */
-html, body {
+html {
   margin: 0;
   padding: 0;
-  height: 100%;
   width: 100%;
+  height: 100%;
   overflow-x: hidden;
 }
 
 body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
   font-family: 'Poppins', sans-serif;
   background-color: #e0e5ec;
   color: #333;
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  min-height: 100vh;
   position: relative;
   transition: background-color 0.5s ease;
   -webkit-user-select: none;
@@ -134,6 +139,11 @@ body {
   -ms-user-select: none;
   user-select: none;
   will-change: background-color;
+}
+
+/* Zablokuj scrollowanie body gdy modal jest otwarty */
+body.modal-open {
+  overflow: hidden;
 }
 
 body.maks-bg {
@@ -903,4 +913,9 @@ body {
   .footer-rights {
     font-size: 0.7rem;
   }
+}
+
+/* ===== RECAPTCHA ===== */
+.grecaptcha-badge {
+  z-index: 1200 !important;
 }

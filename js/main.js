@@ -37,13 +37,13 @@ import {
   updateAdminHeaderInfo,
   handleEditReward,
   handleSaveRewardEdit,
-  updateRewardPreview,
   updateProbabilityInfo,
   renderCategorySuggestions,
-  renderRewardSuggestions
+  renderRewardSuggestions,
+  openGalleryModal
 } from './admin.js';
-import { getAvatar } from './database.js';
-import { setupAuthListener, loginUser, registerUser, logoutUser, getCurrentAuthUser } from './auth.js';
+import { getAvatar, deleteAllUserData } from './database.js';
+import { setupAuthListener, loginUser, registerUser, logoutUser, getCurrentAuthUser, deleteUserAccount } from './auth.js';
 
 const passwordModal = document.getElementById('passwordModal');
 const adminModal = document.getElementById('adminModal');
@@ -55,6 +55,7 @@ const pendingRewardsModal = document.getElementById('pendingRewardsModal');
 const editRewardModal = document.getElementById('editRewardModal');
 const resetRankingPasswordModal = document.getElementById('resetRankingPasswordModal');
 const resetRankingSuccessModal = document.getElementById('resetRankingSuccessModal');
+const deleteAccountPasswordModal = document.getElementById('deleteAccountPasswordModal');
 const appLoader = document.getElementById('appLoader');
 
 const adminPasswordInput = document.getElementById('adminPasswordInput');
@@ -68,10 +69,15 @@ const backToAdminBtn = document.getElementById('backToAdminBtn');
 const changePasswordBtn = document.getElementById('changePasswordBtn');
 const addRewardBtn = document.getElementById('addRewardBtn');
 const setAvatarBtn = document.getElementById('setAvatarBtn');
+const openGalleryBtn = document.getElementById('openGalleryBtn');
 const resetRankingBtn = document.getElementById('resetRankingBtn');
 const addChildBtn = document.getElementById('addChildBtn');
 const saveChildBtn = document.getElementById('saveChildBtn');
 const pendingRewardsBtn = document.getElementById('pendingRewardsBtn');
+const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+const deleteAccountPasswordInput = document.getElementById('deleteAccountPasswordInput');
+const confirmDeleteAccountBtn = document.getElementById('confirmDeleteAccountBtn');
+const cancelDeleteAccountBtn = document.getElementById('cancelDeleteAccountBtn');
 
 // Elementy uwierzytelniania
 const showLoginBtn = document.getElementById('showLoginBtn');
@@ -280,28 +286,44 @@ if (showRegisterBtn) {
 if (loginSubmitBtn) {
   loginSubmitBtn.addEventListener('click', async () => {
     hideError(loginError);
-    
+
     const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value;
-    
+
     if (!email || !password) {
       showError(loginError, 'Podaj email i hasło!');
       return;
     }
-    
+
     loginSubmitBtn.disabled = true;
-    loginSubmitBtn.textContent = 'Logowanie...';
-    
-    const result = await loginUser(email, password);
-    
-    if (result.success) {
-      document.getElementById('loginEmail').value = '';
-      document.getElementById('loginPassword').value = '';
-      hideError(loginError);
-    } else {
-      showError(loginError, result.error);
+    loginSubmitBtn.textContent = 'Weryfikacja...';
+
+    try {
+      // Wykonaj reCAPTCHA v3
+      const token = await grecaptcha.execute('6Lc6LwQsAAAAACRvem7Pfl5U1-ST3TDaJ3Frtvj8', { action: 'login' });
+
+      if (!token) {
+        showError(loginError, 'Błąd weryfikacji reCAPTCHA. Spróbuj ponownie.');
+        loginSubmitBtn.disabled = false;
+        loginSubmitBtn.textContent = 'Zaloguj się';
+        return;
+      }
+
+      loginSubmitBtn.textContent = 'Logowanie...';
+      const result = await loginUser(email, password);
+
+      if (result.success) {
+        document.getElementById('loginEmail').value = '';
+        document.getElementById('loginPassword').value = '';
+        hideError(loginError);
+      } else {
+        showError(loginError, result.error);
+      }
+    } catch (error) {
+      console.error('Błąd reCAPTCHA:', error);
+      showError(loginError, 'Błąd weryfikacji. Spróbuj ponownie.');
     }
-    
+
     loginSubmitBtn.disabled = false;
     loginSubmitBtn.textContent = 'Zaloguj się';
   });
@@ -311,52 +333,68 @@ if (loginSubmitBtn) {
 if (registerSubmitBtn) {
   registerSubmitBtn.addEventListener('click', async () => {
     hideError(registerError);
-    
+
     const name = document.getElementById('registerName').value.trim();
     const email = document.getElementById('registerEmail').value.trim();
     const password = document.getElementById('registerPassword').value;
     const confirmPassword = document.getElementById('registerConfirmPassword').value;
-    
+
     if (!name || !email || !password || !confirmPassword) {
       showError(registerError, 'Wypełnij wszystkie pola!');
       return;
     }
-    
+
     if (password !== confirmPassword) {
       showError(registerError, 'Hasła nie są identyczne!');
       return;
     }
-    
+
     if (password.length < 6) {
       showError(registerError, 'Hasło musi mieć co najmniej 6 znaków!');
       return;
     }
-    
+
     registerSubmitBtn.disabled = true;
-    registerSubmitBtn.textContent = 'Rejestracja...';
-    
-    const result = await registerUser(email, password, name);
-    
-    if (result.success) {
-      document.getElementById('registerName').value = '';
-      document.getElementById('registerEmail').value = '';
-      document.getElementById('registerPassword').value = '';
-      document.getElementById('registerConfirmPassword').value = '';
-      hideError(registerError);
-      
-      // Pokaż komunikat sukcesu
-      const successMessage = document.createElement('div');
-      successMessage.textContent = 'Konto utworzone pomyślnie! Możesz się teraz zalogować.';
-      successMessage.style.cssText = 'padding: 0.75rem; margin: 0.75rem 0; background: #e8f5e9; border: 1px solid #4caf50; border-radius: 0.5rem; color: #2e7d32; font-size: 0.9rem;';
-      registerForm.insertBefore(successMessage, registerForm.firstChild);
-      
-      setTimeout(() => {
-        successMessage.remove();
-        loginForm.style.display = 'block';
-        registerForm.style.display = 'none';
-      }, 2000);
-    } else {
-      showError(registerError, result.error);
+    registerSubmitBtn.textContent = 'Weryfikacja...';
+
+    try {
+      // Wykonaj reCAPTCHA v3
+      const token = await grecaptcha.execute('6Lc6LwQsAAAAACRvem7Pfl5U1-ST3TDaJ3Frtvj8', { action: 'register' });
+
+      if (!token) {
+        showError(registerError, 'Błąd weryfikacji reCAPTCHA. Spróbuj ponownie.');
+        registerSubmitBtn.disabled = false;
+        registerSubmitBtn.textContent = 'Zarejestruj się';
+        return;
+      }
+
+      registerSubmitBtn.textContent = 'Rejestracja...';
+      const result = await registerUser(email, password, name);
+
+      if (result.success) {
+        document.getElementById('registerName').value = '';
+        document.getElementById('registerEmail').value = '';
+        document.getElementById('registerPassword').value = '';
+        document.getElementById('registerConfirmPassword').value = '';
+        hideError(registerError);
+
+        // Pokaż komunikat sukcesu
+        const successMessage = document.createElement('div');
+        successMessage.textContent = 'Konto utworzone pomyślnie! Sprawdź swoją skrzynkę email aby zweryfikować konto.';
+        successMessage.style.cssText = 'padding: 0.75rem; margin: 0.75rem 0; background: #e8f5e9; border: 1px solid #4caf50; border-radius: 0.5rem; color: #2e7d32; font-size: 0.9rem;';
+        registerForm.insertBefore(successMessage, registerForm.firstChild);
+
+        setTimeout(() => {
+          successMessage.remove();
+          loginForm.style.display = 'block';
+          registerForm.style.display = 'none';
+        }, 3000);
+      } else {
+        showError(registerError, result.error);
+      }
+    } catch (error) {
+      console.error('Błąd reCAPTCHA:', error);
+      showError(registerError, 'Błąd weryfikacji. Spróbuj ponownie.')
     }
     
     registerSubmitBtn.disabled = false;
@@ -479,6 +517,7 @@ closeButtons.forEach(btn => {
     editRewardModal.style.display = 'none';
     resetRankingPasswordModal.style.display = 'none';
     resetRankingSuccessModal.style.display = 'none';
+    deleteAccountPasswordModal.style.display = 'none';
 
     const rewardModal = document.getElementById('rewardModal');
     if (rewardModal && rewardModal.style.display === 'flex') {
@@ -500,7 +539,8 @@ document.addEventListener('click', (e) => {
     pendingRewardsModal,
     editRewardModal,
     resetRankingPasswordModal,
-    resetRankingSuccessModal
+    resetRankingSuccessModal,
+    deleteAccountPasswordModal
   ];
 
   if (modals.includes(e.target)) {
@@ -523,7 +563,6 @@ addRewardBtn.addEventListener('click', handleAddReward);
 // Event listenery dla modalu edycji nagrody
 const saveRewardEditBtn = document.getElementById('saveRewardEditBtn');
 const cancelRewardEditBtn = document.getElementById('cancelRewardEditBtn');
-const editRewardImage = document.getElementById('editRewardImage');
 const editRewardProbability = document.getElementById('editRewardProbability');
 
 if (saveRewardEditBtn) {
@@ -538,16 +577,10 @@ if (cancelRewardEditBtn) {
   });
 }
 
-// Aktualizuj podgląd obrazka w czasie rzeczywistym
-if (editRewardImage) {
-  editRewardImage.addEventListener('input', updateRewardPreview);
-}
-
 // Aktualizuj informacje o częstotliwości w czasie rzeczywistym
 if (editRewardProbability) {
   editRewardProbability.addEventListener('input', () => {
     updateProbabilityInfo();
-    updateRewardPreview(); // Aktualizuj też podgląd bo rzadkość się zmienia
   });
 }
 
@@ -599,6 +632,10 @@ changePasswordBtn.addEventListener('click', async () => {
 
 if (setAvatarBtn) {
   setAvatarBtn.addEventListener('click', handleSetAvatar);
+}
+
+if (openGalleryBtn) {
+  openGalleryBtn.addEventListener('click', openGalleryModal);
 }
 
 if (resetRankingBtn) {
@@ -750,10 +787,138 @@ if (closeResetSuccessBtn) {
   });
 }
 
+// ===== OBSŁUGA USUWANIA KONTA =====
+if (deleteAccountBtn) {
+  deleteAccountBtn.addEventListener('click', () => {
+    deleteAccountPasswordInput.value = '';
+    adminModal.style.display = 'none';
+    deleteAccountPasswordModal.style.display = 'flex';
+    deleteAccountPasswordInput.focus();
+  });
+}
+
+if (cancelDeleteAccountBtn) {
+  cancelDeleteAccountBtn.addEventListener('click', () => {
+    deleteAccountPasswordModal.style.display = 'none';
+    adminModal.style.display = 'flex';
+  });
+}
+
+if (confirmDeleteAccountBtn && deleteAccountPasswordInput) {
+  confirmDeleteAccountBtn.addEventListener('click', async () => {
+    const password = deleteAccountPasswordInput.value;
+    const user = getCurrentAuthUser();
+
+    if (!password) {
+      alert('Wprowadź hasło!');
+      return;
+    }
+
+    if (!user) {
+      alert('Błąd: Musisz być zalogowany!');
+      return;
+    }
+
+    // Potwierdzenie przed usunięciem
+    const finalConfirm = confirm(
+      '⚠️ OSTATECZNE OSTRZEŻENIE ⚠️\n\n' +
+      'Czy na pewno chcesz usunąć swoje konto?\n\n' +
+      'Zostaną usunięte:\n' +
+      '• Twoje konto użytkownika\n' +
+      '• Wszystkie profile dzieci\n' +
+      '• Wszystkie kategorie i nagrody\n' +
+      '• Cała historia i statystyki\n\n' +
+      'Ta operacja jest NIEODWRACALNA!\n\n' +
+      'Kliknij OK aby kontynuować lub Anuluj aby przerwać.'
+    );
+
+    if (!finalConfirm) {
+      return;
+    }
+
+    confirmDeleteAccountBtn.disabled = true;
+    confirmDeleteAccountBtn.textContent = 'Usuwanie...';
+
+    try {
+      // Najpierw zweryfikuj hasło przez próbę ponownego logowania
+      const loginResult = await loginUser(user.email, password);
+
+      if (!loginResult.success) {
+        alert('❌ Nieprawidłowe hasło!');
+        confirmDeleteAccountBtn.disabled = false;
+        confirmDeleteAccountBtn.textContent = 'Usuń konto';
+        return;
+      }
+
+      // Usuń wszystkie dane użytkownika z bazy danych
+      const dataDeleted = await deleteAllUserData();
+
+      if (!dataDeleted) {
+        alert('❌ Błąd podczas usuwania danych!');
+        confirmDeleteAccountBtn.disabled = false;
+        confirmDeleteAccountBtn.textContent = 'Usuń konto';
+        return;
+      }
+
+      // Usuń konto Firebase Auth
+      const accountResult = await deleteUserAccount();
+
+      if (accountResult.success) {
+        deleteAccountPasswordModal.style.display = 'none';
+        alert('✅ Twoje konto zostało usunięte.\n\nDziękujemy za korzystanie z aplikacji.');
+        // Przekierowanie do strony logowania nastąpi automatycznie przez auth listener
+      } else {
+        alert(`❌ ${accountResult.error}`);
+        confirmDeleteAccountBtn.disabled = false;
+        confirmDeleteAccountBtn.textContent = 'Usuń konto';
+      }
+    } catch (error) {
+      console.error('Błąd podczas usuwania konta:', error);
+      alert('❌ Wystąpił błąd podczas usuwania konta!');
+      confirmDeleteAccountBtn.disabled = false;
+      confirmDeleteAccountBtn.textContent = 'Usuń konto';
+    }
+  });
+}
+
+// Automatyczne zarządzanie scrollowaniem body gdy modal jest otwarty
+const setupModalScrollLock = () => {
+  const checkModals = () => {
+    const modals = document.querySelectorAll('.modal');
+    const hasOpenModal = Array.from(modals).some(modal => {
+      const computedDisplay = window.getComputedStyle(modal).display;
+      return computedDisplay === 'flex' || computedDisplay === 'block';
+    });
+
+    if (hasOpenModal) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+  };
+
+  // Obserwuj zmiany stylów na wszystkich modalach
+  const observer = new MutationObserver(checkModals);
+
+  const modals = document.querySelectorAll('.modal');
+  modals.forEach(modal => {
+    observer.observe(modal, {
+      attributes: true,
+      attributeFilter: ['style']
+    });
+  });
+
+  // Sprawdź na starcie
+  checkModals();
+};
+
 document.addEventListener('DOMContentLoaded', () => {
   document.body.classList.add('maks-bg');
 
   if (localStorage.getItem(state.ADMIN_FLAG) === '1') {
     setLoggedInUi(true);
   }
+
+  // Uruchom system blokowania scrollowania dla modali
+  setupModalScrollLock();
 });

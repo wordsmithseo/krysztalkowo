@@ -4,7 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <title>Kryształkowo</title>
-  
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Balsamiq+Sans:wght@700&display=swap" rel="stylesheet">
   
   <link rel="stylesheet" href="styles/main.css">
@@ -13,7 +14,8 @@
   
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-  
+  <script src="https://www.google.com/recaptcha/api.js?render=6Lc6LwQsAAAAACRvem7Pfl5U1-ST3TDaJ3Frtvj8"></script>
+
   <script type="module" src="js/config.js"></script>
   <script type="module" src="js/auth.js"></script>
   <script type="module" src="js/state.js"></script>
@@ -272,15 +274,34 @@
         <h3>Zmień avatara</h3>
         <p style="font-size:0.9rem;color:#666;margin:0 0 0.75rem 0;">Avatar zostanie ustawiony dla obecnie wybranego dziecka</p>
         <div class="form-grid" style="grid-template-columns:1fr">
-          <input type="url" id="avatarUrlInput" placeholder="URL avatara">
+          <input type="file" id="avatarFileInput" accept="image/*" style="font-size: 1.05rem; padding: 0.6rem 1rem;">
           <button id="setAvatarBtn" class="set-avatar-btn">Ustaw avatar</button>
         </div>
+      </div>
+
+      <div class="admin-section">
+        <h3>📷 Galeria obrazków</h3>
+        <p style="font-size:0.9rem;color:#666;margin:0 0 0.75rem 0;">Zarządzaj wszystkimi wgranymi obrazkami</p>
+        <button id="openGalleryBtn" class="submit-btn" style="width:100%;">Otwórz galerię</button>
       </div>
 
       <div class="admin-section">
         <h3>⚠️ Resetuj ranking</h3>
         <p style="margin:0.5rem 0;font-size:0.9rem;color:#666;">Uwaga: Usunie wszystkie zwycięstwa wszystkich dzieci we wszystkich kategoriach!</p>
         <button id="resetRankingBtn" class="cancel-btn" style="width:100%;background:#e74c3c;color:#fff;font-weight:700;">🗑️ Resetuj cały ranking</button>
+      </div>
+
+      <div class="admin-section">
+        <h3>🚨 Usuń konto</h3>
+        <p style="margin:0.5rem 0;font-size:0.9rem;color:#d32f2f;font-weight:600;">UWAGA: Ta operacja jest nieodwracalna!</p>
+        <p style="margin:0.5rem 0;font-size:0.9rem;color:#666;">Usunięcie konta spowoduje trwałe usunięcie:</p>
+        <ul style="margin:0.5rem 0;font-size:0.9rem;color:#666;padding-left:1.5rem;">
+          <li>Twojego konta użytkownika</li>
+          <li>Wszystkich profili dzieci</li>
+          <li>Wszystkich kategorii i nagród</li>
+          <li>Całej historii i statystyk</li>
+        </ul>
+        <button id="deleteAccountBtn" class="cancel-btn" style="width:100%;background:#b71c1c;color:#fff;font-weight:700;margin-top:1rem;">❌ Usuń konto permanentnie</button>
       </div>
     </div>
   </div>
@@ -324,8 +345,9 @@
       <label style="font-size: 1.05rem; margin-top: 0.75rem;">Cel (liczba kryształków):</label>
       <input type="number" id="editCategoryGoal" min="1" style="font-size: 1.1rem; padding: 0.9rem 1rem;">
 
-      <label style="font-size: 1.05rem; margin-top: 0.75rem;">Obrazek (URL):</label>
-      <input type="url" id="editCategoryImage" placeholder="https://..." style="font-size: 1.05rem; padding: 0.9rem 1rem;">
+      <label style="font-size: 1.05rem; margin-top: 0.75rem;">Obrazek:</label>
+      <div id="currentCategoryImagePreview" style="margin: 0.5rem 0;"></div>
+      <input type="file" id="editCategoryImageFile" accept="image/*" style="font-size: 1.05rem; padding: 0.6rem 1rem; width: 100%;">
       <div id="imagePreviewsEdit" class="image-previews"></div>
 
       <div style="margin-top:1.5rem;display:flex;gap:.75rem">
@@ -343,18 +365,42 @@
       <label>Nazwa:</label>
       <input type="text" id="editRewardName">
 
-      <label>Obrazek (URL):</label>
-      <input type="url" id="editRewardImage" placeholder="https://...">
+      <label>Obrazek:</label>
+      <div id="currentRewardImagePreview" style="margin: 0.5rem 0;"></div>
+      <input type="file" id="editRewardImageFile" accept="image/*" style="font-size: 1.05rem; padding: 0.6rem 1rem; width: 100%;">
+      <div id="imagePreviewsReward" class="image-previews"></div>
 
       <label>Szansa wylosowania (%):</label>
       <input type="number" id="editRewardProbability" min="0.01" max="100" step="0.01" value="50" placeholder="50">
       <div id="probabilityInfo" class="probability-info"></div>
 
-      <div id="rewardImagePreview" class="reward-preview-container"></div>
-
       <div style="margin-top:1.5rem;display:flex;gap:0.85rem;">
         <button id="saveRewardEditBtn" class="submit-btn">Zapisz</button>
         <button id="cancelRewardEditBtn" class="cancel-btn">Anuluj</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="galleryModal" class="modal">
+    <div class="modal-content" style="max-width: 60rem;">
+      <span class="close-btn">&times;</span>
+      <h2>📷 Galeria obrazków</h2>
+
+      <div id="galleryStats" style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(106, 17, 203, 0.05); border-radius: 0.75rem; border: 1px solid rgba(106, 17, 203, 0.1);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+          <span style="font-weight: 600; color: #6a11cb;">Zajęte miejsce:</span>
+          <span id="totalSize" style="font-weight: 700; color: #6a11cb;">0 MB</span>
+        </div>
+        <div style="width: 100%; height: 20px; background: #e0e0e0; border-radius: 10px; overflow: hidden;">
+          <div id="storageBar" style="height: 100%; background: linear-gradient(90deg, #6a11cb, #8a2be2); width: 0%; transition: width 0.3s ease;"></div>
+        </div>
+        <div style="font-size: 0.85rem; color: #666; margin-top: 0.5rem;">
+          <span id="imageCount">0</span> obrazków
+        </div>
+      </div>
+
+      <div id="galleryGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; max-height: 60vh; overflow-y: auto;">
+        <!-- Obrazki będą renderowane tutaj -->
       </div>
     </div>
   </div>
@@ -410,6 +456,20 @@
       <h2 style="color: #2ecc71 !important; margin-bottom: 1rem;">Ranking został zresetowany!</h2>
       <p style="color: #666; margin: 0; font-size: 1rem;">Wszystkie zwycięstwa zostały usunięte.</p>
       <button id="closeResetSuccessBtn" class="submit-btn" style="width: 100%; margin-top: 1.5rem;">OK</button>
+    </div>
+  </div>
+
+  <div id="deleteAccountPasswordModal" class="modal">
+    <div class="modal-content password-modal-content">
+      <span class="close-btn">&times;</span>
+      <h2>🚨 Usuwanie konta</h2>
+      <p style="color: #d32f2f; font-weight: 600; margin: 1rem 0;">UWAGA: Ta operacja jest nieodwracalna!</p>
+      <p style="margin: 1rem 0;">Aby potwierdzić usunięcie konta, wprowadź swoje hasło:</p>
+      <input type="password" id="deleteAccountPasswordInput" placeholder="Twoje hasło" style="width: 100%; padding: 0.75rem; margin: 1rem 0; border: 2px solid #ddd; border-radius: 0.5rem;">
+      <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+        <button id="cancelDeleteAccountBtn" class="submit-btn" style="flex: 1; background: #95a5a6;">Anuluj</button>
+        <button id="confirmDeleteAccountBtn" class="cancel-btn" style="flex: 1; background: #b71c1c;">Usuń konto</button>
+      </div>
     </div>
   </div>
 

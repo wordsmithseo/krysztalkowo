@@ -21,6 +21,7 @@ import {
   getCategoryImagesFromOtherChildren
 } from './database.js';
 import { getCurrentAuthUser } from './auth.js';
+import { uploadImage, compressImage, getAllUserImages, deleteImageByUrl } from './storage.js';
 
 const adminModal = document.getElementById('adminModal');
 const editModal = document.getElementById('editModal');
@@ -100,28 +101,69 @@ export const updateAdminHeaderInfo = () => {
   }
 };
 
+const formatLastAddTime = (timestamp) => {
+  if (!timestamp) return 'Nigdy nie dodano';
+
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diff = now - date;
+
+  // Jeśli mniej niż minutę temu
+  if (diff < 60000) {
+    return 'Przed chwilą';
+  }
+
+  // Jeśli mniej niż godzinę temu
+  if (diff < 3600000) {
+    const minutes = Math.floor(diff / 60000);
+    return `${minutes} min temu`;
+  }
+
+  // Jeśli mniej niż 24 godziny temu
+  if (diff < 86400000) {
+    const hours = Math.floor(diff / 3600000);
+    return `${hours}h temu`;
+  }
+
+  // Jeśli więcej niż 24 godziny temu - pokaż datę i godzinę
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear();
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+
+  return `${day}.${month}.${year} ${hours}:${minutes}`;
+};
+
 export const renderAdminCategories = () => {
   const categories = getCategories();
 
-  categoryList.innerHTML = categories.map(cat => `
-    <li data-id="${cat.id}">
-      <div class="left">
-        <span class="drag-handle">☰</span>
-        <span class="name">${cat.name}</span>
-      </div>
-      <div class="category-controls">
-        <div class="crystal-controls">
-          <button onclick="window.modifyCrystalsHandler('${cat.id}', -1)" title="Odejmij kryształek">−</button>
-          <span class="count">${cat.count || 0} / ${cat.goal || 10}</span>
-          <button onclick="window.modifyCrystalsHandler('${cat.id}', 1)" title="Dodaj kryształek">+</button>
+  categoryList.innerHTML = categories.map(cat => {
+    const lastAddText = formatLastAddTime(cat.lastAddTimestamp);
+
+    return `
+      <li data-id="${cat.id}">
+        <div class="left">
+          <span class="drag-handle">☰</span>
+          <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+            <span class="name">${cat.name}</span>
+            <span style="font-size: 0.75rem; color: #999;">🕐 Ostatni: ${lastAddText}</span>
+          </div>
         </div>
-        <div class="action-buttons">
-          <button onclick="window.editCategoryHandler('${cat.id}')">✏️</button>
-          <button onclick="window.deleteCategoryHandler('${cat.id}')">🗑️</button>
+        <div class="category-controls">
+          <div class="crystal-controls">
+            <button onclick="window.modifyCrystalsHandler('${cat.id}', -1)" title="Odejmij kryształek">−</button>
+            <span class="count">${cat.count || 0} / ${cat.goal || 10}</span>
+            <button onclick="window.modifyCrystalsHandler('${cat.id}', 1)" title="Dodaj kryształek">+</button>
+          </div>
+          <div class="action-buttons">
+            <button onclick="window.editCategoryHandler('${cat.id}')">✏️</button>
+            <button onclick="window.deleteCategoryHandler('${cat.id}')">🗑️</button>
+          </div>
         </div>
-      </div>
-    </li>
-  `).join('');
+      </li>
+    `;
+  }).join('');
 };
 
 export const handleModifyCrystals = async (categoryId, delta) => {
@@ -232,7 +274,25 @@ export const handleEditCategory = (categoryId) => {
 
   document.getElementById('editCategoryName').value = cat.name || '';
   document.getElementById('editCategoryGoal').value = cat.goal || 10;
-  document.getElementById('editCategoryImage').value = cat.image || '';
+
+  // Pokaż podgląd aktualnego obrazka
+  const currentImagePreview = document.getElementById('currentCategoryImagePreview');
+  if (currentImagePreview) {
+    if (cat.image) {
+      currentImagePreview.innerHTML = `
+        <div style="padding: 0.75rem; background: #f5f5f5; border-radius: 0.5rem; border: 2px solid #ddd;">
+          <div style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; color: #666;">Aktualny obrazek:</div>
+          <img src="${cat.image}" alt="Aktualny obrazek" style="max-width: 150px; max-height: 150px; border-radius: 0.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" onerror="this.parentElement.innerHTML='<div style=\\'color:#999;padding:1rem;\\'>Nie można załadować obrazka</div>'">
+        </div>
+      `;
+    } else {
+      currentImagePreview.innerHTML = '<div style="padding: 0.75rem; background: #f5f5f5; border-radius: 0.5rem; color: #999; font-size: 0.9rem;">Brak obrazka</div>';
+    }
+  }
+
+  // Wyczyść input file i wybrany obrazek z galerii
+  document.getElementById('editCategoryImageFile').value = '';
+  selectedImageFromGallery = null;
 
   // Wyświetl aktualną liczbę kryształków i maksimum
   const currentCount = cat.count || 0;
@@ -257,81 +317,164 @@ export const handleEditCategory = (categoryId) => {
 
 export const handleSaveEdit = async () => {
   const categoryId = editModal.dataset.editingId;
-  
-  const data = {
-    name: document.getElementById('editCategoryName').value.trim(),
-    goal: parseInt(document.getElementById('editCategoryGoal').value) || 10,
-    image: document.getElementById('editCategoryImage').value.trim()
-  };
-  
-  if (!data.name) {
-    alert('Nazwa nie może być pusta!');
-    return;
-  }
-  
-  const success = await updateCategory(categoryId, data);
-  
-  if (success) {
-    editModal.style.display = 'none';
-    adminModal.style.display = 'flex';
-    renderAdminCategories();
-    initializeSortable();
-    updateAdminHeaderInfo();
+
+  const saveBtn = document.getElementById('saveEditBtn');
+  const originalText = saveBtn.textContent;
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'Zapisywanie...';
+
+  try {
+    const imageFile = document.getElementById('editCategoryImageFile').files[0];
+
+    // Pobierz aktualny obrazek z kategorii
+    const categories = getCategories();
+    const currentCategory = categories.find(c => c.id === categoryId);
+    let imageUrl = currentCategory?.image || '';
+
+    // Jeśli wybrano nowy plik, uploaduj go
+    if (imageFile) {
+      saveBtn.textContent = 'Przesyłanie obrazka...';
+
+      // Skompresuj obrazek przed uploadem
+      const compressedFile = await compressImage(imageFile);
+      const uploadResult = await uploadImage(compressedFile, 'category');
+
+      if (!uploadResult.success) {
+        alert(`Błąd podczas przesyłania obrazka: ${uploadResult.error}`);
+        saveBtn.disabled = false;
+        saveBtn.textContent = originalText;
+        return;
+      }
+
+      imageUrl = uploadResult.url;
+    } else if (selectedImageFromGallery) {
+      // Jeśli nie wybrano nowego pliku, ale wybrano obrazek z galerii
+      imageUrl = selectedImageFromGallery;
+    }
+
+    const data = {
+      name: document.getElementById('editCategoryName').value.trim(),
+      goal: parseInt(document.getElementById('editCategoryGoal').value) || 10,
+      image: imageUrl
+    };
+
+    if (!data.name) {
+      alert('Nazwa nie może być pusta!');
+      saveBtn.disabled = false;
+      saveBtn.textContent = originalText;
+      return;
+    }
+
+    saveBtn.textContent = 'Zapisywanie danych...';
+    const success = await updateCategory(categoryId, data);
+
+    if (success) {
+      editModal.style.display = 'none';
+      adminModal.style.display = 'flex';
+      renderAdminCategories();
+      initializeSortable();
+      updateAdminHeaderInfo();
+
+      // Wyczyść input pliku i wybrany obrazek z galerii
+      document.getElementById('editCategoryImageFile').value = '';
+      selectedImageFromGallery = null;
+    }
+  } catch (error) {
+    console.error('Błąd podczas zapisywania:', error);
+    alert('Wystąpił błąd podczas zapisywania. Spróbuj ponownie.');
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.textContent = originalText;
   }
 };
+
+// Zmienne przechowujące wybrany obrazek z galerii
+let selectedImageFromGallery = null;
+let selectedRewardImageFromGallery = null;
 
 const renderImagePreviews = async (currentImage) => {
   const previewContainer = document.getElementById('imagePreviewsEdit');
 
-  const defaultImages = [
-    'https://em-content.zobj.net/source/google/387/avocado_1f951.png',
-    'https://em-content.zobj.net/source/google/387/artist-palette_1f3a8.png',
-    'https://em-content.zobj.net/source/google/387/open-book_1f4d6.png',
-    'https://em-content.zobj.net/source/google/387/red-apple_1f34e.png',
-    'https://em-content.zobj.net/source/google/387/tangerine_1f34a.png',
-    'https://em-content.zobj.net/source/google/387/strawberry_1f353.png',
-    'https://em-content.zobj.net/source/google/387/broccoli_1f966.png',
-    'https://em-content.zobj.net/source/google/387/carrot_1f955.png',
-    'https://em-content.zobj.net/source/google/387/tomato_1f345.png',
-    'https://em-content.zobj.net/source/google/387/person-running_1f3c3.png',
-    'https://em-content.zobj.net/source/google/387/flexed-biceps_1f4aa.png',
-    'https://em-content.zobj.net/source/google/387/water-wave_1f30a.png'
-  ];
-
-  // Pobierz obrazki z innych dzieci
+  // Pobierz wszystkie obrazki już wgrane na Firebase Storage
   const currentChildId = getCurrentUser();
-  const otherChildrenImages = await getCategoryImagesFromOtherChildren(currentChildId);
-
-  // Połącz domyślne obrazki z obrazkami innych dzieci (unikalne)
-  const allImages = [...new Set([...defaultImages, ...otherChildrenImages])];
+  const uploadedImages = await getCategoryImagesFromOtherChildren(currentChildId);
 
   let html = '';
 
-  // Jeśli są obrazki z innych dzieci, pokaż je w osobnej sekcji
-  if (otherChildrenImages.length > 0) {
+  // Jeśli są wgrane obrazki, pokaż je w galerii
+  if (uploadedImages.length > 0) {
     html += '<div class="image-section">';
-    html += '<div class="image-section-title image-section-title-highlight">💡 Obrazki z innych profili:</div>';
+    html += '<div class="image-section-title image-section-title-highlight">📷 Galeria wgranych obrazków:</div>';
+    html += '<div style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">Kliknij obrazek aby go użyć, lub wgraj nowy plik powyżej</div>';
     html += '<div class="image-previews">';
-    html += otherChildrenImages.map(url =>
-      `<img src="${url}" class="image-preview" onclick="window.selectImageHandler('${url}')" alt="Preview">`
+    html += uploadedImages.map(url =>
+      `<img src="${url}" class="image-preview ${url === selectedImageFromGallery ? 'selected' : ''}" onclick="window.selectImageHandler('${url}')" alt="Preview" style="cursor: pointer;">`
     ).join('');
     html += '</div></div>';
+  } else {
+    html += '<div class="image-section">';
+    html += '<div style="font-size: 0.9rem; color: #999; padding: 1rem; text-align: center;">Brak wgranych obrazków. Wgraj pierwszy obrazek używając pola powyżej.</div>';
+    html += '</div>';
   }
-
-  // Dodaj domyślne obrazki
-  html += '<div class="image-section">';
-  html += '<div class="image-section-title">Domyślne obrazki:</div>';
-  html += '<div class="image-previews">';
-  html += defaultImages.map(url =>
-    `<img src="${url}" class="image-preview" onclick="window.selectImageHandler('${url}')" alt="Preview">`
-  ).join('');
-  html += '</div></div>';
 
   previewContainer.innerHTML = html;
 };
 
 export const handleSelectImage = (url) => {
-  document.getElementById('editCategoryImage').value = url;
+  selectedImageFromGallery = url;
+  // Wyczyść pole file input jeśli użytkownik wybrał obrazek z galerii
+  const fileInput = document.getElementById('editCategoryImageFile');
+  if (fileInput) {
+    fileInput.value = '';
+  }
+  // Odśwież widok galerii aby pokazać wybrany obrazek
+  renderImagePreviews();
+};
+
+const renderRewardImagePreviews = async () => {
+  const previewContainer = document.getElementById('imagePreviewsReward');
+
+  // Pobierz wszystkie obrazki już wgrane na Firebase Storage (z nagród)
+  const currentChildId = getCurrentUser();
+  const rewards = getRewards();
+  const uploadedImages = new Set();
+
+  rewards.forEach(reward => {
+    if (reward.image && reward.image.includes('firebasestorage.googleapis.com')) {
+      uploadedImages.add(reward.image);
+    }
+  });
+
+  let html = '';
+
+  // Jeśli są wgrane obrazki, pokaż je w galerii
+  if (uploadedImages.size > 0) {
+    html += '<div class="image-section">';
+    html += '<div class="image-section-title image-section-title-highlight">📷 Galeria wgranych obrazków:</div>';
+    html += '<div style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">Kliknij obrazek aby go użyć, lub wgraj nowy plik powyżej</div>';
+    html += '<div class="image-previews">';
+    html += Array.from(uploadedImages).map(url =>
+      `<img src="${url}" class="image-preview ${url === selectedRewardImageFromGallery ? 'selected' : ''}" onclick="window.selectRewardImageHandler('${url}')" alt="Preview" style="cursor: pointer;">`
+    ).join('');
+    html += '</div></div>';
+  } else {
+    html += '<div class="image-section">';
+    html += '<div style="font-size: 0.9rem; color: #999; padding: 1rem; text-align: center;">Brak wgranych obrazków. Wgraj pierwszy obrazek używając pola powyżej.</div>';
+    html += '</div>';
+  }
+
+  previewContainer.innerHTML = html;
+};
+
+export const handleSelectRewardImage = (url) => {
+  selectedRewardImageFromGallery = url;
+  // Wyczyść pole file input jeśli użytkownik wybrał obrazek z galerii
+  const fileInput = document.getElementById('editRewardImageFile');
+  if (fileInput) {
+    fileInput.value = '';
+  }
+  // Odśwież widok galerii aby pokazać wybrany obrazek
+  renderRewardImagePreviews();
 };
 
 export const handleAddReward = async () => {
@@ -401,14 +544,34 @@ export const handleEditReward = (rewardId) => {
   const adminModal = document.getElementById('adminModal');
 
   document.getElementById('editRewardName').value = reward.name || '';
-  document.getElementById('editRewardImage').value = reward.image || '';
   document.getElementById('editRewardProbability').value = reward.probability || 50;
+
+  // Pokaż podgląd aktualnego obrazka
+  const currentImagePreview = document.getElementById('currentRewardImagePreview');
+  if (currentImagePreview) {
+    if (reward.image) {
+      currentImagePreview.innerHTML = `
+        <div style="padding: 0.75rem; background: #f5f5f5; border-radius: 0.5rem; border: 2px solid #ddd;">
+          <div style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; color: #666;">Aktualny obrazek:</div>
+          <img src="${reward.image}" alt="Aktualny obrazek" style="max-width: 150px; max-height: 150px; border-radius: 0.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" onerror="this.parentElement.innerHTML='<div style=\\'color:#999;padding:1rem;\\'>Nie można załadować obrazka</div>'">
+        </div>
+      `;
+    } else {
+      currentImagePreview.innerHTML = '<div style="padding: 0.75rem; background: #f5f5f5; border-radius: 0.5rem; color: #999; font-size: 0.9rem;">Brak obrazka</div>';
+    }
+  }
+
+  // Wyczyść input file i wybrany obrazek z galerii
+  document.getElementById('editRewardImageFile').value = '';
+  selectedRewardImageFromGallery = null;
 
   // Zapisz ID edytowanej nagrody
   editRewardModal.dataset.editingId = rewardId;
 
-  // Zaktualizuj podgląd i informacje o częstotliwości
-  updateRewardPreview();
+  // Wyświetl galerię obrazków
+  renderRewardImagePreviews();
+
+  // Zaktualizuj informacje o częstotliwości
   updateProbabilityInfo();
 
   adminModal.style.display = 'none';
@@ -420,53 +583,92 @@ export const handleSaveRewardEdit = async () => {
   const editRewardModal = document.getElementById('editRewardModal');
   const rewardId = editRewardModal.dataset.editingId;
 
-  const data = {
-    name: document.getElementById('editRewardName').value.trim(),
-    image: document.getElementById('editRewardImage').value.trim(),
-    probability: parseFloat(document.getElementById('editRewardProbability').value) || 50
-  };
-
-  if (!data.name) {
-    alert('Nazwa nie może być pusta!');
-    return;
+  const saveBtn = document.querySelector('#editRewardModal .submit-btn');
+  const originalText = saveBtn ? saveBtn.textContent : 'Zapisz';
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Zapisywanie...';
   }
 
-  if (data.probability < 0.01 || data.probability > 100) {
-    alert('Szansa musi być między 0.01% a 100%!');
-    return;
-  }
+  try {
+    const imageFile = document.getElementById('editRewardImageFile').files[0];
 
-  const success = await updateReward(rewardId, data);
+    // Pobierz aktualny obrazek z nagrody
+    const rewards = getRewards();
+    const currentReward = rewards.find(r => r.id === rewardId);
+    let imageUrl = currentReward?.image || '';
 
-  if (success) {
-    editRewardModal.style.display = 'none';
-    const adminModal = document.getElementById('adminModal');
-    adminModal.style.display = 'flex';
-    renderAdminRewards();
+    // Jeśli wybrano nowy plik, uploaduj go
+    if (imageFile) {
+      if (saveBtn) saveBtn.textContent = 'Przesyłanie obrazka...';
+
+      // Skompresuj obrazek przed uploadem
+      const compressedFile = await compressImage(imageFile);
+      const uploadResult = await uploadImage(compressedFile, 'reward');
+
+      if (!uploadResult.success) {
+        alert(`Błąd podczas przesyłania obrazka: ${uploadResult.error}`);
+        if (saveBtn) {
+          saveBtn.disabled = false;
+          saveBtn.textContent = originalText;
+        }
+        return;
+      }
+
+      imageUrl = uploadResult.url;
+    } else if (selectedRewardImageFromGallery) {
+      // Jeśli nie wybrano nowego pliku, ale wybrano obrazek z galerii
+      imageUrl = selectedRewardImageFromGallery;
+    }
+
+    const data = {
+      name: document.getElementById('editRewardName').value.trim(),
+      image: imageUrl,
+      probability: parseFloat(document.getElementById('editRewardProbability').value) || 50
+    };
+
+    if (!data.name) {
+      alert('Nazwa nie może być pusta!');
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = originalText;
+      }
+      return;
+    }
+
+    if (data.probability < 0.01 || data.probability > 100) {
+      alert('Szansa musi być między 0.01% a 100%!');
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = originalText;
+      }
+      return;
+    }
+
+    if (saveBtn) saveBtn.textContent = 'Zapisywanie danych...';
+    const success = await updateReward(rewardId, data);
+
+    if (success) {
+      editRewardModal.style.display = 'none';
+      const adminModal = document.getElementById('adminModal');
+      adminModal.style.display = 'flex';
+      renderAdminRewards();
+
+      // Wyczyść input pliku i wybrany obrazek z galerii
+      document.getElementById('editRewardImageFile').value = '';
+      selectedRewardImageFromGallery = null;
+    }
+  } catch (error) {
+    console.error('Błąd podczas zapisywania nagrody:', error);
+    alert('Wystąpił błąd podczas zapisywania. Spróbuj ponownie.');
+  } finally {
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.textContent = originalText;
+    }
   }
 };
 
-// Funkcja aktualizacji podglądu nagrody
-export const updateRewardPreview = () => {
-  const imageUrl = document.getElementById('editRewardImage').value.trim();
-  const probability = parseFloat(document.getElementById('editRewardProbability').value) || 50;
-  const previewContainer = document.getElementById('rewardImagePreview');
-
-  if (!imageUrl) {
-    previewContainer.innerHTML = '<p style="color:#999;text-align:center;">Wklej URL obrazka aby zobaczyć podgląd</p>';
-    return;
-  }
-
-  const rarityClass = getRarityClass(probability);
-  const rarityName = getRarityName(probability);
-
-  previewContainer.innerHTML = `
-    <div class="reward-preview-wrapper ${rarityClass}">
-      <img src="${imageUrl}" class="reward-preview-image" alt="Podgląd nagrody" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22150%22 height=%22150%22 viewBox=%220 0 150 150%22%3E%3Crect width=%22150%22 height=%22150%22 fill=%22%23f0f0f0%22 rx=%2210%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2260%22%3E🎁%3C/text%3E%3C/svg%3E'; this.onerror=null;">
-      <span class="rarity-label">${rarityName}</span>
-    </div>
-  `;
-};
 
 // Funkcja aktualizacji informacji o częstotliwości
 export const updateProbabilityInfo = () => {
@@ -508,11 +710,11 @@ export const setLoggedInUi = (isLoggedIn) => {
 };
 
 export const handleSetAvatar = async () => {
-  const input = document.getElementById('avatarUrlInput');
-  const url = input.value.trim();
+  const input = document.getElementById('avatarFileInput');
+  const file = input.files[0];
 
-  if (!url) {
-    alert('Podaj URL avatara!');
+  if (!file) {
+    alert('Wybierz plik obrazka!');
     return;
   }
 
@@ -526,15 +728,39 @@ export const handleSetAvatar = async () => {
     return;
   }
 
-  const success = await setAvatar(currentUserId, url);
+  const setAvatarBtn = document.getElementById('setAvatarBtn');
+  const originalText = setAvatarBtn.textContent;
+  setAvatarBtn.disabled = true;
+  setAvatarBtn.textContent = 'Przesyłanie...';
 
-  if (success) {
-    input.value = '';
-    alert(`Avatar dla ${currentChild.name} został zaktualizowany!`);
-    // Odśwież przyciski użytkowników, aby pokazać nowy avatar
-    if (window.updateUserButtons) {
-      window.updateUserButtons();
+  try {
+    // Skompresuj obrazek przed uploadem
+    const compressedFile = await compressImage(file);
+    const uploadResult = await uploadImage(compressedFile, 'avatar');
+
+    if (!uploadResult.success) {
+      alert(`Błąd podczas przesyłania obrazka: ${uploadResult.error}`);
+      setAvatarBtn.disabled = false;
+      setAvatarBtn.textContent = originalText;
+      return;
     }
+
+    const success = await setAvatar(currentUserId, uploadResult.url);
+
+    if (success) {
+      input.value = '';
+      alert(`Avatar dla ${currentChild.name} został zaktualizowany!`);
+      // Odśwież przyciski użytkowników, aby pokazać nowy avatar
+      if (window.updateUserButtons) {
+        window.updateUserButtons();
+      }
+    }
+  } catch (error) {
+    console.error('Błąd podczas ustawiania avatara:', error);
+    alert('Wystąpił błąd podczas ustawiania avatara. Spróbuj ponownie.');
+  } finally {
+    setAvatarBtn.disabled = false;
+    setAvatarBtn.textContent = originalText;
   }
 };
 
@@ -707,8 +933,9 @@ export const renderCategorySuggestions = async () => {
       <div style="font-size: 0.85rem; font-weight: 600; color: #6a11cb; margin-bottom: 0.5rem;">💡 Kategorie z innych profili:</div>
       <div class="suggestions-list">
         ${suggestions.map(cat => `
-          <button class="suggestion-btn" onclick="window.fillCategoryFromSuggestion('${cat.name.replace(/'/g, "\\'")}', ${cat.goal}, '${(cat.image || '').replace(/'/g, "\\'")}')">
-            ${cat.name}
+          <button class="suggestion-btn-with-image" onclick="window.fillCategoryFromSuggestion('${cat.name.replace(/'/g, "\\'")}', ${cat.goal}, '${(cat.image || '').replace(/'/g, "\\'")}')">
+            ${cat.image ? `<img src="${cat.image}" alt="${cat.name}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 0.25rem; margin-right: 0.5rem;">` : ''}
+            <span>${cat.name}</span>
           </button>
         `).join('')}
       </div>
@@ -735,8 +962,9 @@ export const renderRewardSuggestions = async () => {
       <div style="font-size: 0.85rem; font-weight: 600; color: #6a11cb; margin-bottom: 0.5rem;">💡 Nagrody z innych profili:</div>
       <div class="suggestions-list">
         ${suggestions.map(reward => `
-          <button class="suggestion-btn" onclick="window.fillRewardFromSuggestion('${reward.name.replace(/'/g, "\\'")}', '${(reward.image || '').replace(/'/g, "\\'")}', ${reward.probability})">
-            ${reward.name}
+          <button class="suggestion-btn-with-image" onclick="window.fillRewardFromSuggestion('${reward.name.replace(/'/g, "\\'")}', '${(reward.image || '').replace(/'/g, "\\'")}', ${reward.probability})">
+            ${reward.image ? `<img src="${reward.image}" alt="${reward.name}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 0.25rem; margin-right: 0.5rem;">` : ''}
+            <span>${reward.name}</span>
           </button>
         `).join('')}
       </div>
@@ -762,10 +990,86 @@ export const fillRewardFromSuggestion = (name, image, probability) => {
   }
 };
 
+// ===== GALERIA OBRAZKÓW =====
+export const openGalleryModal = async () => {
+  const galleryModal = document.getElementById('galleryModal');
+  galleryModal.style.display = 'flex';
+  await renderGallery();
+};
+
+export const renderGallery = async () => {
+  const galleryGrid = document.getElementById('galleryGrid');
+  const totalSizeEl = document.getElementById('totalSize');
+  const imageCountEl = document.getElementById('imageCount');
+  const storageBar = document.getElementById('storageBar');
+
+  galleryGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: #666;">Ładowanie...</div>';
+
+  const result = await getAllUserImages();
+
+  if (!result.success) {
+    galleryGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: #d32f2f;">Błąd ładowania obrazków</div>';
+    return;
+  }
+
+  if (result.images.length === 0) {
+    galleryGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: #666;">Brak wgranych obrazków</div>';
+    totalSizeEl.textContent = '0 MB';
+    imageCountEl.textContent = '0';
+    storageBar.style.width = '0%';
+    return;
+  }
+
+  // Aktualizuj statystyki
+  const totalMB = (result.totalSize / (1024 * 1024)).toFixed(2);
+  totalSizeEl.textContent = `${totalMB} MB`;
+  imageCountEl.textContent = result.count.toString();
+
+  // Ustaw pasek postępu (na razie bez limitu, więc użyjemy 100MB jako bazę dla wizualizacji)
+  const maxVisualization = 100; // MB dla wizualizacji
+  const percentage = Math.min((parseFloat(totalMB) / maxVisualization) * 100, 100);
+  storageBar.style.width = `${percentage}%`;
+
+  // Renderuj obrazki
+  galleryGrid.innerHTML = result.images.map(img => `
+    <div class="gallery-item" style="position: relative; border-radius: 0.5rem; overflow: hidden; border: 2px solid #e0e0e0;">
+      <img src="${img.url}" alt="${img.name}" style="width: 100%; height: 150px; object-fit: cover;">
+      <div style="position: absolute; top: 0; right: 0; padding: 0.25rem;">
+        <button
+          onclick="window.handleDeleteImageHandler('${img.url}')"
+          style="background: #d32f2f; color: white; border: none; border-radius: 0.25rem; padding: 0.25rem 0.5rem; cursor: pointer; font-size: 0.8rem; font-weight: 700;"
+          title="Usuń obrazek"
+        >
+          ❌
+        </button>
+      </div>
+      <div style="padding: 0.5rem; font-size: 0.75rem; color: #666; background: rgba(255,255,255,0.9);">
+        ${(img.size / 1024).toFixed(1)} KB
+      </div>
+    </div>
+  `).join('');
+};
+
+export const handleDeleteImage = async (imageUrl) => {
+  if (!confirm('Czy na pewno chcesz usunąć ten obrazek? Tej operacji nie można cofnąć.')) {
+    return;
+  }
+
+  const result = await deleteImageByUrl(imageUrl);
+
+  if (result.success) {
+    alert('Obrazek został usunięty');
+    await renderGallery();
+  } else {
+    alert(`Błąd podczas usuwania obrazka: ${result.error}`);
+  }
+};
+
 if (typeof window !== 'undefined') {
   window.editCategoryHandler = handleEditCategory;
   window.deleteCategoryHandler = handleDeleteCategory;
   window.selectImageHandler = handleSelectImage;
+  window.selectRewardImageHandler = handleSelectRewardImage;
   window.editRewardHandler = handleEditReward;
   window.deleteRewardHandler = handleDeleteReward;
   window.modifyCrystalsHandler = handleModifyCrystals;
@@ -773,4 +1077,26 @@ if (typeof window !== 'undefined') {
   window.deleteChildHandler = handleDeleteChild;
   window.fillCategoryFromSuggestion = fillCategoryFromSuggestion;
   window.fillRewardFromSuggestion = fillRewardFromSuggestion;
+  window.handleDeleteImageHandler = handleDeleteImage;
+
+  // Event listener dla file input - wyczyść wybrany obrazek z galerii gdy wybrano nowy plik
+  const categoryFileInput = document.getElementById('editCategoryImageFile');
+  if (categoryFileInput) {
+    categoryFileInput.addEventListener('change', () => {
+      if (categoryFileInput.files.length > 0) {
+        selectedImageFromGallery = null;
+        renderImagePreviews();
+      }
+    });
+  }
+
+  const rewardFileInput = document.getElementById('editRewardImageFile');
+  if (rewardFileInput) {
+    rewardFileInput.addEventListener('change', () => {
+      if (rewardFileInput.files.length > 0) {
+        selectedRewardImageFromGallery = null;
+        renderRewardImagePreviews();
+      }
+    });
+  }
 }
