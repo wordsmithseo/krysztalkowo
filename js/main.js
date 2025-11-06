@@ -207,6 +207,7 @@ setupAuthListener((user) => {
   if (user) {
     // Użytkownik zalogowany - ukryj modal i pokaż aplikację
     authModal.style.display = 'none';
+    document.body.classList.remove('auth-modal-visible');
     document.querySelector('.crystal-app').style.display = 'flex';
     document.getElementById('userEmail').textContent = user.email;
     
@@ -251,6 +252,7 @@ setupAuthListener((user) => {
   } else {
     // Użytkownik niezalogowany - pokaż modal uwierzytelniania
     authModal.style.display = 'flex';
+    document.body.classList.add('auth-modal-visible');
     document.querySelector('.crystal-app').style.display = 'none';
     dataLoaded = false;
     childrenLoaded = false;
