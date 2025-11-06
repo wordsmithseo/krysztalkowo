@@ -93,33 +93,44 @@ export const hideProfileLoader = () => {
 };
 
 // Funkcja animacji dodawania kryształka
-const animateCrystalAdd = (card, categoryId, newCount) => {
-  // Animuj licznik
-  const countDiv = card.querySelector('.crystal-count');
-  if (countDiv) {
-    countDiv.classList.add('animating');
-    setTimeout(() => {
-      countDiv.classList.remove('animating');
-    }, 500);
-  }
+const animateCrystalAdd = (categoryId, newCount) => {
+  // Poczekaj aż DOM się zaktualizuje po Firebase onValue
+  setTimeout(() => {
+    // Znajdź kartę po categoryId
+    const card = document.querySelector(`[data-category-id="${categoryId}"]`);
 
-  // Znajdź i animuj nowo dodany kryształek
-  const crystals = card.querySelectorAll('.crystal-item');
-  if (crystals && crystals[newCount - 1]) {
-    const newCrystal = crystals[newCount - 1];
-    newCrystal.classList.add('just-added');
+    if (!card) {
+      console.warn('Nie znaleziono karty dla animacji:', categoryId);
+      return;
+    }
 
-    // Usuń klasę po zakończeniu animacji
-    setTimeout(() => {
-      newCrystal.classList.remove('just-added');
-    }, 1400);
-  }
+    // Animuj licznik
+    const countDiv = card.querySelector('.crystal-count');
+    if (countDiv) {
+      countDiv.classList.add('animating');
+      setTimeout(() => {
+        countDiv.classList.remove('animating');
+      }, 500);
+    }
 
-  // Stwórz efekt confetti
-  createConfetti(card);
+    // Znajdź i animuj nowo dodany kryształek
+    const crystals = card.querySelectorAll('.crystal-item');
+    if (crystals && crystals[newCount - 1]) {
+      const newCrystal = crystals[newCount - 1];
+      newCrystal.classList.add('just-added');
 
-  // Stwórz iskierki
-  createSparkles(card);
+      // Usuń klasę po zakończeniu animacji
+      setTimeout(() => {
+        newCrystal.classList.remove('just-added');
+      }, 1400);
+    }
+
+    // Stwórz efekt confetti
+    createConfetti(card);
+
+    // Stwórz iskierki
+    createSparkles(card);
+  }, 100); // Opóźnienie aby poczekać na re-render
 };
 
 // Funkcja tworząca confetti
@@ -217,7 +228,8 @@ export const renderCategories = () => {
 const createCategoryCard = (cat, user) => {
   const card = document.createElement('div');
   card.className = 'category-card';
-  
+  card.setAttribute('data-category-id', cat.id); // Dodaj ID kategorii dla łatwego odnalezienia
+
   const count = cat.count || 0;
   const goal = cat.goal || 10;
   const isReady = count >= goal;
@@ -397,7 +409,7 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
         }
 
         // Animacja dodawania kryształka
-        animateCrystalAdd(card, categoryId, newCount);
+        animateCrystalAdd(categoryId, newCount);
 
         if (willComplete) {
           vibrate([200, 100, 200, 100, 200]);

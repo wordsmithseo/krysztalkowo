@@ -42,7 +42,7 @@ import {
   renderRewardSuggestions,
   openGalleryModal
 } from './admin.js';
-import { getAvatar, deleteAllUserData, manualMigration } from './database.js';
+import { getAvatar, deleteAllUserData } from './database.js';
 import { setupAuthListener, loginUser, registerUser, logoutUser, getCurrentAuthUser, deleteUserAccount } from './auth.js';
 
 const passwordModal = document.getElementById('passwordModal');
@@ -71,7 +71,6 @@ const changePasswordBtn = document.getElementById('changePasswordBtn');
 const addRewardBtn = document.getElementById('addRewardBtn');
 const setAvatarBtn = document.getElementById('setAvatarBtn');
 const openGalleryBtn = document.getElementById('openGalleryBtn');
-const manualMigrationBtn = document.getElementById('manualMigrationBtn');
 const resetRankingBtn = document.getElementById('resetRankingBtn');
 const addChildBtn = document.getElementById('addChildBtn');
 const saveChildBtn = document.getElementById('saveChildBtn');
@@ -644,13 +643,6 @@ if (setAvatarBtn) {
 
 if (openGalleryBtn) {
   openGalleryBtn.addEventListener('click', openGalleryModal);
-}
-
-if (manualMigrationBtn) {
-  manualMigrationBtn.addEventListener('click', async () => {
-    console.log('🔧 Kliknięto przycisk migracji danych');
-    await manualMigration();
-  });
 }
 
 if (resetRankingBtn) {
