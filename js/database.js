@@ -702,7 +702,13 @@ export const deleteChild = async (childId) => {
   }
 };
 
-// Pobierz sugestie kategorii z innych dzieci (tylko tego samego użytkownika)
+// Funkcja sprawdzająca czy URL to Firebase Storage
+const isFirebaseStorageUrl = (url) => {
+  if (!url) return false;
+  return url.includes('firebasestorage.googleapis.com') || url.includes('firebase');
+};
+
+// Pobierz sugestie kategorii z innych dzieci (tylko tego samego użytkownika, tylko Firebase Storage)
 export const getSuggestedCategories = async (currentChildId) => {
   try {
     const user = getCurrentAuthUser();
@@ -733,11 +739,12 @@ export const getSuggestedCategories = async (currentChildId) => {
 
       if (categoriesData) {
         Object.values(categoriesData).forEach(cat => {
-          if (cat.name && !suggestions.has(cat.name)) {
+          // Tylko kategorie z Firebase Storage
+          if (cat.name && !suggestions.has(cat.name) && isFirebaseStorageUrl(cat.image)) {
             suggestions.set(cat.name, {
               name: cat.name,
               goal: cat.goal || 10,
-              image: cat.image || ''
+              image: cat.image
             });
           }
         });
@@ -751,7 +758,7 @@ export const getSuggestedCategories = async (currentChildId) => {
   }
 };
 
-// Pobierz sugestie nagród z innych dzieci (tylko tego samego użytkownika)
+// Pobierz sugestie nagród z innych dzieci (tylko tego samego użytkownika, tylko Firebase Storage)
 export const getSuggestedRewards = async (currentChildId) => {
   try {
     const user = getCurrentAuthUser();
@@ -782,10 +789,11 @@ export const getSuggestedRewards = async (currentChildId) => {
 
       if (rewardsData) {
         Object.values(rewardsData).forEach(reward => {
-          if (reward.name && !suggestions.has(reward.name)) {
+          // Tylko nagrody z Firebase Storage
+          if (reward.name && !suggestions.has(reward.name) && isFirebaseStorageUrl(reward.image)) {
             suggestions.set(reward.name, {
               name: reward.name,
-              image: reward.image || '',
+              image: reward.image,
               probability: reward.probability || 50
             });
           }
@@ -800,7 +808,7 @@ export const getSuggestedRewards = async (currentChildId) => {
   }
 };
 
-// Pobierz obrazki używane przez inne dzieci (tylko tego samego użytkownika)
+// Pobierz obrazki używane przez inne dzieci (tylko tego samego użytkownika, tylko Firebase Storage)
 export const getCategoryImagesFromOtherChildren = async (currentChildId) => {
   try {
     const user = getCurrentAuthUser();
@@ -831,7 +839,8 @@ export const getCategoryImagesFromOtherChildren = async (currentChildId) => {
 
       if (categoriesData) {
         Object.values(categoriesData).forEach(cat => {
-          if (cat.image && cat.image.trim()) {
+          // Tylko obrazki z Firebase Storage
+          if (cat.image && cat.image.trim() && isFirebaseStorageUrl(cat.image)) {
             images.add(cat.image.trim());
           }
         });

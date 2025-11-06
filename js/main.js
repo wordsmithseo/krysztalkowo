@@ -37,7 +37,6 @@ import {
   updateAdminHeaderInfo,
   handleEditReward,
   handleSaveRewardEdit,
-  updateRewardPreview,
   updateProbabilityInfo,
   renderCategorySuggestions,
   renderRewardSuggestions
@@ -562,7 +561,6 @@ addRewardBtn.addEventListener('click', handleAddReward);
 // Event listenery dla modalu edycji nagrody
 const saveRewardEditBtn = document.getElementById('saveRewardEditBtn');
 const cancelRewardEditBtn = document.getElementById('cancelRewardEditBtn');
-const editRewardImage = document.getElementById('editRewardImage');
 const editRewardProbability = document.getElementById('editRewardProbability');
 
 if (saveRewardEditBtn) {
@@ -577,16 +575,10 @@ if (cancelRewardEditBtn) {
   });
 }
 
-// Aktualizuj podgląd obrazka w czasie rzeczywistym
-if (editRewardImage) {
-  editRewardImage.addEventListener('input', updateRewardPreview);
-}
-
 // Aktualizuj informacje o częstotliwości w czasie rzeczywistym
 if (editRewardProbability) {
   editRewardProbability.addEventListener('input', () => {
     updateProbabilityInfo();
-    updateRewardPreview(); // Aktualizuj też podgląd bo rzadkość się zmienia
   });
 }
 

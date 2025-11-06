@@ -233,7 +233,24 @@ export const handleEditCategory = (categoryId) => {
 
   document.getElementById('editCategoryName').value = cat.name || '';
   document.getElementById('editCategoryGoal').value = cat.goal || 10;
-  document.getElementById('editCategoryImage').value = cat.image || '';
+
+  // Pokaż podgląd aktualnego obrazka
+  const currentImagePreview = document.getElementById('currentCategoryImagePreview');
+  if (currentImagePreview) {
+    if (cat.image) {
+      currentImagePreview.innerHTML = `
+        <div style="padding: 0.75rem; background: #f5f5f5; border-radius: 0.5rem; border: 2px solid #ddd;">
+          <div style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; color: #666;">Aktualny obrazek:</div>
+          <img src="${cat.image}" alt="Aktualny obrazek" style="max-width: 150px; max-height: 150px; border-radius: 0.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" onerror="this.parentElement.innerHTML='<div style=\\'color:#999;padding:1rem;\\'>Nie można załadować obrazka</div>'">
+        </div>
+      `;
+    } else {
+      currentImagePreview.innerHTML = '<div style="padding: 0.75rem; background: #f5f5f5; border-radius: 0.5rem; color: #999; font-size: 0.9rem;">Brak obrazka</div>';
+    }
+  }
+
+  // Wyczyść input file
+  document.getElementById('editCategoryImageFile').value = '';
 
   // Wyświetl aktualną liczbę kryształków i maksimum
   const currentCount = cat.count || 0;
@@ -265,10 +282,14 @@ export const handleSaveEdit = async () => {
   saveBtn.textContent = 'Zapisywanie...';
 
   try {
-    let imageUrl = document.getElementById('editCategoryImage').value.trim();
     const imageFile = document.getElementById('editCategoryImageFile').files[0];
 
-    // Jeśli wybrano plik, uploaduj go
+    // Pobierz aktualny obrazek z kategorii
+    const categories = getCategories();
+    const currentCategory = categories.find(c => c.id === categoryId);
+    let imageUrl = currentCategory?.image || '';
+
+    // Jeśli wybrano nowy plik, uploaduj go
     if (imageFile) {
       saveBtn.textContent = 'Przesyłanie obrazka...';
 
@@ -442,14 +463,30 @@ export const handleEditReward = (rewardId) => {
   const adminModal = document.getElementById('adminModal');
 
   document.getElementById('editRewardName').value = reward.name || '';
-  document.getElementById('editRewardImage').value = reward.image || '';
   document.getElementById('editRewardProbability').value = reward.probability || 50;
+
+  // Pokaż podgląd aktualnego obrazka
+  const currentImagePreview = document.getElementById('currentRewardImagePreview');
+  if (currentImagePreview) {
+    if (reward.image) {
+      currentImagePreview.innerHTML = `
+        <div style="padding: 0.75rem; background: #f5f5f5; border-radius: 0.5rem; border: 2px solid #ddd;">
+          <div style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; color: #666;">Aktualny obrazek:</div>
+          <img src="${reward.image}" alt="Aktualny obrazek" style="max-width: 150px; max-height: 150px; border-radius: 0.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" onerror="this.parentElement.innerHTML='<div style=\\'color:#999;padding:1rem;\\'>Nie można załadować obrazka</div>'">
+        </div>
+      `;
+    } else {
+      currentImagePreview.innerHTML = '<div style="padding: 0.75rem; background: #f5f5f5; border-radius: 0.5rem; color: #999; font-size: 0.9rem;">Brak obrazka</div>';
+    }
+  }
+
+  // Wyczyść input file
+  document.getElementById('editRewardImageFile').value = '';
 
   // Zapisz ID edytowanej nagrody
   editRewardModal.dataset.editingId = rewardId;
 
-  // Zaktualizuj podgląd i informacje o częstotliwości
-  updateRewardPreview();
+  // Zaktualizuj informacje o częstotliwości
   updateProbabilityInfo();
 
   adminModal.style.display = 'none';
@@ -469,10 +506,14 @@ export const handleSaveRewardEdit = async () => {
   }
 
   try {
-    let imageUrl = document.getElementById('editRewardImage').value.trim();
     const imageFile = document.getElementById('editRewardImageFile').files[0];
 
-    // Jeśli wybrano plik, uploaduj go
+    // Pobierz aktualny obrazek z nagrody
+    const rewards = getRewards();
+    const currentReward = rewards.find(r => r.id === rewardId);
+    let imageUrl = currentReward?.image || '';
+
+    // Jeśli wybrano nowy plik, uploaduj go
     if (imageFile) {
       if (saveBtn) saveBtn.textContent = 'Przesyłanie obrazka...';
 
@@ -539,27 +580,6 @@ export const handleSaveRewardEdit = async () => {
   }
 };
 
-// Funkcja aktualizacji podglądu nagrody
-export const updateRewardPreview = () => {
-  const imageUrl = document.getElementById('editRewardImage').value.trim();
-  const probability = parseFloat(document.getElementById('editRewardProbability').value) || 50;
-  const previewContainer = document.getElementById('rewardImagePreview');
-
-  if (!imageUrl) {
-    previewContainer.innerHTML = '<p style="color:#999;text-align:center;">Wklej URL obrazka aby zobaczyć podgląd</p>';
-    return;
-  }
-
-  const rarityClass = getRarityClass(probability);
-  const rarityName = getRarityName(probability);
-
-  previewContainer.innerHTML = `
-    <div class="reward-preview-wrapper ${rarityClass}">
-      <img src="${imageUrl}" class="reward-preview-image" alt="Podgląd nagrody" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22150%22 height=%22150%22 viewBox=%220 0 150 150%22%3E%3Crect width=%22150%22 height=%22150%22 fill=%22%23f0f0f0%22 rx=%2210%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2260%22%3E🎁%3C/text%3E%3C/svg%3E'; this.onerror=null;">
-      <span class="rarity-label">${rarityName}</span>
-    </div>
-  `;
-};
 
 // Funkcja aktualizacji informacji o częstotliwości
 export const updateProbabilityInfo = () => {
