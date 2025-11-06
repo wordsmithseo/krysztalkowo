@@ -833,7 +833,7 @@ body.nina-bg {
   box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
   padding: 0.75rem 1rem;
   padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
-  z-index: 1100;
+  z-index: 1300;
 }
 
 .footer-content {

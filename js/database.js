@@ -21,15 +21,12 @@ export const listenChildren = () => {
     const data = snapshot.val();
     const allChildren = data ? Object.keys(data).map(id => ({ id, ...data[id] })) : [];
 
-    // Filtruj dzieci należące do aktualnie zalogowanego użytkownika
-    const userChildren = allChildren.filter(child => child.userId === user.uid);
-
-    // MIGRACJA: Jeśli użytkownik nie ma żadnych dzieci z userId,
-    // ale są dzieci bez userId, przypisz je do tego użytkownika
+    // MIGRACJA: Automatycznie przypisz dzieci bez userId do pierwszego zalogowanego użytkownika
+    // To zapewnia kompatybilność wsteczną ze starymi danymi
     const childrenWithoutUserId = allChildren.filter(child => !child.userId);
 
-    if (userChildren.length === 0 && childrenWithoutUserId.length > 0) {
-      console.log('Migracja danych: przypisywanie dzieci do użytkownika...');
+    if (childrenWithoutUserId.length > 0) {
+      console.log(`Migracja danych: znaleziono ${childrenWithoutUserId.length} dzieci bez userId, przypisywanie do użytkownika ${user.uid}...`);
 
       // Przypisz wszystkie dzieci bez userId do tego użytkownika
       const migrationPromises = childrenWithoutUserId.map(child =>
@@ -46,6 +43,9 @@ export const listenChildren = () => {
 
       return; // Funkcja zostanie wywołana ponownie po aktualizacji
     }
+
+    // Filtruj dzieci należące do aktualnie zalogowanego użytkownika
+    const userChildren = allChildren.filter(child => child.userId === user.uid);
 
     userChildren.sort((a, b) => (a.order || 0) - (b.order || 0));
     setChildren(userChildren);

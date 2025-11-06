@@ -36,6 +36,12 @@
   padding: 2rem;
   z-index: 1200;
   overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Wyłącz scrollowanie na body gdy modal logowania jest widoczny */
+body.auth-modal-visible {
+  overflow: hidden;
 }
 
 .auth-container {
