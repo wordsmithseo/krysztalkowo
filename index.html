@@ -282,6 +282,19 @@
         <p style="margin:0.5rem 0;font-size:0.9rem;color:#666;">Uwaga: Usunie wszystkie zwycięstwa wszystkich dzieci we wszystkich kategoriach!</p>
         <button id="resetRankingBtn" class="cancel-btn" style="width:100%;background:#e74c3c;color:#fff;font-weight:700;">🗑️ Resetuj cały ranking</button>
       </div>
+
+      <div class="admin-section">
+        <h3>🚨 Usuń konto</h3>
+        <p style="margin:0.5rem 0;font-size:0.9rem;color:#d32f2f;font-weight:600;">UWAGA: Ta operacja jest nieodwracalna!</p>
+        <p style="margin:0.5rem 0;font-size:0.9rem;color:#666;">Usunięcie konta spowoduje trwałe usunięcie:</p>
+        <ul style="margin:0.5rem 0;font-size:0.9rem;color:#666;padding-left:1.5rem;">
+          <li>Twojego konta użytkownika</li>
+          <li>Wszystkich profili dzieci</li>
+          <li>Wszystkich kategorii i nagród</li>
+          <li>Całej historii i statystyk</li>
+        </ul>
+        <button id="deleteAccountBtn" class="cancel-btn" style="width:100%;background:#b71c1c;color:#fff;font-weight:700;margin-top:1rem;">❌ Usuń konto permanentnie</button>
+      </div>
     </div>
   </div>
 
@@ -410,6 +423,20 @@
       <h2 style="color: #2ecc71 !important; margin-bottom: 1rem;">Ranking został zresetowany!</h2>
       <p style="color: #666; margin: 0; font-size: 1rem;">Wszystkie zwycięstwa zostały usunięte.</p>
       <button id="closeResetSuccessBtn" class="submit-btn" style="width: 100%; margin-top: 1.5rem;">OK</button>
+    </div>
+  </div>
+
+  <div id="deleteAccountPasswordModal" class="modal">
+    <div class="modal-content password-modal-content">
+      <span class="close-btn">&times;</span>
+      <h2>🚨 Usuwanie konta</h2>
+      <p style="color: #d32f2f; font-weight: 600; margin: 1rem 0;">UWAGA: Ta operacja jest nieodwracalna!</p>
+      <p style="margin: 1rem 0;">Aby potwierdzić usunięcie konta, wprowadź swoje hasło:</p>
+      <input type="password" id="deleteAccountPasswordInput" placeholder="Twoje hasło" style="width: 100%; padding: 0.75rem; margin: 1rem 0; border: 2px solid #ddd; border-radius: 0.5rem;">
+      <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+        <button id="cancelDeleteAccountBtn" class="submit-btn" style="flex: 1; background: #95a5a6;">Anuluj</button>
+        <button id="confirmDeleteAccountBtn" class="cancel-btn" style="flex: 1; background: #b71c1c;">Usuń konto</button>
+      </div>
     </div>
   </div>
 

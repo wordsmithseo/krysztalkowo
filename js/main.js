@@ -42,8 +42,8 @@ import {
   renderCategorySuggestions,
   renderRewardSuggestions
 } from './admin.js';
-import { getAvatar } from './database.js';
-import { setupAuthListener, loginUser, registerUser, logoutUser, getCurrentAuthUser } from './auth.js';
+import { getAvatar, deleteAllUserData } from './database.js';
+import { setupAuthListener, loginUser, registerUser, logoutUser, getCurrentAuthUser, deleteUserAccount } from './auth.js';
 
 const passwordModal = document.getElementById('passwordModal');
 const adminModal = document.getElementById('adminModal');
@@ -55,6 +55,7 @@ const pendingRewardsModal = document.getElementById('pendingRewardsModal');
 const editRewardModal = document.getElementById('editRewardModal');
 const resetRankingPasswordModal = document.getElementById('resetRankingPasswordModal');
 const resetRankingSuccessModal = document.getElementById('resetRankingSuccessModal');
+const deleteAccountPasswordModal = document.getElementById('deleteAccountPasswordModal');
 const appLoader = document.getElementById('appLoader');
 
 const adminPasswordInput = document.getElementById('adminPasswordInput');
@@ -72,6 +73,10 @@ const resetRankingBtn = document.getElementById('resetRankingBtn');
 const addChildBtn = document.getElementById('addChildBtn');
 const saveChildBtn = document.getElementById('saveChildBtn');
 const pendingRewardsBtn = document.getElementById('pendingRewardsBtn');
+const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+const deleteAccountPasswordInput = document.getElementById('deleteAccountPasswordInput');
+const confirmDeleteAccountBtn = document.getElementById('confirmDeleteAccountBtn');
+const cancelDeleteAccountBtn = document.getElementById('cancelDeleteAccountBtn');
 
 // Elementy uwierzytelniania
 const showLoginBtn = document.getElementById('showLoginBtn');
@@ -479,6 +484,7 @@ closeButtons.forEach(btn => {
     editRewardModal.style.display = 'none';
     resetRankingPasswordModal.style.display = 'none';
     resetRankingSuccessModal.style.display = 'none';
+    deleteAccountPasswordModal.style.display = 'none';
 
     const rewardModal = document.getElementById('rewardModal');
     if (rewardModal && rewardModal.style.display === 'flex') {
@@ -500,7 +506,8 @@ document.addEventListener('click', (e) => {
     pendingRewardsModal,
     editRewardModal,
     resetRankingPasswordModal,
-    resetRankingSuccessModal
+    resetRankingSuccessModal,
+    deleteAccountPasswordModal
   ];
 
   if (modals.includes(e.target)) {
@@ -750,10 +757,138 @@ if (closeResetSuccessBtn) {
   });
 }
 
+// ===== OBSŁUGA USUWANIA KONTA =====
+if (deleteAccountBtn) {
+  deleteAccountBtn.addEventListener('click', () => {
+    deleteAccountPasswordInput.value = '';
+    adminModal.style.display = 'none';
+    deleteAccountPasswordModal.style.display = 'flex';
+    deleteAccountPasswordInput.focus();
+  });
+}
+
+if (cancelDeleteAccountBtn) {
+  cancelDeleteAccountBtn.addEventListener('click', () => {
+    deleteAccountPasswordModal.style.display = 'none';
+    adminModal.style.display = 'flex';
+  });
+}
+
+if (confirmDeleteAccountBtn && deleteAccountPasswordInput) {
+  confirmDeleteAccountBtn.addEventListener('click', async () => {
+    const password = deleteAccountPasswordInput.value;
+    const user = getCurrentAuthUser();
+
+    if (!password) {
+      alert('Wprowadź hasło!');
+      return;
+    }
+
+    if (!user) {
+      alert('Błąd: Musisz być zalogowany!');
+      return;
+    }
+
+    // Potwierdzenie przed usunięciem
+    const finalConfirm = confirm(
+      '⚠️ OSTATECZNE OSTRZEŻENIE ⚠️\n\n' +
+      'Czy na pewno chcesz usunąć swoje konto?\n\n' +
+      'Zostaną usunięte:\n' +
+      '• Twoje konto użytkownika\n' +
+      '• Wszystkie profile dzieci\n' +
+      '• Wszystkie kategorie i nagrody\n' +
+      '• Cała historia i statystyki\n\n' +
+      'Ta operacja jest NIEODWRACALNA!\n\n' +
+      'Kliknij OK aby kontynuować lub Anuluj aby przerwać.'
+    );
+
+    if (!finalConfirm) {
+      return;
+    }
+
+    confirmDeleteAccountBtn.disabled = true;
+    confirmDeleteAccountBtn.textContent = 'Usuwanie...';
+
+    try {
+      // Najpierw zweryfikuj hasło przez próbę ponownego logowania
+      const loginResult = await loginUser(user.email, password);
+
+      if (!loginResult.success) {
+        alert('❌ Nieprawidłowe hasło!');
+        confirmDeleteAccountBtn.disabled = false;
+        confirmDeleteAccountBtn.textContent = 'Usuń konto';
+        return;
+      }
+
+      // Usuń wszystkie dane użytkownika z bazy danych
+      const dataDeleted = await deleteAllUserData();
+
+      if (!dataDeleted) {
+        alert('❌ Błąd podczas usuwania danych!');
+        confirmDeleteAccountBtn.disabled = false;
+        confirmDeleteAccountBtn.textContent = 'Usuń konto';
+        return;
+      }
+
+      // Usuń konto Firebase Auth
+      const accountResult = await deleteUserAccount();
+
+      if (accountResult.success) {
+        deleteAccountPasswordModal.style.display = 'none';
+        alert('✅ Twoje konto zostało usunięte.\n\nDziękujemy za korzystanie z aplikacji.');
+        // Przekierowanie do strony logowania nastąpi automatycznie przez auth listener
+      } else {
+        alert(`❌ ${accountResult.error}`);
+        confirmDeleteAccountBtn.disabled = false;
+        confirmDeleteAccountBtn.textContent = 'Usuń konto';
+      }
+    } catch (error) {
+      console.error('Błąd podczas usuwania konta:', error);
+      alert('❌ Wystąpił błąd podczas usuwania konta!');
+      confirmDeleteAccountBtn.disabled = false;
+      confirmDeleteAccountBtn.textContent = 'Usuń konto';
+    }
+  });
+}
+
+// Automatyczne zarządzanie scrollowaniem body gdy modal jest otwarty
+const setupModalScrollLock = () => {
+  const checkModals = () => {
+    const modals = document.querySelectorAll('.modal');
+    const hasOpenModal = Array.from(modals).some(modal => {
+      const computedDisplay = window.getComputedStyle(modal).display;
+      return computedDisplay === 'flex' || computedDisplay === 'block';
+    });
+
+    if (hasOpenModal) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+  };
+
+  // Obserwuj zmiany stylów na wszystkich modalach
+  const observer = new MutationObserver(checkModals);
+
+  const modals = document.querySelectorAll('.modal');
+  modals.forEach(modal => {
+    observer.observe(modal, {
+      attributes: true,
+      attributeFilter: ['style']
+    });
+  });
+
+  // Sprawdź na starcie
+  checkModals();
+};
+
 document.addEventListener('DOMContentLoaded', () => {
   document.body.classList.add('maks-bg');
 
   if (localStorage.getItem(state.ADMIN_FLAG) === '1') {
     setLoggedInUi(true);
   }
+
+  // Uruchom system blokowania scrollowania dla modali
+  setupModalScrollLock();
 });

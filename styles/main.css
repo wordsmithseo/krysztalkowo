@@ -119,6 +119,11 @@ html, body {
   overflow-x: hidden;
 }
 
+/* Zablokuj scrollowanie body gdy modal jest otwarty */
+body.modal-open {
+  overflow: hidden;
+}
+
 body {
   font-family: 'Poppins', sans-serif;
   background-color: #e0e5ec;

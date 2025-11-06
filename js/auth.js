@@ -1,12 +1,13 @@
 // ===== KONFIGURACJA FIREBASE =====
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getDatabase } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
-import { 
-  getAuth, 
+import {
+  getAuth,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
-  onAuthStateChanged
+  onAuthStateChanged,
+  deleteUser
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
 const firebaseConfig = {
@@ -108,6 +109,31 @@ export const setupAuthListener = (callback) => {
 // Funkcja zwracająca aktualnego użytkownika
 export const getCurrentAuthUser = () => {
   return auth.currentUser;
+};
+
+// Funkcja usuwająca konto użytkownika
+export const deleteUserAccount = async () => {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      return { success: false, error: 'Użytkownik nie jest zalogowany' };
+    }
+
+    await deleteUser(user);
+    return { success: true };
+  } catch (error) {
+    let errorMessage = 'Błąd usuwania konta';
+
+    switch (error.code) {
+      case 'auth/requires-recent-login':
+        errorMessage = 'Ze względów bezpieczeństwa musisz się ponownie zalogować przed usunięciem konta';
+        break;
+      default:
+        errorMessage = `Błąd usuwania konta: ${error.message}`;
+    }
+
+    return { success: false, error: errorMessage };
+  }
 };
 
 export { db, auth };
