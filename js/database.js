@@ -15,36 +15,49 @@ export const listenChildren = () => {
     return;
   }
 
+  console.log(`[listenChildren] Zalogowany użytkownik: ${user.uid}`);
   const childrenRef = ref(db, 'children');
 
   onValue(childrenRef, async (snapshot) => {
     const data = snapshot.val();
     const allChildren = data ? Object.keys(data).map(id => ({ id, ...data[id] })) : [];
 
-    // Filtruj dzieci należące do aktualnie zalogowanego użytkownika
-    const userChildren = allChildren.filter(child => child.userId === user.uid);
+    console.log(`[listenChildren] Znaleziono ${allChildren.length} dzieci w bazie danych`);
+    console.log('[listenChildren] Wszystkie dzieci:', allChildren);
 
-    // MIGRACJA: Jeśli użytkownik nie ma żadnych dzieci z userId,
-    // ale są dzieci bez userId, przypisz je do tego użytkownika
+    // MIGRACJA: Automatycznie przypisz dzieci bez userId do pierwszego zalogowanego użytkownika
+    // To zapewnia kompatybilność wsteczną ze starymi danymi
     const childrenWithoutUserId = allChildren.filter(child => !child.userId);
 
-    if (userChildren.length === 0 && childrenWithoutUserId.length > 0) {
-      console.log('Migracja danych: przypisywanie dzieci do użytkownika...');
+    if (childrenWithoutUserId.length > 0) {
+      console.log(`🔄 MIGRACJA: znaleziono ${childrenWithoutUserId.length} dzieci bez userId`);
+      console.log('🔄 MIGRACJA: dzieci do migracji:', childrenWithoutUserId);
+      console.log(`🔄 MIGRACJA: przypisywanie do użytkownika ${user.uid}...`);
 
       // Przypisz wszystkie dzieci bez userId do tego użytkownika
-      const migrationPromises = childrenWithoutUserId.map(child =>
-        update(ref(db, `children/${child.id}`), { userId: user.uid })
-      );
+      const migrationPromises = childrenWithoutUserId.map(child => {
+        console.log(`🔄 MIGRACJA: przypisywanie dziecka ${child.id} (${child.name || 'bez nazwy'})`);
+        return update(ref(db, `children/${child.id}`), { userId: user.uid });
+      });
 
       try {
         await Promise.all(migrationPromises);
-        console.log('Migracja zakończona pomyślnie');
+        console.log('✅ MIGRACJA zakończona pomyślnie!');
         // Funkcja zostanie wywołana ponownie automatycznie przez onValue
       } catch (error) {
-        console.error('Błąd podczas migracji:', error);
+        console.error('❌ MIGRACJA: Błąd podczas migracji:', error);
       }
 
       return; // Funkcja zostanie wywołana ponownie po aktualizacji
+    }
+
+    // Filtruj dzieci należące do aktualnie zalogowanego użytkownika
+    const userChildren = allChildren.filter(child => child.userId === user.uid);
+
+    console.log(`[listenChildren] Dzieci użytkownika ${user.uid}:`, userChildren.length);
+    if (userChildren.length === 0 && allChildren.length > 0) {
+      console.warn('⚠️ UWAGA: W bazie są dzieci, ale żadne nie należy do tego użytkownika!');
+      console.warn('⚠️ Wszystkie dzieci w bazie:', allChildren);
     }
 
     userChildren.sort((a, b) => (a.order || 0) - (b.order || 0));
@@ -669,6 +682,22 @@ export const addChild = async (name, gender) => {
 
 export const updateChild = async (childId, data) => {
   try {
+    const user = getCurrentAuthUser();
+    if (!user) {
+      console.error('Użytkownik nie jest zalogowany');
+      return false;
+    }
+
+    // Sprawdź czy dziecko należy do tego użytkownika
+    const childRef = ref(db, `children/${childId}`);
+    const snapshot = await get(childRef);
+    const childData = snapshot.val();
+
+    if (!childData || childData.userId !== user.uid) {
+      console.error('Brak uprawnień do modyfikacji tego dziecka');
+      return false;
+    }
+
     await update(ref(db, `children/${childId}`), data);
     return true;
   } catch (error) {
@@ -679,6 +708,22 @@ export const updateChild = async (childId, data) => {
 
 export const updateChildOrder = async (childId, newOrder) => {
   try {
+    const user = getCurrentAuthUser();
+    if (!user) {
+      console.error('Użytkownik nie jest zalogowany');
+      return false;
+    }
+
+    // Sprawdź czy dziecko należy do tego użytkownika
+    const childRef = ref(db, `children/${childId}`);
+    const snapshot = await get(childRef);
+    const childData = snapshot.val();
+
+    if (!childData || childData.userId !== user.uid) {
+      console.error('Brak uprawnień do zmiany kolejności tego dziecka');
+      return false;
+    }
+
     await set(ref(db, `children/${childId}/order`), newOrder);
     return true;
   } catch (error) {
@@ -689,6 +734,22 @@ export const updateChildOrder = async (childId, newOrder) => {
 
 export const deleteChild = async (childId) => {
   try {
+    const user = getCurrentAuthUser();
+    if (!user) {
+      console.error('Użytkownik nie jest zalogowany');
+      return false;
+    }
+
+    // Sprawdź czy dziecko należy do tego użytkownika
+    const childRef = ref(db, `children/${childId}`);
+    const snapshot = await get(childRef);
+    const childData = snapshot.val();
+
+    if (!childData || childData.userId !== user.uid) {
+      console.error('Brak uprawnień do usunięcia tego dziecka');
+      return false;
+    }
+
     // Usuwamy dziecko z listy children
     await remove(ref(db, `children/${childId}`));
 
@@ -889,3 +950,86 @@ export const deleteAllUserData = async () => {
     return false;
   }
 };
+
+// ===== FUNKCJA RĘCZNEJ MIGRACJI DANYCH =====
+// Użyj tej funkcji jeśli automatyczna migracja nie zadziałała
+export const manualMigration = async () => {
+  console.log('🔧 === RĘCZNA MIGRACJA DANYCH ===');
+
+  const user = getCurrentAuthUser();
+  if (!user) {
+    console.error('❌ Użytkownik nie jest zalogowany!');
+    alert('Musisz być zalogowany aby przeprowadzić migrację!');
+    return false;
+  }
+
+  console.log(`✅ Zalogowany użytkownik: ${user.uid}`);
+  console.log(`✅ Email: ${user.email}`);
+
+  try {
+    // Pobierz wszystkie dzieci
+    const childrenRef = ref(db, 'children');
+    const snapshot = await get(childrenRef);
+    const data = snapshot.val();
+
+    if (!data) {
+      console.log('ℹ️ Brak dzieci w bazie danych');
+      alert('Brak dzieci w bazie danych do migracji.');
+      return false;
+    }
+
+    const allChildren = Object.keys(data).map(id => ({ id, ...data[id] }));
+    console.log(`📊 Znaleziono ${allChildren.length} dzieci w bazie:`, allChildren);
+
+    // Znajdź dzieci bez userId
+    const childrenWithoutUserId = allChildren.filter(child => !child.userId);
+    console.log(`🔍 Dzieci bez userId: ${childrenWithoutUserId.length}`, childrenWithoutUserId);
+
+    // Znajdź dzieci należące do użytkownika
+    const userChildren = allChildren.filter(child => child.userId === user.uid);
+    console.log(`👤 Dzieci użytkownika ${user.uid}: ${userChildren.length}`, userChildren);
+
+    if (childrenWithoutUserId.length === 0) {
+      console.log('✅ Wszystkie dzieci mają już przypisany userId!');
+      alert(`Wszystkie dzieci mają już przypisany userId.\n\nTwoje dzieci (${userChildren.length}): ${userChildren.map(c => c.name).join(', ')}`);
+      return true;
+    }
+
+    // Zapytaj użytkownika czy chce przypisać dzieci bez userId
+    const childrenNames = childrenWithoutUserId.map(c => c.name || `ID: ${c.id}`).join('\n- ');
+    const confirm = window.confirm(
+      `Znaleziono ${childrenWithoutUserId.length} dzieci bez przypisanego właściciela:\n\n- ${childrenNames}\n\n` +
+      `Czy chcesz przypisać te dzieci do swojego konta (${user.email})?`
+    );
+
+    if (!confirm) {
+      console.log('❌ Użytkownik anulował migrację');
+      return false;
+    }
+
+    console.log('🔄 Rozpoczynam migrację...');
+
+    // Przypisz dzieci do użytkownika
+    const migrationPromises = childrenWithoutUserId.map(async (child) => {
+      console.log(`  ➡️ Przypisywanie: ${child.name || child.id} -> ${user.uid}`);
+      await update(ref(db, `children/${child.id}`), { userId: user.uid });
+    });
+
+    await Promise.all(migrationPromises);
+
+    console.log('✅ Migracja zakończona pomyślnie!');
+    alert(`✅ Migracja zakończona!\n\nPrzypisano ${childrenWithoutUserId.length} dzieci do Twojego konta.\n\nOdśwież stronę aby zobaczyć swoje dane.`);
+
+    return true;
+  } catch (error) {
+    console.error('❌ Błąd podczas ręcznej migracji:', error);
+    alert(`❌ Błąd podczas migracji:\n\n${error.message}`);
+    return false;
+  }
+};
+
+// Udostępnij funkcję globalnie w konsoli dla wygody
+if (typeof window !== 'undefined') {
+  window.manualMigration = manualMigration;
+  console.log('🔧 Funkcja ręcznej migracji dostępna jako: window.manualMigration()');
+}

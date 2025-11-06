@@ -1,0 +1,24 @@
+{
+  "rules": {
+    "children": {
+      ".read": "auth != null",
+      ".indexOn": ["userId"],
+      "$childId": {
+        ".write": "auth != null && (!data.exists() || data.child('userId').val() === auth.uid) && newData.child('userId').val() === auth.uid",
+        ".validate": "newData.hasChildren(['name', 'userId']) && newData.child('userId').val() === auth.uid"
+      }
+    },
+    "users": {
+      "$childId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+    "userProfiles": {
+      "$userId": {
+        ".read": "auth != null && auth.uid === $userId",
+        ".write": "auth != null && auth.uid === $userId"
+      }
+    }
+  }
+}
