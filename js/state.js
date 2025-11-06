@@ -113,3 +113,16 @@ export const generateCategoryColors = () => {
   const borderColor = generateBorderColor(bgColor);
   return { color: bgColor, borderColor };
 };
+
+// Funkcja czyszcząca stan (przy wylogowaniu/zmianie użytkownika)
+export const clearState = () => {
+  console.log('🧹 Czyszczenie stanu aplikacji...');
+  state.currentUser = null;
+  state.categories = [];
+  state.rewards = [];
+  state.children = [];
+  state.rewardFlowLock = false;
+  state.pendingCategoryId = null;
+  state.cache = {};
+  console.log('✅ Stan wyczyszczony');
+};

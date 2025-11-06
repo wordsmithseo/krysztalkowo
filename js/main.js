@@ -1,5 +1,5 @@
 // ===== GŁÓWNY PLIK APLIKACJI =====
-import { state, setCurrentUser, getCachedData, setCategories, setRewards } from './state.js';
+import { state, setCurrentUser, getCachedData, setCategories, setRewards, clearState } from './state.js';
 import {
   setupRealtimeListener,
   listenRewardsForUser,
@@ -252,6 +252,8 @@ setupAuthListener((user) => {
     }, 3000);
   } else {
     // Użytkownik niezalogowany - pokaż modal uwierzytelniania
+    console.log('👋 Wylogowano użytkownika - czyszczenie stanu');
+    clearState(); // Wyczyść cały stan aplikacji
     authModal.style.display = 'flex';
     document.body.classList.add('auth-modal-visible');
     document.querySelector('.crystal-app').style.display = 'none';

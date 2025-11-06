@@ -92,6 +92,90 @@ export const hideProfileLoader = () => {
   }
 };
 
+// Funkcja animacji dodawania kryształka
+const animateCrystalAdd = (card, categoryId, newCount) => {
+  // Animuj licznik
+  const countDiv = card.querySelector('.crystal-count');
+  if (countDiv) {
+    countDiv.classList.add('animating');
+    setTimeout(() => {
+      countDiv.classList.remove('animating');
+    }, 500);
+  }
+
+  // Znajdź i animuj nowo dodany kryształek
+  const crystals = card.querySelectorAll('.crystal-item');
+  if (crystals && crystals[newCount - 1]) {
+    const newCrystal = crystals[newCount - 1];
+    newCrystal.classList.add('just-added');
+
+    // Usuń klasę po zakończeniu animacji
+    setTimeout(() => {
+      newCrystal.classList.remove('just-added');
+    }, 1400);
+  }
+
+  // Stwórz efekt confetti
+  createConfetti(card);
+
+  // Stwórz iskierki
+  createSparkles(card);
+};
+
+// Funkcja tworząca confetti
+const createConfetti = (card) => {
+  const colors = ['#FFD700', '#FFA500', '#FF69B4', '#00CED1', '#32CD32', '#FF4500'];
+  const confettiCount = 15;
+
+  for (let i = 0; i < confettiCount; i++) {
+    const confetti = document.createElement('div');
+    confetti.className = 'confetti-particle';
+    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+    confetti.style.left = `${Math.random() * 100}%`;
+    confetti.style.top = '30%';
+    confetti.style.animationDuration = `${0.8 + Math.random() * 0.4}s`;
+    confetti.style.animationDelay = `${Math.random() * 0.2}s`;
+
+    card.appendChild(confetti);
+
+    setTimeout(() => {
+      confetti.remove();
+    }, 1500);
+  }
+};
+
+// Funkcja tworząca iskierki
+const createSparkles = (card) => {
+  const sparkleCount = 8;
+  const centerX = 50;
+  const centerY = 35;
+
+  for (let i = 0; i < sparkleCount; i++) {
+    const angle = (360 / sparkleCount) * i;
+    const distance = 30 + Math.random() * 20;
+
+    const tx = Math.cos(angle * Math.PI / 180) * distance;
+    const ty = Math.sin(angle * Math.PI / 180) * distance;
+
+    const sparkle = document.createElement('div');
+    sparkle.className = 'sparkle';
+    sparkle.style.left = `${centerX}%`;
+    sparkle.style.top = `${centerY}%`;
+    sparkle.style.setProperty('--tx', `${tx}px`);
+    sparkle.style.setProperty('--ty', `${ty}px`);
+    sparkle.style.animationDelay = `${i * 0.05}s`;
+
+    card.appendChild(sparkle);
+
+    setTimeout(() => {
+      sparkle.remove();
+    }, 800);
+  }
+};
+
+// Eksportuj funkcję animacji
+export { animateCrystalAdd };
+
 export const renderCategories = () => {
   if (renderScheduled) return;
 
@@ -311,6 +395,9 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
         if (!success) {
           return;
         }
+
+        // Animacja dodawania kryształka
+        animateCrystalAdd(card, categoryId, newCount);
 
         if (willComplete) {
           vibrate([200, 100, 200, 100, 200]);

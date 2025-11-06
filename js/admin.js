@@ -243,14 +243,20 @@ export const renderChildrenList = () => {
 export const handleAddCategory = async () => {
   const input = document.getElementById('categoryNameInput');
   const name = input.value.trim();
-  
+
+  // Sprawdź czy dziecko jest wybrane
+  if (!getCurrentUser()) {
+    alert('⚠️ Najpierw wybierz dziecko!\n\nAby dodać kategorię, musisz najpierw dodać dziecko i wybrać jego profil.');
+    return;
+  }
+
   if (!name) {
     alert('Podaj nazwę kategorii!');
     return;
   }
-  
+
   const success = await addCategory(name);
-  
+
   if (success) {
     input.value = '';
     renderAdminCategories();
@@ -479,12 +485,18 @@ export const handleSelectRewardImage = (url) => {
 export const handleAddReward = async () => {
   const input = document.getElementById('rewardNameInput');
   const name = input.value.trim();
-  
+
+  // Sprawdź czy dziecko jest wybrane
+  if (!getCurrentUser()) {
+    alert('⚠️ Najpierw wybierz dziecko!\n\nAby dodać nagrodę, musisz najpierw dodać dziecko i wybrać jego profil.');
+    return;
+  }
+
   if (!name) {
     alert('Podaj nazwę nagrody!');
     return;
   }
-  
+
   const success = await addReward(name);
   
   if (success) {
