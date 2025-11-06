@@ -249,8 +249,9 @@ export const handleEditCategory = (categoryId) => {
     }
   }
 
-  // Wyczyść input file
+  // Wyczyść input file i wybrany obrazek z galerii
   document.getElementById('editCategoryImageFile').value = '';
+  selectedImageFromGallery = null;
 
   // Wyświetl aktualną liczbę kryształków i maksimum
   const currentCount = cat.count || 0;
@@ -305,6 +306,9 @@ export const handleSaveEdit = async () => {
       }
 
       imageUrl = uploadResult.url;
+    } else if (selectedImageFromGallery) {
+      // Jeśli nie wybrano nowego pliku, ale wybrano obrazek z galerii
+      imageUrl = selectedImageFromGallery;
     }
 
     const data = {
@@ -330,8 +334,9 @@ export const handleSaveEdit = async () => {
       initializeSortable();
       updateAdminHeaderInfo();
 
-      // Wyczyść input pliku
+      // Wyczyść input pliku i wybrany obrazek z galerii
       document.getElementById('editCategoryImageFile').value = '';
+      selectedImageFromGallery = null;
     }
   } catch (error) {
     console.error('Błąd podczas zapisywania:', error);
@@ -342,58 +347,93 @@ export const handleSaveEdit = async () => {
   }
 };
 
+// Zmienne przechowujące wybrany obrazek z galerii
+let selectedImageFromGallery = null;
+let selectedRewardImageFromGallery = null;
+
 const renderImagePreviews = async (currentImage) => {
   const previewContainer = document.getElementById('imagePreviewsEdit');
 
-  const defaultImages = [
-    'https://em-content.zobj.net/source/google/387/avocado_1f951.png',
-    'https://em-content.zobj.net/source/google/387/artist-palette_1f3a8.png',
-    'https://em-content.zobj.net/source/google/387/open-book_1f4d6.png',
-    'https://em-content.zobj.net/source/google/387/red-apple_1f34e.png',
-    'https://em-content.zobj.net/source/google/387/tangerine_1f34a.png',
-    'https://em-content.zobj.net/source/google/387/strawberry_1f353.png',
-    'https://em-content.zobj.net/source/google/387/broccoli_1f966.png',
-    'https://em-content.zobj.net/source/google/387/carrot_1f955.png',
-    'https://em-content.zobj.net/source/google/387/tomato_1f345.png',
-    'https://em-content.zobj.net/source/google/387/person-running_1f3c3.png',
-    'https://em-content.zobj.net/source/google/387/flexed-biceps_1f4aa.png',
-    'https://em-content.zobj.net/source/google/387/water-wave_1f30a.png'
-  ];
-
-  // Pobierz obrazki z innych dzieci
+  // Pobierz wszystkie obrazki już wgrane na Firebase Storage
   const currentChildId = getCurrentUser();
-  const otherChildrenImages = await getCategoryImagesFromOtherChildren(currentChildId);
-
-  // Połącz domyślne obrazki z obrazkami innych dzieci (unikalne)
-  const allImages = [...new Set([...defaultImages, ...otherChildrenImages])];
+  const uploadedImages = await getCategoryImagesFromOtherChildren(currentChildId);
 
   let html = '';
 
-  // Jeśli są obrazki z innych dzieci, pokaż je w osobnej sekcji
-  if (otherChildrenImages.length > 0) {
+  // Jeśli są wgrane obrazki, pokaż je w galerii
+  if (uploadedImages.length > 0) {
     html += '<div class="image-section">';
-    html += '<div class="image-section-title image-section-title-highlight">💡 Obrazki z innych profili:</div>';
+    html += '<div class="image-section-title image-section-title-highlight">📷 Galeria wgranych obrazków:</div>';
+    html += '<div style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">Kliknij obrazek aby go użyć, lub wgraj nowy plik powyżej</div>';
     html += '<div class="image-previews">';
-    html += otherChildrenImages.map(url =>
-      `<img src="${url}" class="image-preview" onclick="window.selectImageHandler('${url}')" alt="Preview">`
+    html += uploadedImages.map(url =>
+      `<img src="${url}" class="image-preview ${url === selectedImageFromGallery ? 'selected' : ''}" onclick="window.selectImageHandler('${url}')" alt="Preview" style="cursor: pointer;">`
     ).join('');
     html += '</div></div>';
+  } else {
+    html += '<div class="image-section">';
+    html += '<div style="font-size: 0.9rem; color: #999; padding: 1rem; text-align: center;">Brak wgranych obrazków. Wgraj pierwszy obrazek używając pola powyżej.</div>';
+    html += '</div>';
   }
-
-  // Dodaj domyślne obrazki
-  html += '<div class="image-section">';
-  html += '<div class="image-section-title">Domyślne obrazki:</div>';
-  html += '<div class="image-previews">';
-  html += defaultImages.map(url =>
-    `<img src="${url}" class="image-preview" onclick="window.selectImageHandler('${url}')" alt="Preview">`
-  ).join('');
-  html += '</div></div>';
 
   previewContainer.innerHTML = html;
 };
 
 export const handleSelectImage = (url) => {
-  document.getElementById('editCategoryImage').value = url;
+  selectedImageFromGallery = url;
+  // Wyczyść pole file input jeśli użytkownik wybrał obrazek z galerii
+  const fileInput = document.getElementById('editCategoryImageFile');
+  if (fileInput) {
+    fileInput.value = '';
+  }
+  // Odśwież widok galerii aby pokazać wybrany obrazek
+  renderImagePreviews();
+};
+
+const renderRewardImagePreviews = async () => {
+  const previewContainer = document.getElementById('imagePreviewsReward');
+
+  // Pobierz wszystkie obrazki już wgrane na Firebase Storage (z nagród)
+  const currentChildId = getCurrentUser();
+  const rewards = getRewards();
+  const uploadedImages = new Set();
+
+  rewards.forEach(reward => {
+    if (reward.image && reward.image.includes('firebasestorage.googleapis.com')) {
+      uploadedImages.add(reward.image);
+    }
+  });
+
+  let html = '';
+
+  // Jeśli są wgrane obrazki, pokaż je w galerii
+  if (uploadedImages.size > 0) {
+    html += '<div class="image-section">';
+    html += '<div class="image-section-title image-section-title-highlight">📷 Galeria wgranych obrazków:</div>';
+    html += '<div style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">Kliknij obrazek aby go użyć, lub wgraj nowy plik powyżej</div>';
+    html += '<div class="image-previews">';
+    html += Array.from(uploadedImages).map(url =>
+      `<img src="${url}" class="image-preview ${url === selectedRewardImageFromGallery ? 'selected' : ''}" onclick="window.selectRewardImageHandler('${url}')" alt="Preview" style="cursor: pointer;">`
+    ).join('');
+    html += '</div></div>';
+  } else {
+    html += '<div class="image-section">';
+    html += '<div style="font-size: 0.9rem; color: #999; padding: 1rem; text-align: center;">Brak wgranych obrazków. Wgraj pierwszy obrazek używając pola powyżej.</div>';
+    html += '</div>';
+  }
+
+  previewContainer.innerHTML = html;
+};
+
+export const handleSelectRewardImage = (url) => {
+  selectedRewardImageFromGallery = url;
+  // Wyczyść pole file input jeśli użytkownik wybrał obrazek z galerii
+  const fileInput = document.getElementById('editRewardImageFile');
+  if (fileInput) {
+    fileInput.value = '';
+  }
+  // Odśwież widok galerii aby pokazać wybrany obrazek
+  renderRewardImagePreviews();
 };
 
 export const handleAddReward = async () => {
@@ -480,11 +520,15 @@ export const handleEditReward = (rewardId) => {
     }
   }
 
-  // Wyczyść input file
+  // Wyczyść input file i wybrany obrazek z galerii
   document.getElementById('editRewardImageFile').value = '';
+  selectedRewardImageFromGallery = null;
 
   // Zapisz ID edytowanej nagrody
   editRewardModal.dataset.editingId = rewardId;
+
+  // Wyświetl galerię obrazków
+  renderRewardImagePreviews();
 
   // Zaktualizuj informacje o częstotliwości
   updateProbabilityInfo();
@@ -531,6 +575,9 @@ export const handleSaveRewardEdit = async () => {
       }
 
       imageUrl = uploadResult.url;
+    } else if (selectedRewardImageFromGallery) {
+      // Jeśli nie wybrano nowego pliku, ale wybrano obrazek z galerii
+      imageUrl = selectedRewardImageFromGallery;
     }
 
     const data = {
@@ -566,8 +613,9 @@ export const handleSaveRewardEdit = async () => {
       adminModal.style.display = 'flex';
       renderAdminRewards();
 
-      // Wyczyść input pliku
+      // Wyczyść input pliku i wybrany obrazek z galerii
       document.getElementById('editRewardImageFile').value = '';
+      selectedRewardImageFromGallery = null;
     }
   } catch (error) {
     console.error('Błąd podczas zapisywania nagrody:', error);
@@ -621,11 +669,11 @@ export const setLoggedInUi = (isLoggedIn) => {
 };
 
 export const handleSetAvatar = async () => {
-  const input = document.getElementById('avatarUrlInput');
-  const url = input.value.trim();
+  const input = document.getElementById('avatarFileInput');
+  const file = input.files[0];
 
-  if (!url) {
-    alert('Podaj URL avatara!');
+  if (!file) {
+    alert('Wybierz plik obrazka!');
     return;
   }
 
@@ -639,15 +687,39 @@ export const handleSetAvatar = async () => {
     return;
   }
 
-  const success = await setAvatar(currentUserId, url);
+  const setAvatarBtn = document.getElementById('setAvatarBtn');
+  const originalText = setAvatarBtn.textContent;
+  setAvatarBtn.disabled = true;
+  setAvatarBtn.textContent = 'Przesyłanie...';
 
-  if (success) {
-    input.value = '';
-    alert(`Avatar dla ${currentChild.name} został zaktualizowany!`);
-    // Odśwież przyciski użytkowników, aby pokazać nowy avatar
-    if (window.updateUserButtons) {
-      window.updateUserButtons();
+  try {
+    // Skompresuj obrazek przed uploadem
+    const compressedFile = await compressImage(file);
+    const uploadResult = await uploadImage(compressedFile, 'avatar');
+
+    if (!uploadResult.success) {
+      alert(`Błąd podczas przesyłania obrazka: ${uploadResult.error}`);
+      setAvatarBtn.disabled = false;
+      setAvatarBtn.textContent = originalText;
+      return;
     }
+
+    const success = await setAvatar(currentUserId, uploadResult.url);
+
+    if (success) {
+      input.value = '';
+      alert(`Avatar dla ${currentChild.name} został zaktualizowany!`);
+      // Odśwież przyciski użytkowników, aby pokazać nowy avatar
+      if (window.updateUserButtons) {
+        window.updateUserButtons();
+      }
+    }
+  } catch (error) {
+    console.error('Błąd podczas ustawiania avatara:', error);
+    alert('Wystąpił błąd podczas ustawiania avatara. Spróbuj ponownie.');
+  } finally {
+    setAvatarBtn.disabled = false;
+    setAvatarBtn.textContent = originalText;
   }
 };
 
@@ -879,6 +951,7 @@ if (typeof window !== 'undefined') {
   window.editCategoryHandler = handleEditCategory;
   window.deleteCategoryHandler = handleDeleteCategory;
   window.selectImageHandler = handleSelectImage;
+  window.selectRewardImageHandler = handleSelectRewardImage;
   window.editRewardHandler = handleEditReward;
   window.deleteRewardHandler = handleDeleteReward;
   window.modifyCrystalsHandler = handleModifyCrystals;
@@ -886,4 +959,25 @@ if (typeof window !== 'undefined') {
   window.deleteChildHandler = handleDeleteChild;
   window.fillCategoryFromSuggestion = fillCategoryFromSuggestion;
   window.fillRewardFromSuggestion = fillRewardFromSuggestion;
+
+  // Event listener dla file input - wyczyść wybrany obrazek z galerii gdy wybrano nowy plik
+  const categoryFileInput = document.getElementById('editCategoryImageFile');
+  if (categoryFileInput) {
+    categoryFileInput.addEventListener('change', () => {
+      if (categoryFileInput.files.length > 0) {
+        selectedImageFromGallery = null;
+        renderImagePreviews();
+      }
+    });
+  }
+
+  const rewardFileInput = document.getElementById('editRewardImageFile');
+  if (rewardFileInput) {
+    rewardFileInput.addEventListener('change', () => {
+      if (rewardFileInput.files.length > 0) {
+        selectedRewardImageFromGallery = null;
+        renderRewardImagePreviews();
+      }
+    });
+  }
 }

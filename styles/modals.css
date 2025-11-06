@@ -784,6 +784,12 @@
   border-color: #6a11cb;
 }
 
+.image-previews .image-preview.selected {
+  border: 3px solid #6a11cb;
+  box-shadow: 0 0 0 3px rgba(106, 17, 203, 0.2);
+  transform: scale(1.05);
+}
+
 #categoryList,
 #childrenList {
   list-style: none;

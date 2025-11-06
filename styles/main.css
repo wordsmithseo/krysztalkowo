@@ -914,3 +914,8 @@ body {
     font-size: 0.7rem;
   }
 }
+
+/* ===== RECAPTCHA ===== */
+.grecaptcha-badge {
+  z-index: 1200 !important;
+}

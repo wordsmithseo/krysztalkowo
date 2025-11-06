@@ -4,7 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <title>Kryształkowo</title>
-  
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Balsamiq+Sans:wght@700&display=swap" rel="stylesheet">
   
   <link rel="stylesheet" href="styles/main.css">
@@ -273,7 +274,7 @@
         <h3>Zmień avatara</h3>
         <p style="font-size:0.9rem;color:#666;margin:0 0 0.75rem 0;">Avatar zostanie ustawiony dla obecnie wybranego dziecka</p>
         <div class="form-grid" style="grid-template-columns:1fr">
-          <input type="url" id="avatarUrlInput" placeholder="URL avatara">
+          <input type="file" id="avatarFileInput" accept="image/*" style="font-size: 1.05rem; padding: 0.6rem 1rem;">
           <button id="setAvatarBtn" class="set-avatar-btn">Ustaw avatar</button>
         </div>
       </div>
@@ -361,6 +362,7 @@
       <label>Obrazek:</label>
       <div id="currentRewardImagePreview" style="margin: 0.5rem 0;"></div>
       <input type="file" id="editRewardImageFile" accept="image/*" style="font-size: 1.05rem; padding: 0.6rem 1rem; width: 100%;">
+      <div id="imagePreviewsReward" class="image-previews"></div>
 
       <label>Szansa wylosowania (%):</label>
       <input type="number" id="editRewardProbability" min="0.01" max="100" step="0.01" value="50" placeholder="50">
