@@ -836,12 +836,6 @@ body.nina-bg {
   z-index: 1100;
 }
 
-/* Ukryj stopkę gdy pokazany jest auth modal (klasa dodawana przez JS) */
-body.auth-modal-visible .app-footer {
-  display: none;
-}
-
-
 .footer-content {
   max-width: 90rem;
   margin: 0 auto;

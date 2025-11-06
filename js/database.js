@@ -669,6 +669,22 @@ export const addChild = async (name, gender) => {
 
 export const updateChild = async (childId, data) => {
   try {
+    const user = getCurrentAuthUser();
+    if (!user) {
+      console.error('Użytkownik nie jest zalogowany');
+      return false;
+    }
+
+    // Sprawdź czy dziecko należy do tego użytkownika
+    const childRef = ref(db, `children/${childId}`);
+    const snapshot = await get(childRef);
+    const childData = snapshot.val();
+
+    if (!childData || childData.userId !== user.uid) {
+      console.error('Brak uprawnień do modyfikacji tego dziecka');
+      return false;
+    }
+
     await update(ref(db, `children/${childId}`), data);
     return true;
   } catch (error) {
@@ -679,6 +695,22 @@ export const updateChild = async (childId, data) => {
 
 export const updateChildOrder = async (childId, newOrder) => {
   try {
+    const user = getCurrentAuthUser();
+    if (!user) {
+      console.error('Użytkownik nie jest zalogowany');
+      return false;
+    }
+
+    // Sprawdź czy dziecko należy do tego użytkownika
+    const childRef = ref(db, `children/${childId}`);
+    const snapshot = await get(childRef);
+    const childData = snapshot.val();
+
+    if (!childData || childData.userId !== user.uid) {
+      console.error('Brak uprawnień do zmiany kolejności tego dziecka');
+      return false;
+    }
+
     await set(ref(db, `children/${childId}/order`), newOrder);
     return true;
   } catch (error) {
@@ -689,6 +721,22 @@ export const updateChildOrder = async (childId, newOrder) => {
 
 export const deleteChild = async (childId) => {
   try {
+    const user = getCurrentAuthUser();
+    if (!user) {
+      console.error('Użytkownik nie jest zalogowany');
+      return false;
+    }
+
+    // Sprawdź czy dziecko należy do tego użytkownika
+    const childRef = ref(db, `children/${childId}`);
+    const snapshot = await get(childRef);
+    const childData = snapshot.val();
+
+    if (!childData || childData.userId !== user.uid) {
+      console.error('Brak uprawnień do usunięcia tego dziecka');
+      return false;
+    }
+
     // Usuwamy dziecko z listy children
     await remove(ref(db, `children/${childId}`));
 

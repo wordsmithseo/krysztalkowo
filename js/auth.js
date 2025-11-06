@@ -1,8 +1,7 @@
 // ===== KONFIGURACJA FIREBASE =====
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getDatabase } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+import { db, auth } from './config.js';
+import { ref, set } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
 import {
-  getAuth,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
@@ -10,21 +9,6 @@ import {
   deleteUser,
   sendEmailVerification
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-
-const firebaseConfig = {
-  apiKey: "AIzaSyB1MhW9A8RaNffW9yoIYgeruY_6VytSrJM",
-  authDomain: "krysztalkowo-561e4.firebaseapp.com",
-  databaseURL: "https://krysztalkowo-561e4-default-rtdb.firebaseio.com",
-  projectId: "krysztalkowo-561e4",
-  storageBucket: "krysztalkowo-561e4.firebasestorage.app",
-  messagingSenderId: "77455685375",
-  appId: "1:77455685375:web:30e3a726b9f164774ebeca",
-};
-
-// Inicjalizacja Firebase
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-const auth = getAuth(app);
 
 // Funkcja logowania
 export const loginUser = async (email, password) => {
@@ -61,10 +45,37 @@ export const loginUser = async (email, password) => {
   }
 };
 
+// Funkcja inicjalizacji profilu nowego użytkownika
+export const initializeUserProfile = async (userId, name, email) => {
+  try {
+    const userProfileRef = ref(db, `userProfiles/${userId}`);
+    await set(userProfileRef, {
+      name: name,
+      email: email,
+      createdAt: new Date().toISOString(),
+      initialized: true
+    });
+    console.log('Profil użytkownika został zainicjalizowany');
+    return { success: true };
+  } catch (error) {
+    console.error('Błąd podczas inicjalizacji profilu:', error);
+    return { success: false, error: error.message };
+  }
+};
+
 // Funkcja rejestracji
 export const registerUser = async (email, password, name) => {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+
+    // Inicjalizuj profil użytkownika
+    try {
+      await initializeUserProfile(userCredential.user.uid, name, email);
+      console.log('Profil użytkownika został utworzony');
+    } catch (profileError) {
+      console.error('Błąd podczas tworzenia profilu:', profileError);
+      // Nie blokujemy rejestracji jeśli profil się nie utworzy
+    }
 
     // Wyślij email weryfikacyjny
     try {
@@ -150,4 +161,4 @@ export const deleteUserAccount = async () => {
   }
 };
 
-export { db, auth };
+export { auth };
