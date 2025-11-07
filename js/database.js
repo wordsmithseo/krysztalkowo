@@ -1088,6 +1088,21 @@ export const deleteAllUserData = async () => {
     }
 
     console.log('🗑️ Rozpoczynam usuwanie WSZYSTKICH danych użytkownika...');
+
+    // NAJPIERW usuń wszystkie obrazy użytkownika z Firebase Storage
+    console.log('🗑️ Usuwanie wszystkich obrazów użytkownika...');
+    const { getAllUserImages, deleteImageByUrl } = await import('./storage.js');
+    const { images } = await getAllUserImages();
+
+    if (images && images.length > 0) {
+      console.log(`📦 Znaleziono ${images.length} obrazów do usunięcia`);
+      for (const image of images) {
+        console.log(`  🗑️ Usuwam: ${image.name}`);
+        await deleteImageByUrl(image.url);
+      }
+      console.log('✅ Wszystkie obrazy usunięte');
+    }
+
     const deletePromises = [];
 
     // 1. Pobierz i usuń wszystkie dzieci tego użytkownika
@@ -1215,6 +1230,96 @@ export const cleanupDatabase = async () => {
       success: false,
       error: error.message
     };
+  }
+};
+
+// ===== FUNKCJA CZYSZCZENIA NIEUŻYWANYCH OBRAZÓW =====
+export const cleanupUnusedImages = async () => {
+  try {
+    const user = getCurrentAuthUser();
+    if (!user) {
+      console.error('Użytkownik nie jest zalogowany');
+      return { success: false, error: 'Musisz być zalogowany' };
+    }
+
+    console.log('🧹 === ROZPOCZYNAM CZYSZCZENIE NIEUŻYWANYCH OBRAZÓW ===');
+
+    // Pobierz wszystkie obrazy użytkownika z storage
+    const { getAllUserImages } = await import('./storage.js');
+    const { images } = await getAllUserImages();
+
+    if (images.length === 0) {
+      console.log('✅ Brak obrazów do wyczyszczenia');
+      return { success: true, deleted: 0, checked: 0 };
+    }
+
+    console.log(`📦 Znaleziono ${images.length} obrazów w storage`);
+
+    // Zbierz wszystkie używane URL-e obrazów
+    const usedUrls = new Set();
+
+    // 1. Pobierz wszystkie dzieci użytkownika
+    const childrenRef = ref(db, 'children');
+    const childrenSnapshot = await get(childrenRef);
+    const childrenData = childrenSnapshot.val();
+
+    const userChildren = [];
+    if (childrenData) {
+      for (const childId in childrenData) {
+        if (childrenData[childId].userId === user.uid) {
+          userChildren.push(childId);
+        }
+      }
+    }
+
+    // 2. Dla każdego dziecka zbierz URL-e obrazów
+    for (const childId of userChildren) {
+      // Avatar
+      const avatarRef = ref(db, `users/${childId}/profile/avatarUrl`);
+      const avatarSnapshot = await get(avatarRef);
+      if (avatarSnapshot.val()) usedUrls.add(avatarSnapshot.val());
+
+      // Kategorie
+      const categoriesRef = ref(db, `users/${childId}/categories`);
+      const categoriesSnapshot = await get(categoriesRef);
+      const categories = categoriesSnapshot.val();
+      if (categories) {
+        Object.values(categories).forEach(cat => {
+          if (cat.image) usedUrls.add(cat.image);
+        });
+      }
+
+      // Nagrody
+      const rewardsRef = ref(db, `users/${childId}/rewards`);
+      const rewardsSnapshot = await get(rewardsRef);
+      const rewards = rewardsSnapshot.val();
+      if (rewards) {
+        Object.values(rewards).forEach(reward => {
+          if (reward.image) usedUrls.add(reward.image);
+        });
+      }
+    }
+
+    console.log(`✅ Znaleziono ${usedUrls.size} używanych obrazów`);
+
+    // 3. Usuń nieużywane obrazy
+    const { deleteImageByUrl } = await import('./storage.js');
+    let deleted = 0;
+
+    for (const image of images) {
+      if (!usedUrls.has(image.url)) {
+        console.log(`🗑️ Usuwam nieużywany obrazek: ${image.name}`);
+        await deleteImageByUrl(image.url);
+        deleted++;
+      }
+    }
+
+    console.log(`✅ Wyczyszczono ${deleted} nieużywanych obrazów`);
+
+    return { success: true, deleted, checked: images.length };
+  } catch (error) {
+    console.error('Błąd czyszczenia obrazów:', error);
+    return { success: false, error: error.message };
   }
 };
 
