@@ -75,108 +75,68 @@
   }
 }
 
-/* Złota karta - gdy cel osiągnięty, przed otwarciem modala */
-.category-card.reward-ready {
-  background: linear-gradient(135deg, #FFD700, #FFA500, #FFD700) !important;
-  border-color: #fff !important;
-  box-shadow:
-    0 0 30px rgba(255, 215, 0, 0.8),
-    0 15px 40px rgba(255, 165, 0, 0.6) !important;
-  animation: goldShimmer 2s ease-in-out infinite;
-  cursor: pointer;
-  will-change: box-shadow;
-}
-
-@keyframes goldShimmer {
-  0%, 100% {
-    box-shadow:
-      0 0 30px rgba(255, 215, 0, 0.8),
-      0 15px 40px rgba(255, 165, 0, 0.6);
-  }
-  50% {
-    box-shadow:
-      0 0 45px rgba(255, 215, 0, 0.95),
-      0 15px 45px rgba(255, 165, 0, 0.75);
-  }
-}
-
-.category-card.reward-ready::before {
-  content: '👑';
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  font-size: 3rem;
-  z-index: 10;
-  animation: crownBounce 0.8s ease-in-out infinite;
-}
-
-@keyframes crownBounce {
-  0%, 100% {
-    transform: translateY(0) rotate(0deg);
-  }
-  50% {
-    transform: translateY(-10px) rotate(15deg);
-  }
-}
-
-/* Nowa klasa dla wygranej karty (po wylosowaniu nagrody) - czeka na reset */
+/* Złota karta z tęczowym tłem - gdy cel osiągnięty lub po wylosowaniu nagrody */
+.category-card.reward-ready,
 .category-card.reward-won {
   background: linear-gradient(135deg, #FFD700, #FFA500, #FFD700) !important;
-  border-color: #fff !important;
-  box-shadow: 
-    0 0 30px rgba(255, 215, 0, 0.8),
-    0 15px 40px rgba(255, 165, 0, 0.6) !important;
-  animation: goldPulse 1.5s ease-in-out infinite;
+  border: 3px solid transparent !important;
+  background-clip: padding-box;
+  cursor: pointer;
+  will-change: transform, box-shadow;
+  animation: rainbowGlow 3s ease-in-out infinite;
+  box-shadow:
+    0 0 20px rgba(255, 215, 0, 0.6),
+    0 0 40px rgba(255, 255, 255, 0.4) !important;
 }
 
-@keyframes goldPulse {
+/* Tęczowe obramowanie za kartą */
+.category-card.reward-ready::before,
+.category-card.reward-won::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  background: linear-gradient(
+    45deg,
+    #ff0000,
+    #ff7f00,
+    #ffff00,
+    #00ff00,
+    #0000ff,
+    #4b0082,
+    #9400d3,
+    #ff0000
+  );
+  background-size: 400% 400%;
+  border-radius: 1.5rem;
+  z-index: -1;
+  animation: rainbowShift 4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes rainbowShift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes rainbowGlow {
   0%, 100% {
     transform: scale(1);
-    box-shadow: 
-      0 0 30px rgba(255, 215, 0, 0.8),
-      0 15px 40px rgba(255, 165, 0, 0.6);
+    box-shadow:
+      0 0 20px rgba(255, 215, 0, 0.6),
+      0 0 40px rgba(255, 255, 255, 0.4);
   }
   50% {
     transform: scale(1.02);
-    box-shadow: 
-      0 0 50px rgba(255, 215, 0, 1),
-      0 20px 50px rgba(255, 165, 0, 0.8);
-  }
-}
-
-.category-card.reward-won::before {
-  content: '👑';
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  font-size: 2.5rem;
-  z-index: 2;
-  transform: rotate(12deg);
-  transform-origin: top right;
-}
-
-.category-card.reward-ready.reward-crown::before,
-.category-card.reward-won.reward-crown::before {
-  font-size: 3rem;
-  animation: crownPulse 2s ease-in-out infinite;
-}
-
-@keyframes crownPulse {
-  0%, 100% {
-    transform: rotate(12deg) translateX(0);
-    filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.9)) drop-shadow(0 0 15px rgba(255, 215, 0, 0.6));
-  }
-  25% {
-    transform: rotate(12deg) translateX(-2px);
-    filter: drop-shadow(0 0 12px rgba(255, 215, 0, 1)) drop-shadow(0 0 20px rgba(255, 215, 0, 0.8));
-  }
-  50% {
-    transform: rotate(12deg) translateX(0);
-    filter: drop-shadow(0 0 15px rgba(255, 215, 0, 1)) drop-shadow(0 0 25px rgba(255, 215, 0, 0.9));
-  }
-  75% {
-    transform: rotate(12deg) translateX(2px);
-    filter: drop-shadow(0 0 12px rgba(255, 215, 0, 1)) drop-shadow(0 0 20px rgba(255, 215, 0, 0.8));
+    box-shadow:
+      0 0 30px rgba(255, 215, 0, 0.8),
+      0 0 60px rgba(255, 255, 255, 0.6);
   }
 }
 

@@ -241,19 +241,10 @@ const createCategoryCard = (cat, user) => {
   const isReady = count >= goal;
   const pendingReset = cat.pendingReset || false;
   
-  const wins = cat.wins?.[user] || 0;
-  const isCrown = wins >= 3;
-  
   if (isReady && !pendingReset) {
     card.classList.add('reward-ready');
-    if (isCrown) {
-      card.classList.add('reward-crown');
-    }
   } else if (pendingReset) {
     card.classList.add('reward-won');
-    if (isCrown) {
-      card.classList.add('reward-crown');
-    }
   } else {
     card.style.backgroundColor = cat.color || '#FFB6C1';
     card.style.borderColor = cat.borderColor || '#FF69B4';
@@ -417,7 +408,7 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
       if (isCurrentlyWon) {
         await resetCategory(categoryId);
         // Natychmiastowo usuń klasy aby karta wróciła do normalnego stanu
-        card.classList.remove('reward-won', 'reward-crown', 'reset-filling', 'filling-complete', 'active-hold');
+        card.classList.remove('reward-won', 'reset-filling', 'filling-complete', 'active-hold');
       } else {
         const currentCard = card;
         const crystalProgress = currentCard.querySelector('.crystal-progress');

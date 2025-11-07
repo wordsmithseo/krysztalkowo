@@ -203,19 +203,25 @@ if (realizeLaterBtn) {
     const category = categories.find(c => c.id === state.pendingCategoryId);
     const categoryName = category ? category.name : 'Nieznana kategoria';
     
+    const rewardName = selectedReward.name;
+    const categoryId = state.pendingCategoryId;
+
     const success = await addPendingReward(
-      state.pendingCategoryId, 
+      categoryId,
       categoryName,
-      selectedReward.name
+      rewardName
     );
-    
+
     if (success) {
+      // Finalizuj nagrodę (zlicz wygraną, ustaw lastReward)
+      await finalizeReward(categoryId, rewardName);
+
       setPendingCategoryId(null);
       selectedReward = null;
-      
+
       // Odblokuj zamykanie modala
       unblockModalClosing();
-      
+
       // Pokaż komunikat sukcesu
       rewardReveal.innerHTML = `
         <div style="font-size:2rem;margin-bottom:1rem;">✅</div>
