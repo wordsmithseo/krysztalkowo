@@ -119,10 +119,10 @@ const animateCrystalAdd = (categoryId, newCount) => {
       }, 500);
     }
 
-    // Znajdź i animuj nowo dodany kryształek
-    const crystals = card.querySelectorAll('.crystal-item');
-    if (crystals && crystals[newCount - 1]) {
-      const newCrystal = crystals[newCount - 1];
+    // Znajdź i animuj nowo dodany kryształek (ostatni pełny)
+    const filledCrystals = card.querySelectorAll('.crystal-item:not(.missing-crystal)');
+    if (filledCrystals && filledCrystals.length > 0) {
+      const newCrystal = filledCrystals[filledCrystals.length - 1]; // Ostatni pełny kryształek
       newCrystal.classList.add('just-added');
 
       // Usuń klasę po zakończeniu animacji
@@ -438,11 +438,9 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
               const drawId = await createDrawId(categoryId);
 
               if (drawId) {
-                console.log(`✨ ID losowania utworzone: ${drawId}, czekam na aktualizację stanu...`);
-                // Poczekaj chwilę na aktualizację stanu przez onValue listener
-                await new Promise(resolve => setTimeout(resolve, 300));
-                // Teraz możemy otworzyć modal losowania
-                openRewardModal(categoryId);
+                console.log(`✨ ID losowania utworzone: ${drawId}, otwieranie modalu...`);
+                // Przekaż drawId bezpośrednio do modalu (nie czekaj na aktualizację stanu)
+                openRewardModal(categoryId, drawId);
               }
             } else {
               // Brak nagród - otwórz modal bez ID losowania

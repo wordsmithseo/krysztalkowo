@@ -46,7 +46,7 @@ const showNoRewardsModal = (categoryId) => {
 };
 
 // Otwieranie modala z nagrodami
-export const openRewardModal = async (categoryId) => {
+export const openRewardModal = async (categoryId, drawId = null) => {
   const rewards = getRewards();
   const currentUser = getCurrentUser();
   const categories = getCategories();
@@ -63,14 +63,17 @@ export const openRewardModal = async (categoryId) => {
     return;
   }
 
-  // WALIDACJA: Sprawdź czy kategoria ma drawId
-  if (!category || !category.drawId) {
+  // Użyj przekazanego drawId lub pobierz z kategorii
+  const activeDrawId = drawId || (category ? category.drawId : null);
+
+  // WALIDACJA: Sprawdź czy jest drawId (z parametru lub kategorii)
+  if (!activeDrawId) {
     console.warn('⚠️ Próba otwarcia modalu losowania bez ID losowania!');
     alert('❌ Brak uprawnień do losowania. Karta musi najpierw wygenerować ID losowania.');
     return;
   }
 
-  console.log(`✅ Otwieranie modalu losowania z ID: ${category.drawId}`);
+  console.log(`✅ Otwieranie modalu losowania z ID: ${activeDrawId}`);
 
   setPendingCategoryId(categoryId);
   setRewardFlowLock(false);
@@ -84,7 +87,7 @@ export const openRewardModal = async (categoryId) => {
   // Wyświetl ID losowania na modalu
   const drawIdDisplay = document.getElementById('drawIdDisplay');
   if (drawIdDisplay) {
-    drawIdDisplay.textContent = `ID losowania: ${category.drawId}`;
+    drawIdDisplay.textContent = `ID losowania: ${activeDrawId}`;
   }
 
   // Blokada zamykania modala
