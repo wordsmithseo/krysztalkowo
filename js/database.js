@@ -357,8 +357,21 @@ export const addCategory = async (name) => {
 
 export const deleteCategory = async (categoryId) => {
   const user = getCurrentUser();
-  
+
   try {
+    // Pobierz dane kategorii przed usunięciem (aby mieć URL obrazka)
+    const categoryRef = ref(db, `users/${user}/categories/${categoryId}`);
+    const snapshot = await get(categoryRef);
+    const categoryData = snapshot.val();
+
+    // Usuń obrazek jeśli istnieje
+    if (categoryData && categoryData.image) {
+      console.log('🗑️ Usuwanie obrazka kategorii:', categoryData.image);
+      const { deleteImage } = await import('./storage.js');
+      await deleteImage(categoryData.image);
+    }
+
+    // Usuń kategorię z bazy danych
     await remove(ref(db, `users/${user}/categories/${categoryId}`));
     return true;
   } catch (error) {
@@ -476,8 +489,21 @@ export const addReward = async (name, image = '', probability = 50) => {
 
 export const deleteReward = async (rewardId) => {
   const user = getCurrentUser();
-  
+
   try {
+    // Pobierz dane nagrody przed usunięciem (aby mieć URL obrazka)
+    const rewardRef = ref(db, `users/${user}/rewards/${rewardId}`);
+    const snapshot = await get(rewardRef);
+    const rewardData = snapshot.val();
+
+    // Usuń obrazek jeśli istnieje
+    if (rewardData && rewardData.image) {
+      console.log('🗑️ Usuwanie obrazka nagrody:', rewardData.image);
+      const { deleteImage } = await import('./storage.js');
+      await deleteImage(rewardData.image);
+    }
+
+    // Usuń nagrodę z bazy danych
     await remove(ref(db, `users/${user}/rewards/${rewardId}`));
     return true;
   } catch (error) {
@@ -842,12 +868,57 @@ export const deleteChild = async (childId) => {
       return false;
     }
 
+    // Pobierz avatar dziecka przed usunięciem
+    const avatarRef = ref(db, `users/${childId}/profile/avatarUrl`);
+    const avatarSnapshot = await get(avatarRef);
+    const avatarUrl = avatarSnapshot.val();
+
+    // Usuń avatar jeśli istnieje
+    if (avatarUrl) {
+      console.log('🗑️ Usuwanie avatara dziecka:', avatarUrl);
+      const { deleteImage } = await import('./storage.js');
+      await deleteImage(avatarUrl);
+    }
+
+    // Pobierz wszystkie kategorie dziecka i usuń ich obrazki
+    const categoriesRef = ref(db, `users/${childId}/categories`);
+    const categoriesSnapshot = await get(categoriesRef);
+    const categories = categoriesSnapshot.val();
+
+    if (categories) {
+      const deletePromises = Object.values(categories).map(async (cat) => {
+        if (cat.image) {
+          console.log('🗑️ Usuwanie obrazka kategorii:', cat.image);
+          const { deleteImage } = await import('./storage.js');
+          await deleteImage(cat.image);
+        }
+      });
+      await Promise.all(deletePromises);
+    }
+
+    // Pobierz wszystkie nagrody dziecka i usuń ich obrazki
+    const rewardsRef = ref(db, `users/${childId}/rewards`);
+    const rewardsSnapshot = await get(rewardsRef);
+    const rewards = rewardsSnapshot.val();
+
+    if (rewards) {
+      const deletePromises = Object.values(rewards).map(async (reward) => {
+        if (reward.image) {
+          console.log('🗑️ Usuwanie obrazka nagrody:', reward.image);
+          const { deleteImage } = await import('./storage.js');
+          await deleteImage(reward.image);
+        }
+      });
+      await Promise.all(deletePromises);
+    }
+
     // Usuwamy dziecko z listy children
     await remove(ref(db, `children/${childId}`));
 
     // Usuwamy wszystkie dane użytkownika (kategorie, nagrody, ranking itp.)
     await remove(ref(db, `users/${childId}`));
 
+    console.log('✅ Usunięto dziecko wraz ze wszystkimi obrazkami');
     return true;
   } catch (error) {
     console.error('Błąd usuwania dziecka:', error);
