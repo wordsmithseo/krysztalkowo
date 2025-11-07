@@ -220,14 +220,9 @@ export const renderCategories = () => {
     // Ukryj loader profilu po wyrenderowaniu
     hideProfileLoader();
 
-    // Przywróć modal nagród, jeśli kategoria ma pendingReset
-    const pendingCategory = categories.find(cat => cat.pendingReset === true);
-    if (pendingCategory) {
-      // Opóźnij otwarcie modalu, żeby UI się zdążyło załadować
-      setTimeout(() => {
-        openRewardModal(pendingCategory.id);
-      }, 500);
-    }
+    // USUNIĘTO: Automatyczne otwieranie modala dla kart z pendingReset
+    // W nowym systemie pendingReset oznacza że nagroda została już wylosowana
+    // i karta czeka na reset. Modal nie powinien się otwierać automatycznie.
   });
 };
 
