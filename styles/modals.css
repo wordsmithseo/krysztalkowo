@@ -620,7 +620,7 @@ body.auth-modal-visible {
   font-weight: 700;
   cursor: pointer;
   background: linear-gradient(135deg, #6a11cb, #8a2be2);
-  color: #fff;
+  color: #fff !important;
   box-shadow: 0 6px 20px rgba(106, 17, 203, 0.4);
   transition: all 0.3s ease;
   display: flex;
@@ -645,11 +645,13 @@ body.auth-modal-visible {
 .empty-guide-btn .btn-icon {
   font-size: 1.3rem;
   line-height: 1;
+  color: #fff !important;
 }
 
 .empty-guide-btn .btn-text {
   font-size: 1.1rem;
   font-weight: 700;
+  color: #fff !important;
 }
 
 @keyframes buttonPulse {
