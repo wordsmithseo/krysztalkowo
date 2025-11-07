@@ -1,5 +1,5 @@
 // ===== PANEL ADMINISTRACYJNY =====
-import { getCategories, getRewards, getChildren, setIsLoggedIn, state, getCurrentUser } from './state.js';
+import { getCategories, getRewards, getChildren, setIsLoggedIn, state, getCurrentUser, setCurrentUser } from './state.js';
 import {
   addCategory,
   deleteCategory,
@@ -850,38 +850,40 @@ export const handleSaveChild = async () => {
   const childId = modal.dataset.editingId;
   const name = document.getElementById('childName').value.trim();
   const gender = document.getElementById('childGenderMale').checked ? 'male' : 'female';
-  
+
   if (!name) {
     alert('Podaj imię dziecka!');
     return;
   }
-  
+
   let success;
+  let newChildId = null;
+
   if (childId) {
+    // Edycja istniejącego dziecka
     success = await updateChild(childId, { name, gender });
   } else {
-    success = await addChild(name, gender);
+    // Dodawanie nowego dziecka
+    newChildId = await addChild(name, gender);
+    success = newChildId !== null;
   }
-  
+
   if (success) {
     modal.style.display = 'none';
     renderChildrenList();
 
-    // Jeśli to było pierwsze dziecko, automatycznie wybierz je po krótkiej chwili
-    // (daj czas na aktualizację state.children przez listenChildren)
-    setTimeout(() => {
-      const children = getChildren();
-      if (children.length === 1 && !getCurrentUser()) {
-        const { setCurrentUser } = require('./state.js');
-        setCurrentUser(children[0].id);
-        console.log('✅ Automatycznie wybrano pierwsze dziecko:', children[0].name);
+    // Automatycznie wybierz nowo utworzone dziecko
+    if (newChildId) {
+      setTimeout(() => {
+        setCurrentUser(newChildId);
+        console.log('✅ Automatycznie wybrano nowo utworzone dziecko:', name);
 
         // Odśwież UI
         if (window.updateUserButtons) {
           window.updateUserButtons();
         }
-      }
-    }, 300);
+      }, 300);
+    }
   }
 };
 

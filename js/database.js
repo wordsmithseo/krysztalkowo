@@ -769,7 +769,7 @@ export const addChild = async (name, gender) => {
     const user = getCurrentAuthUser();
     if (!user) {
       console.error('Użytkownik nie jest zalogowany');
-      return false;
+      return null;
     }
 
     const childrenRef = ref(db, 'children');
@@ -791,10 +791,10 @@ export const addChild = async (name, gender) => {
     };
 
     await set(ref(db, `children/${newId}`), newChild);
-    return true;
+    return newId; // Zwróć ID nowo utworzonego dziecka
   } catch (error) {
     console.error('Błąd dodawania dziecka:', error);
-    return false;
+    return null;
   }
 };
 
