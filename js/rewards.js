@@ -45,6 +45,9 @@ export const openRewardModal = async (categoryId) => {
   const currentUser = getCurrentUser();
 
   if (!rewards.length) {
+    // WAŻNE: Oznacz kategorię jako pendingReset PRZED wywołaniem modala
+    await markCategoryPendingReset(categoryId);
+
     // Sprawdź czy modal został już wyświetlony dla tego dziecka
     if (!noRewardsShownForChild.has(currentUser)) {
       noRewardsShownForChild.add(currentUser);

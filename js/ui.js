@@ -500,30 +500,33 @@ export const fireConfetti = () => {
 export const switchUser = (user, setupRealtimeListener, listenRewardsForUser) => {
   const children = getChildren();
   const child = children.find(c => c.id === user);
-  
+
   if (!child) return;
-  
+
   // Pokaż loader profilu
   showProfileLoader(child.name);
-  
+
+  // WAŻNE: Wyczyść stare karty NATYCHMIAST aby nie pokazywać kart z poprzedniego konta
+  elements.container.innerHTML = '';
+
   // Zapisz wybór do localStorage
   localStorage.setItem('selectedChildId', user);
-  
+
   const bgClass = child.gender === 'male' ? 'maks-bg' : 'nina-bg';
   const otherBgClass = child.gender === 'male' ? 'nina-bg' : 'maks-bg';
-  
+
   document.body.classList.remove(otherBgClass);
   document.body.classList.add(bgClass);
-  
+
   document.querySelectorAll('.user-btn').forEach(btn => {
     btn.classList.remove('active-user');
   });
-  
+
   const activeBtn = document.getElementById(`user-${user}`);
   if (activeBtn) {
     activeBtn.classList.add('active-user');
   }
-  
+
   const cached = getCachedData(user);
   if (cached.categories) {
     import('./state.js').then(({ setCategories }) => {
@@ -536,7 +539,7 @@ export const switchUser = (user, setupRealtimeListener, listenRewardsForUser) =>
       setRewards(cached.rewards);
     });
   }
-  
+
   setupRealtimeListener(user);
   listenRewardsForUser(user);
 };

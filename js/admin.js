@@ -557,14 +557,17 @@ export const handleEditReward = (rewardId) => {
   document.getElementById('editRewardName').value = reward.name || '';
   document.getElementById('editRewardProbability').value = reward.probability || 50;
 
-  // Pokaż podgląd aktualnego obrazka
+  // Pokaż podgląd aktualnego obrazka z obramówką rzadkości
   const currentImagePreview = document.getElementById('currentRewardImagePreview');
   if (currentImagePreview) {
     if (reward.image) {
+      const rarityClass = getRarityClass(reward.probability || 50);
       currentImagePreview.innerHTML = `
         <div style="padding: 0.75rem; background: #f5f5f5; border-radius: 0.5rem; border: 2px solid #ddd;">
-          <div style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; color: #666;">Aktualny obrazek:</div>
-          <img src="${reward.image}" alt="Aktualny obrazek" style="max-width: 150px; max-height: 150px; border-radius: 0.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" onerror="this.parentElement.innerHTML='<div style=\\'color:#999;padding:1rem;\\'>Nie można załadować obrazka</div>'">
+          <div style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; color: #666;">Aktualny obrazek z obramówką rzadkości:</div>
+          <div class="reward-preview-wrapper ${rarityClass}" id="rarityPreviewWrapper" style="display: inline-block;">
+            <img src="${reward.image}" class="reward-img" alt="Aktualny obrazek" style="max-width: 150px; max-height: 150px; border-radius: 0.5rem;" onerror="this.parentElement.innerHTML='<div style=\\'color:#999;padding:1rem;\\'>Nie można załadować obrazka</div>'">
+          </div>
         </div>
       `;
     } else {
@@ -681,7 +684,7 @@ export const handleSaveRewardEdit = async () => {
 };
 
 
-// Funkcja aktualizacji informacji o częstotliwości
+// Funkcja aktualizacji informacji o częstotliwości i obramówki rzadkości
 export const updateProbabilityInfo = () => {
   const probability = parseFloat(document.getElementById('editRewardProbability').value) || 0;
   const probabilityInfo = document.getElementById('probabilityInfo');
@@ -693,8 +696,16 @@ export const updateProbabilityInfo = () => {
   }
 
   const frequency = calculateFrequency(probability);
+  const rarityName = getRarityName(probability);
   probabilityInfo.className = 'probability-info';
-  probabilityInfo.innerHTML = `📊 ${frequency} <span style="font-weight:400;opacity:0.8;">(${probability}% szansy)</span>`;
+  probabilityInfo.innerHTML = `📊 ${frequency} <span style="font-weight:400;opacity:0.8;">(${probability}% szansy - ${rarityName})</span>`;
+
+  // Update obramówki rzadkości w czasie rzeczywistym
+  const rarityPreviewWrapper = document.getElementById('rarityPreviewWrapper');
+  if (rarityPreviewWrapper) {
+    const rarityClass = getRarityClass(probability);
+    rarityPreviewWrapper.className = `reward-preview-wrapper ${rarityClass}`;
+  }
 };
 
 export const handleResetRanking = () => {
@@ -1041,10 +1052,16 @@ export const renderGallery = async () => {
   const percentage = Math.min((parseFloat(totalMB) / maxVisualization) * 100, 100);
   storageBar.style.width = `${percentage}%`;
 
-  // Renderuj obrazki
+  // Renderuj obrazki z lazy loading
   galleryGrid.innerHTML = result.images.map(img => `
-    <div class="gallery-item" style="position: relative; border-radius: 0.5rem; overflow: hidden; border: 2px solid #e0e0e0;">
-      <img src="${img.url}" alt="${img.name}" style="width: 100%; height: 150px; object-fit: cover;">
+    <div class="gallery-item" style="position: relative; border-radius: 0.5rem; overflow: hidden; border: 2px solid #e0e0e0; background: #f5f5f5;">
+      <img
+        src="${img.url}"
+        alt="${img.name}"
+        loading="lazy"
+        decoding="async"
+        style="width: 100%; height: 150px; object-fit: cover; display: block;"
+      >
       <div style="position: absolute; top: 0; right: 0; padding: 0.25rem;">
         <button
           onclick="window.handleDeleteImageHandler('${img.url}')"
