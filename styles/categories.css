@@ -79,6 +79,7 @@
 .category-card.reward-ready {
   background: linear-gradient(135deg, #FFD700, #FFA500, #FFD700) !important;
   border: 3px solid #FFC107 !important;
+  border-bottom: 5px solid #00C853 !important; /* Zielona dolna krawędź oznaczająca ID losowania */
   cursor: not-allowed;
   pointer-events: none; /* ZABLOKOWANA - czeka na automatyczne otwarcie modalu */
   will-change: transform, box-shadow;

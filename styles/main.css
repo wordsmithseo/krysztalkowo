@@ -917,7 +917,7 @@ body {
 
 /* ===== RECAPTCHA ===== */
 .grecaptcha-badge {
-  z-index: 1200 !important;
+  z-index: 1400 !important; /* Wyższy niż stopka (1300) */
 }
 
 /* ===== CLEANUP TOAST ===== */

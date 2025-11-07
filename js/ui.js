@@ -438,6 +438,9 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
               const drawId = await createDrawId(categoryId);
 
               if (drawId) {
+                console.log(`✨ ID losowania utworzone: ${drawId}, czekam na aktualizację stanu...`);
+                // Poczekaj chwilę na aktualizację stanu przez onValue listener
+                await new Promise(resolve => setTimeout(resolve, 300));
                 // Teraz możemy otworzyć modal losowania
                 openRewardModal(categoryId);
               }
