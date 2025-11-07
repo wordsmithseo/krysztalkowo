@@ -21,6 +21,8 @@ import {
 } from './database.js';
 import { getCurrentAuthUser } from './auth.js';
 import { uploadImage, compressImage, getAllUserImages, deleteImageByUrl } from './storage.js';
+import { db } from './config.js';
+import { ref, get } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
 
 const adminModal = document.getElementById('adminModal');
 const editModal = document.getElementById('editModal');
@@ -1212,6 +1214,43 @@ if (typeof window !== 'undefined') {
 // Zmienna dla wybranego awatara z galerii
 let selectedAvatarFromGallery = null;
 
+// Funkcja pobierająca wcześniej użyte awatary
+const getPreviouslyUsedAvatars = async () => {
+  try {
+    const user = getCurrentAuthUser();
+    if (!user) return [];
+
+    // Pobierz wszystkie dzieci użytkownika
+    const childrenRef = ref(db, 'children');
+    const childrenSnapshot = await get(childrenRef);
+    const childrenData = childrenSnapshot.val();
+
+    if (!childrenData) return [];
+
+    const avatarUrls = new Set(); // Użyj Set aby uniknąć duplikatów
+
+    // Dla każdego dziecka należącego do tego użytkownika
+    for (const childId in childrenData) {
+      if (childrenData[childId].userId === user.uid) {
+        // Pobierz avatarUrl dziecka
+        const avatarRef = ref(db, `users/${childId}/profile/avatarUrl`);
+        const avatarSnapshot = await get(avatarRef);
+        const avatarUrl = avatarSnapshot.val();
+
+        if (avatarUrl) {
+          avatarUrls.add(avatarUrl);
+        }
+      }
+    }
+
+    // Konwertuj Set na Array i zwróć
+    return Array.from(avatarUrls);
+  } catch (error) {
+    console.error('Błąd pobierania wcześniej używanych awatarów:', error);
+    return [];
+  }
+};
+
 // Renderowanie podglądu obrazków dla awatara
 const renderAvatarImagePreviews = async (localPreview) => {
   const previewContainer = document.getElementById('avatarImagePreviews');
@@ -1221,6 +1260,9 @@ const renderAvatarImagePreviews = async (localPreview) => {
   const result = await getAllUserImages();
   const uploadedImages = result.success ? result.images.map(img => img.url) : [];
 
+  // Pobierz wcześniej użyte awatary
+  const usedAvatars = await getPreviouslyUsedAvatars();
+
   let html = '';
 
   // Podgląd lokalnego pliku (jeśli wybrano)
@@ -1229,6 +1271,18 @@ const renderAvatarImagePreviews = async (localPreview) => {
     html += '<div class="image-section-title">Podgląd wybranego pliku:</div>';
     html += '<div class="image-previews">';
     html += `<img src="${localPreview}" class="image-preview" alt="Preview" style="width: 150px; height: 150px; object-fit: cover; border-radius: 50%; border: 3px solid #6a11cb;">`;
+    html += '</div></div>';
+  }
+
+  // Sekcja z wcześniej używanymi awatarami (PRIORYTET)
+  if (usedAvatars.length > 0) {
+    html += '<div class="image-section">';
+    html += '<div class="image-section-title" style="color: #6a11cb; font-weight: 700;">✨ Wcześniej używane awatary:</div>';
+    html += '<div style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">Kliknij awatar aby go użyć ponownie</div>';
+    html += '<div class="image-previews">';
+    html += usedAvatars.map(url =>
+      `<img src="${url}" class="image-preview ${url === selectedAvatarFromGallery ? 'selected' : ''}" onclick="window.selectAvatarHandler('${url}')" alt="Preview" style="cursor: pointer; width: 120px; height: 120px; object-fit: cover; border-radius: 50%; ${url === selectedAvatarFromGallery ? 'border: 3px solid #6a11cb;' : ''}">`
+    ).join('');
     html += '</div></div>';
   }
 
