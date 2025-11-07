@@ -411,6 +411,15 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
       vibrate([100, 50, 100]);
 
       if (isCurrentlyWon) {
+        // Sprawdź czy karta ma drawId (czeka na automatyczny reset)
+        const hasDrawId = card.querySelector('.draw-id-bar');
+        if (hasDrawId) {
+          console.log('⚠️ Karta czeka na automatyczny reset - ignoruję ręczny reset');
+          card.classList.remove('reset-filling', 'filling-complete', 'active-hold');
+          return;
+        }
+
+        // Karta nie ma drawId - można zresetować ręcznie
         await resetCategory(categoryId);
         // Natychmiastowo usuń klasy aby karta wróciła do normalnego stanu
         card.classList.remove('reward-won', 'reset-filling', 'filling-complete', 'active-hold');
