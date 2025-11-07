@@ -739,13 +739,13 @@ export const updateProbabilityInfo = () => {
 
   const frequency = calculateFrequency(probability);
   const rarityName = getRarityName(probability);
-  probabilityInfo.className = 'probability-info';
+  const rarityClass = getRarityClass(probability);
+  probabilityInfo.className = `probability-info ${rarityClass}`;
   probabilityInfo.innerHTML = `📊 ${frequency} <span style="font-weight:400;opacity:0.8;">(${probability}% szansy - ${rarityName})</span>`;
 
   // Update obramówki rzadkości w czasie rzeczywistym
   const rarityPreviewWrapper = document.getElementById('rarityPreviewWrapper');
   if (rarityPreviewWrapper) {
-    const rarityClass = getRarityClass(probability);
     rarityPreviewWrapper.className = `reward-preview-wrapper ${rarityClass}`;
   }
 };
