@@ -258,19 +258,53 @@ body.auth-modal-visible {
 
 @media (max-width: 768px) {
   .auth-modal {
-    padding: 0.5rem;
+    padding: 1rem;
     align-items: flex-start;
-    padding-top: max(0.5rem, env(safe-area-inset-top));
+    padding-top: max(1rem, env(safe-area-inset-top));
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
   }
 
   .auth-container {
-    gap: 1rem;
+    gap: 1.5rem;
     max-width: 100%;
   }
 
-  /* Ukryj welcome section na mobile - za mało miejsca w pionie */
+  /* Pokaż welcome section na mobile, ale w kompaktowej formie */
   .auth-welcome-section {
-    display: none;
+    display: block;
+    padding: 1rem;
+  }
+
+  .auth-welcome-title {
+    font-size: 2rem;
+    text-align: center;
+  }
+
+  .auth-welcome-subtitle {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+  }
+
+  .auth-features {
+    gap: 1rem;
+  }
+
+  .auth-feature-item {
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .auth-feature-icon {
+    font-size: 2rem;
+  }
+
+  .auth-feature-text h3 {
+    font-size: 1rem;
+  }
+
+  .auth-feature-text p {
+    font-size: 0.85rem;
   }
 
   .auth-form-section {
@@ -286,16 +320,49 @@ body.auth-modal-visible {
 
 @media (max-width: 480px) {
   .auth-modal {
-    padding: 0.25rem;
-    padding-top: max(0.25rem, env(safe-area-inset-top));
-    padding-bottom: max(0.25rem, env(safe-area-inset-bottom));
+    padding: 0.75rem;
+    align-items: flex-start;
+    padding-top: max(0.75rem, env(safe-area-inset-top));
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
   }
 
   .auth-container {
-    gap: 0.5rem;
+    gap: 1rem;
   }
 
-  /* Welcome section jest już ukryta na max-width: 768px */
+  .auth-welcome-section {
+    padding: 0.75rem;
+  }
+
+  .auth-welcome-title {
+    font-size: 1.75rem;
+  }
+
+  .auth-welcome-subtitle {
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+  }
+
+  .auth-features {
+    gap: 0.75rem;
+  }
+
+  .auth-feature-item {
+    padding: 0.875rem;
+    gap: 0.875rem;
+  }
+
+  .auth-feature-icon {
+    font-size: 1.75rem;
+  }
+
+  .auth-feature-text h3 {
+    font-size: 0.95rem;
+  }
+
+  .auth-feature-text p {
+    font-size: 0.8rem;
+  }
 
   .auth-modal-content {
     padding: 1.25rem 1.25rem 1.75rem;
@@ -1927,16 +1994,26 @@ body.auth-modal-visible {
   
   .empty-guide {
     padding: 1.5rem 1rem;
+    max-width: calc(100% - 2rem);
+    margin: 1.5rem auto;
   }
-  
+
+  .categories-guide {
+    max-width: calc(100% - 2rem);
+  }
+
+  .children-guide {
+    max-width: calc(100% - 2rem);
+  }
+
   .empty-guide-icon {
     font-size: 3rem;
   }
-  
+
   .empty-guide h3 {
     font-size: 1.3rem;
   }
-  
+
   .empty-guide p {
     font-size: 0.95rem;
   }
