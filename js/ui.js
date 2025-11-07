@@ -427,8 +427,24 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
         if (willComplete) {
           vibrate([200, 100, 200, 100, 200]);
 
-          setTimeout(() => {
-            openRewardModal(categoryId);
+          setTimeout(async () => {
+            // Sprawdź czy są zdefiniowane nagrody
+            const { getRewards } = await import('./state.js');
+            const rewards = getRewards();
+
+            if (rewards.length > 0) {
+              // Są nagrody - wygeneruj ID losowania
+              const { createDrawId } = await import('./database.js');
+              const drawId = await createDrawId(categoryId);
+
+              if (drawId) {
+                // Teraz możemy otworzyć modal losowania
+                openRewardModal(categoryId);
+              }
+            } else {
+              // Brak nagród - otwórz modal bez ID losowania
+              openRewardModal(categoryId);
+            }
           }, 1000);
         }
       }

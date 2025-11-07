@@ -49,22 +49,28 @@ const showNoRewardsModal = (categoryId) => {
 export const openRewardModal = async (categoryId) => {
   const rewards = getRewards();
   const currentUser = getCurrentUser();
+  const categories = getCategories();
+  const category = categories.find(c => c.id === categoryId);
 
   if (!rewards.length) {
-    // WAŻNE: Oznacz kategorię jako pendingReset PRZED wywołaniem modala
-    await markCategoryPendingReset(categoryId);
-
     // Sprawdź czy modal został już wyświetlony dla tego dziecka
     if (!noRewardsShownForChild.has(currentUser)) {
       noRewardsShownForChild.add(currentUser);
       await showNoRewardsModal(categoryId);
     }
+    // pendingReset zostanie ustawiony w finalizeReward
     finalizeReward(categoryId, 'Nagroda nieustawiona');
     return;
   }
 
-  // WAŻNE: Oznacz kategorię jako pendingReset od razu, żeby po odświeżeniu strony karta była kliklana
-  await markCategoryPendingReset(categoryId);
+  // WALIDACJA: Sprawdź czy kategoria ma drawId
+  if (!category || !category.drawId) {
+    console.warn('⚠️ Próba otwarcia modalu losowania bez ID losowania!');
+    alert('❌ Brak uprawnień do losowania. Karta musi najpierw wygenerować ID losowania.');
+    return;
+  }
+
+  console.log(`✅ Otwieranie modalu losowania z ID: ${category.drawId}`);
 
   setPendingCategoryId(categoryId);
   setRewardFlowLock(false);
@@ -74,6 +80,12 @@ export const openRewardModal = async (categoryId) => {
   rewardReveal.innerHTML = '';
   rewardActions.style.display = 'none';
   rewardModal.style.display = 'flex';
+
+  // Wyświetl ID losowania na modalu
+  const drawIdDisplay = document.getElementById('drawIdDisplay');
+  if (drawIdDisplay) {
+    drawIdDisplay.textContent = `ID losowania: ${category.drawId}`;
+  }
 
   // Blokada zamykania modala
   blockModalClosing();
@@ -129,26 +141,31 @@ const unblockModalClosing = () => {
 const setupChestHandlers = (chests, rewards, categoryId) => {
   const onPick = async (e) => {
     if (state.rewardFlowLock) return;
-    
+
     const chest = e.currentTarget;
     setRewardFlowLock(true);
-    
+
+    // WAŻNE: Usuń ID losowania i ustaw pendingReset zaraz po wybraniu skrzynki
+    const { removeDrawId, markCategoryPendingReset } = await import('./database.js');
+    await removeDrawId(categoryId);
+    await markCategoryPendingReset(categoryId);
+
     chest.classList.add('opening');
     chests.forEach(c => {
       c.style.pointerEvents = 'none';
     });
-    
+
     // Konfetti po 250ms
     setTimeout(() => {
       fireConfetti();
     }, 250);
-    
+
     // Otwarcie skrzynki po 600ms
     setTimeout(() => {
       chest.classList.remove('opening');
       chest.classList.add('opened');
     }, 600);
-    
+
     // Losowanie nagrody
     const reward = rewards[randInt(0, rewards.length - 1)];
     selectedReward = reward;

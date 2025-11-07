@@ -546,6 +546,50 @@ export const getAvatar = (user, callback) => {
   });
 };
 
+// Generuj unikalne ID losowania
+const generateDrawId = () => {
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substring(2, 9);
+  return `DRAW-${timestamp}-${random}`.toUpperCase();
+};
+
+// Utwórz ID losowania dla kategorii (gdy osiągnie cel)
+export const createDrawId = async (categoryId) => {
+  const user = getCurrentUser();
+  const drawId = generateDrawId();
+
+  try {
+    const updates = {};
+    updates[`users/${user}/categories/${categoryId}/drawId`] = drawId;
+    updates[`users/${user}/categories/${categoryId}/drawCreatedAt`] = Date.now();
+
+    await update(ref(db), updates);
+    console.log(`✨ Wygenerowano ID losowania: ${drawId} dla kategorii ${categoryId}`);
+    return drawId;
+  } catch (error) {
+    console.error('Błąd tworzenia ID losowania:', error);
+    return null;
+  }
+};
+
+// Usuń ID losowania (po wylosowaniu nagrody)
+export const removeDrawId = async (categoryId) => {
+  const user = getCurrentUser();
+
+  try {
+    const updates = {};
+    updates[`users/${user}/categories/${categoryId}/drawId`] = null;
+    updates[`users/${user}/categories/${categoryId}/drawCreatedAt`] = null;
+
+    await update(ref(db), updates);
+    console.log(`🗑️ Usunięto ID losowania dla kategorii ${categoryId}`);
+    return true;
+  } catch (error) {
+    console.error('Błąd usuwania ID losowania:', error);
+    return false;
+  }
+};
+
 // Oznacz kategorię jako oczekującą na reset (gdy modal się otwiera)
 export const markCategoryPendingReset = async (categoryId) => {
   const user = getCurrentUser();
@@ -574,6 +618,9 @@ export const finalizeReward = async (categoryId, rewardName) => {
     updates[`users/${user}/categories/${categoryId}/wins/${user}`] = currentWins + 1;
     updates[`users/${user}/categories/${categoryId}/lastReward`] = rewardName;
     updates[`users/${user}/categories/${categoryId}/pendingReset`] = true;
+    // Usuń drawId po finalizacji nagrody
+    updates[`users/${user}/categories/${categoryId}/drawId`] = null;
+    updates[`users/${user}/categories/${categoryId}/drawCreatedAt`] = null;
 
     await update(ref(db), updates);
     return true;
