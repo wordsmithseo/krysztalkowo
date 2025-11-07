@@ -1041,12 +1041,19 @@ export const renderCategorySuggestions = async () => {
   const currentChildId = getCurrentUser();
   const suggestionsContainer = document.getElementById('categorySuggestions');
 
-  if (!suggestionsContainer) return;
+  console.log('🔍 renderCategorySuggestions - currentChildId:', currentChildId);
+
+  if (!suggestionsContainer) {
+    console.log('❌ categorySuggestions container not found');
+    return;
+  }
 
   const suggestions = await getSuggestedCategories(currentChildId);
+  console.log('📋 Znalezione sugestie kategorii:', suggestions);
 
   if (suggestions.length === 0) {
     suggestionsContainer.innerHTML = '';
+    console.log('⚠️ Brak sugestii kategorii');
     return;
   }
 

@@ -936,6 +936,8 @@ const isFirebaseStorageUrl = (url) => {
 export const getSuggestedCategories = async (currentChildId) => {
   try {
     const user = getCurrentAuthUser();
+    console.log('🔍 getSuggestedCategories - user:', user ? user.uid : 'brak', 'currentChildId:', currentChildId);
+
     if (!user) {
       console.error('Użytkownik nie jest zalogowany');
       return [];
@@ -945,13 +947,25 @@ export const getSuggestedCategories = async (currentChildId) => {
     const childrenSnapshot = await get(childrenRef);
     const childrenData = childrenSnapshot.val();
 
-    if (!childrenData) return [];
+    console.log('👶 Wszystkie dzieci w bazie:', childrenData);
+
+    if (!childrenData) {
+      console.log('⚠️ Brak dzieci w bazie');
+      return [];
+    }
 
     const suggestions = new Map(); // Używamy Map aby uniknąć duplikatów
 
     // Przeiteruj po wszystkich dzieciach TEGO użytkownika
     for (const childId in childrenData) {
       const child = childrenData[childId];
+
+      console.log(`🔍 Sprawdzam dziecko ${childId}:`, {
+        childUserId: child.userId,
+        currentUserId: user.uid,
+        isCurrentChild: childId === currentChildId,
+        shouldSkip: child.userId !== user.uid || childId === currentChildId
+      });
 
       // Pomiń dzieci innych użytkowników i aktualne dziecko
       if (child.userId !== user.uid || childId === currentChildId) continue;
@@ -961,10 +975,13 @@ export const getSuggestedCategories = async (currentChildId) => {
       const categoriesSnapshot = await get(categoriesRef);
       const categoriesData = categoriesSnapshot.val();
 
+      console.log(`📦 Kategorie dla dziecka ${childId}:`, categoriesData);
+
       if (categoriesData) {
         Object.values(categoriesData).forEach(cat => {
           // Dodaj wszystkie unikalne kategorie z innych profili
           if (cat.name && !suggestions.has(cat.name)) {
+            console.log(`✅ Dodaję sugestię kategorii:`, cat.name);
             suggestions.set(cat.name, {
               name: cat.name,
               goal: cat.goal || 10,
@@ -974,6 +991,8 @@ export const getSuggestedCategories = async (currentChildId) => {
         });
       }
     }
+
+    console.log('📋 Finalne sugestie kategorii:', Array.from(suggestions.values()));
 
     return Array.from(suggestions.values());
   } catch (error) {
