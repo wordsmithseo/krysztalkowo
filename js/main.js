@@ -166,14 +166,20 @@ const autoLoadChildProfile = () => {
   document.body.classList.add(bgClass);
 
   // Usuń active-user ze wszystkich przycisków i ustaw dla wybranego dziecka
-  document.querySelectorAll('.user-btn').forEach(btn => {
-    btn.classList.remove('active-user');
-  });
+  // Dodaj opóźnienie aby upewnić się że przyciski zostały wyrenderowane
+  setTimeout(() => {
+    document.querySelectorAll('.user-btn').forEach(btn => {
+      btn.classList.remove('active-user');
+    });
 
-  const activeBtn = document.getElementById(`user-${selectedChild.id}`);
-  if (activeBtn) {
-    activeBtn.classList.add('active-user');
-  }
+    const activeBtn = document.getElementById(`user-${selectedChild.id}`);
+    if (activeBtn) {
+      activeBtn.classList.add('active-user');
+      console.log('✅ Ustawiono active-user dla:', selectedChild.name);
+    } else {
+      console.warn('⚠️ Nie znaleziono przycisku dla dziecka:', selectedChild.id);
+    }
+  }, 100);
 
   setCurrentUser(selectedChild.id);
 

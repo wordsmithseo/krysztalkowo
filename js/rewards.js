@@ -238,16 +238,25 @@ const setupChestHandlers = (chests, rewards, categoryId, drawId) => {
 // Obsługa przycisku "Zrealizuj później"
 if (realizeLaterBtn) {
   realizeLaterBtn.addEventListener('click', async () => {
-    if (!selectedReward || !state.pendingCategoryId) return;
-    
+    console.log('🔘 Kliknięto "Zrealizuj później"');
+    console.log('📊 selectedReward:', selectedReward);
+    console.log('📊 state.pendingCategoryId:', state.pendingCategoryId);
+
+    if (!selectedReward || !state.pendingCategoryId) {
+      console.error('❌ Brak selectedReward lub pendingCategoryId - przerwano');
+      return;
+    }
+
     realizeLaterBtn.disabled = true;
     realizeLaterBtn.textContent = 'Zapisywanie...';
-    
+
     // Pobierz nazwę kategorii i drawId (z state - zapisane przed usunięciem)
     const categories = getCategories();
     const category = categories.find(c => c.id === state.pendingCategoryId);
     const categoryName = category ? category.name : 'Nieznana kategoria';
     const drawId = state.currentDrawId || null;
+
+    console.log('💾 Zapisuję nagrodę:', { categoryName, rewardName: selectedReward.name, drawId });
 
     const rewardName = selectedReward.name;
     const categoryId = state.pendingCategoryId;
@@ -258,6 +267,8 @@ if (realizeLaterBtn) {
       rewardName,
       drawId // Przekaż ID losowania
     );
+
+    console.log('✅ Wynik zapisu:', success);
 
     if (success) {
       // Finalizuj nagrodę (zlicz wygraną, ustaw lastReward)
@@ -276,12 +287,15 @@ if (realizeLaterBtn) {
         <div style="font-size:1rem;margin-top:0.5rem;opacity:0.8;">Znajdziesz ją w "Zaległe nagrody"</div>
       `;
       rewardActions.style.display = 'none';
-      
+
+      console.log('⏱️ Zamykanie modalu za 2 sekundy...');
       // Automatycznie zamknij modal po 2 sekundach
       setTimeout(() => {
+        console.log('🚪 Zamykam modal');
         closeRewardModal();
       }, 2000);
     } else {
+      console.error('❌ Zapis nagrody nie powiódł się');
       alert('❌ Błąd zapisywania nagrody!');
       realizeLaterBtn.disabled = false;
       realizeLaterBtn.textContent = '📋 Zrealizuj później';

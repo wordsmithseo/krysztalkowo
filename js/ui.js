@@ -1022,7 +1022,7 @@ export const updateUserButtons = () => {
   children.forEach(child => {
     const btn = document.getElementById(`user-${child.id}`);
     const avatar = document.getElementById(`avatar-${child.id}`);
-    
+
     if (btn) {
       btn.addEventListener('click', () => {
         import('./state.js').then(({ setCurrentUser }) => {
@@ -1033,14 +1033,26 @@ export const updateUserButtons = () => {
         });
       });
     }
-    
+
     if (avatar) {
       import('./database.js').then(({ getAvatar }) => {
         loadAvatar(child.id, avatar, getAvatar);
       });
     }
   });
-  
+
+  // Upewnij się że pierwszy profil jest zaznaczony jeśli nie ma innego wybranego
+  const currentUser = getCurrentUser();
+  if (currentUser) {
+    setTimeout(() => {
+      const activeBtn = document.getElementById(`user-${currentUser}`);
+      if (activeBtn && !activeBtn.classList.contains('active-user')) {
+        activeBtn.classList.add('active-user');
+        console.log('✅ Zaznaczono aktywnego użytkownika w updateUserButtons:', currentUser);
+      }
+    }, 50);
+  }
+
   // Sprawdź czy pokazać wskazówki
   showEmptyStateGuide();
 };
