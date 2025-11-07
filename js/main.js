@@ -559,6 +559,22 @@ submitPassword.addEventListener('click', async () => {
     updateAdminHeaderInfo();
     renderCategorySuggestions();
     renderRewardSuggestions();
+
+    // Przewiń do sekcji jeśli była zapisana
+    if (window.pendingAdminSection) {
+      setTimeout(() => {
+        const section = document.getElementById(window.pendingAdminSection);
+        if (section) {
+          section.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Dodaj efekt flashowania
+          section.style.animation = 'none';
+          setTimeout(() => {
+            section.style.animation = 'highlightSection 1.5s ease-in-out';
+          }, 10);
+        }
+        window.pendingAdminSection = null;
+      }, 300);
+    }
   } else {
     alert('Nieprawidłowe hasło!');
   }
@@ -994,6 +1010,42 @@ const setupModalScrollLock = () => {
 
   // Sprawdź na starcie
   checkModals();
+};
+
+// Funkcja otwierająca panel admina i przewijająca do konkretnej sekcji
+window.openAdminPanelWithSection = (sectionId) => {
+  // Zapisz sekcję do której chcemy przewinąć
+  window.pendingAdminSection = sectionId;
+
+  if (state.isLoggedIn) {
+    // Jeśli już zalogowany, od razu otwórz panel
+    adminModal.style.display = 'flex';
+    renderAdminCategories();
+    renderAdminRewards();
+    renderChildrenList();
+    initializeSortable();
+    updateAdminHeaderInfo();
+    renderCategorySuggestions();
+    renderRewardSuggestions();
+
+    // Przewiń do sekcji po krótkim timeout (aby modal się załadował)
+    setTimeout(() => {
+      const section = document.getElementById(sectionId);
+      if (section) {
+        section.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Dodaj efekt flashowania
+        section.style.animation = 'none';
+        setTimeout(() => {
+          section.style.animation = 'highlightSection 1.5s ease-in-out';
+        }, 10);
+      }
+      window.pendingAdminSection = null;
+    }, 300);
+  } else {
+    // Jeśli nie zalogowany, otwórz modal hasła
+    passwordModal.style.display = 'flex';
+    adminPasswordInput.focus();
+  }
 };
 
 document.addEventListener('DOMContentLoaded', () => {

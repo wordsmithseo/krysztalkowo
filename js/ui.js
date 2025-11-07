@@ -1081,12 +1081,11 @@ export const showEmptyStateGuide = () => {
       <div class="empty-guide-content">
         <div class="empty-guide-icon">👶</div>
         <h3>Dodaj pierwsze dziecko!</h3>
-        <p>Kliknij przycisk "Panel admina" w menu, aby dodać profil dziecka.</p>
-        <div class="empty-guide-arrow">
-          <svg width="60" height="60" viewBox="0 0 60 60">
-            <path d="M30 10 L30 40 M20 30 L30 40 L40 30" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
+        <p>Kliknij przycisk poniżej, aby dodać profil dziecka.</p>
+        <button class="empty-guide-btn" onclick="window.openAdminPanelWithSection('adminChildrenSection')">
+          <span class="btn-icon">➕</span>
+          <span class="btn-text">Dodaj dziecko</span>
+        </button>
       </div>
     `;
 
@@ -1094,15 +1093,6 @@ export const showEmptyStateGuide = () => {
     const mainContent = document.querySelector('.main-content');
     if (mainContent) {
       mainContent.insertBefore(guide, mainContent.firstChild);
-    }
-
-    // Dodaj efekt pulsowania do przycisku (desktop i mobile)
-    if (adminBtn) {
-      adminBtn.classList.add('pulse-hint');
-    }
-    const adminBtnMobile = document.getElementById('adminBtnMobile');
-    if (adminBtnMobile) {
-      adminBtnMobile.classList.add('pulse-hint');
     }
 
     return;
@@ -1117,31 +1107,16 @@ export const showEmptyStateGuide = () => {
         <div class="empty-guide-icon">📝</div>
         <h3>Dodaj pierwszą kategorię!</h3>
         <p>Kategorie to cele do osiągnięcia, np. "Posprzątaj pokój" lub "Zjedz warzywa".</p>
-        <p style="margin-top: 0.5rem;">Kliknij "Panel admina" i dodaj kategorie, żeby zacząć zbierać kryształki!</p>
-        <div class="empty-guide-arrow">
-          <svg width="60" height="60" viewBox="0 0 60 60">
-            <path d="M30 10 L30 40 M20 30 L30 40 L40 30" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
+        <p style="margin-top: 0.5rem;">Kliknij przycisk poniżej, aby dodać kategorie i zacząć zbierać kryształki!</p>
+        <button class="empty-guide-btn" onclick="window.openAdminPanelWithSection('adminCategoriesSection')">
+          <span class="btn-icon">➕</span>
+          <span class="btn-text">Dodaj kategorię</span>
+        </button>
       </div>
     `;
-    
+
     container.appendChild(guide);
 
-    // Dodaj efekt pulsowania do przycisku (desktop i mobile)
-    if (adminBtn) {
-      adminBtn.classList.add('pulse-hint');
-    }
-    const adminBtnMobile = document.getElementById('adminBtnMobile');
-    if (adminBtnMobile) {
-      adminBtnMobile.classList.add('pulse-hint');
-    }
-    
     return;
-  }
-  
-  // Usuń pulsowanie jeśli wszystko OK
-  if (adminBtn) {
-    adminBtn.classList.remove('pulse-hint');
   }
 };
