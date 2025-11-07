@@ -963,12 +963,12 @@ export const getSuggestedCategories = async (currentChildId) => {
 
       if (categoriesData) {
         Object.values(categoriesData).forEach(cat => {
-          // Tylko kategorie z Firebase Storage
-          if (cat.name && !suggestions.has(cat.name) && isFirebaseStorageUrl(cat.image)) {
+          // Dodaj wszystkie unikalne kategorie z innych profili
+          if (cat.name && !suggestions.has(cat.name)) {
             suggestions.set(cat.name, {
               name: cat.name,
               goal: cat.goal || 10,
-              image: cat.image
+              image: cat.image || '' // Obrazek opcjonalny
             });
           }
         });
@@ -1013,11 +1013,11 @@ export const getSuggestedRewards = async (currentChildId) => {
 
       if (rewardsData) {
         Object.values(rewardsData).forEach(reward => {
-          // Tylko nagrody z Firebase Storage
-          if (reward.name && !suggestions.has(reward.name) && isFirebaseStorageUrl(reward.image)) {
+          // Dodaj wszystkie unikalne nagrody z innych profili
+          if (reward.name && !suggestions.has(reward.name)) {
             suggestions.set(reward.name, {
               name: reward.name,
-              image: reward.image,
+              image: reward.image || '', // Obrazek opcjonalny
               probability: reward.probability || 50
             });
           }
