@@ -235,7 +235,7 @@ const setupChestHandlers = (chests, rewards, categoryId, drawId) => {
           if (success) {
             console.log('✅ Nagroda zapisana pomyślnie');
 
-            // Finalizuj nagrodę (zlicz wygraną, ustaw lastReward, usuń drawId)
+            // Finalizuj nagrodę (zlicz wygraną, ustaw lastReward, pendingReset - BEZ usuwania drawId)
             await finalizeReward(categoryId, reward.name);
 
             // Pokaż komunikat sukcesu
@@ -243,26 +243,49 @@ const setupChestHandlers = (chests, rewards, categoryId, drawId) => {
               <div style="font-size:2rem;margin-bottom:1rem;">✅</div>
               <div style="font-weight:700;font-size:1.3rem;">Nagroda zapisana!</div>
               <div style="font-size:1rem;margin-top:0.5rem;opacity:0.8;">Znajdziesz ją w "Zaległe nagrody"</div>
-              <div style="font-size:0.9rem;margin-top:1rem;opacity:0.7;">Resetowanie karty...</div>
             `;
 
-            // Automatycznie zresetuj kartę po 1.5s
-            setTimeout(async () => {
-              const { resetCategory } = await import('./database.js');
-              await resetCategory(categoryId);
+            // Odblokuj zamykanie modala
+            unblockModalClosing();
 
-              console.log('🔄 Karta zresetowana');
+            // Zamknij modal po 1.5s
+            setTimeout(() => {
+              closeRewardModal();
+              setPendingCategoryId(null);
+              selectedReward = null;
+              setRewardFlowLock(false);
 
-              // Odblokuj zamykanie modala
-              unblockModalClosing();
+              console.log('🕐 Karta zresetuje się za 5 sekund...');
 
-              // Zamknij modal po 1s
-              setTimeout(() => {
-                closeRewardModal();
-                setPendingCategoryId(null);
-                selectedReward = null;
-                setRewardFlowLock(false);
-              }, 1000);
+              // PO zamknięciu modala: usuń drawId i zresetuj kartę po 5s z animacją
+              setTimeout(async () => {
+                console.log('🎬 Rozpoczynam animację i reset karty');
+
+                // Znajdź kartę w DOM
+                const card = document.querySelector(`[data-category-id="${categoryId}"]`);
+                if (card) {
+                  // Dodaj animację shake + flash
+                  card.classList.add('resetting-animation');
+
+                  // Po zakończeniu animacji (1s): usuń drawId i zresetuj kartę
+                  setTimeout(async () => {
+                    const { removeDrawId, resetCategory } = await import('./database.js');
+
+                    // Usuń drawId (zielony pasek zniknie)
+                    await removeDrawId(categoryId);
+
+                    // Zresetuj kartę (zeruj kryształki, randomizuj kolory)
+                    await resetCategory(categoryId);
+
+                    // Usuń klasę animacji
+                    if (card) {
+                      card.classList.remove('resetting-animation');
+                    }
+
+                    console.log('🔄 Karta zresetowana i odblokowana');
+                  }, 1000);
+                }
+              }, 5000);
             }, 1500);
           } else {
             console.error('❌ Zapis nagrody nie powiódł się');

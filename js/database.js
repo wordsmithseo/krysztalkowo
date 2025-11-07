@@ -618,14 +618,30 @@ export const finalizeReward = async (categoryId, rewardName) => {
     updates[`users/${user}/categories/${categoryId}/wins/${user}`] = currentWins + 1;
     updates[`users/${user}/categories/${categoryId}/lastReward`] = rewardName;
     updates[`users/${user}/categories/${categoryId}/pendingReset`] = true;
-    // Usuń drawId po finalizacji nagrody
-    updates[`users/${user}/categories/${categoryId}/drawId`] = null;
-    updates[`users/${user}/categories/${categoryId}/drawCreatedAt`] = null;
+    // NIE usuwamy drawId tutaj - będzie usunięte później po zamknięciu modala
 
     await update(ref(db), updates);
     return true;
   } catch (error) {
     console.error('Błąd finalizacji nagrody:', error);
+    return false;
+  }
+};
+
+// Usuń ID losowania z karty (wywoływane po zamknięciu modala)
+export const removeDrawId = async (categoryId) => {
+  const user = getCurrentUser();
+
+  try {
+    const updates = {};
+    updates[`users/${user}/categories/${categoryId}/drawId`] = null;
+    updates[`users/${user}/categories/${categoryId}/drawCreatedAt`] = null;
+
+    await update(ref(db), updates);
+    console.log('🗑️ ID losowania usunięte z karty');
+    return true;
+  } catch (error) {
+    console.error('Błąd usuwania ID losowania:', error);
     return false;
   }
 };

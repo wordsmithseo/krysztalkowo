@@ -268,16 +268,18 @@ const createCategoryCard = (cat, user) => {
       };
     }
     
-    img.alt = cat.name;
-    img.onerror = () => { 
-      img.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"%3E%3Crect width="200" height="200" fill="%23e0e5ec"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="80" fill="%23999"%3E' + encodeURIComponent(cat.name.charAt(0).toUpperCase()) + '%3C/text%3E%3C/svg%3E';
+    img.alt = cat.name || 'Kategoria';
+    img.onerror = () => {
+      const firstLetter = cat.name ? cat.name.charAt(0).toUpperCase() : '?';
+      img.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"%3E%3Crect width="200" height="200" fill="%23e0e5ec"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="80" fill="%23999"%3E' + encodeURIComponent(firstLetter) + '%3C/text%3E%3C/svg%3E';
       img.onerror = null;
     };
     imgWrap.appendChild(img);
   } else {
     const placeholder = document.createElement('div');
     placeholder.style.cssText = 'width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:4rem;font-weight:700;color:#999;background:#f0f0f0;';
-    placeholder.textContent = cat.name.charAt(0).toUpperCase();
+    const firstLetter = cat.name ? cat.name.charAt(0).toUpperCase() : '?';
+    placeholder.textContent = firstLetter;
     imgWrap.appendChild(placeholder);
   }
   
