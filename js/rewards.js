@@ -66,7 +66,8 @@ export const openRewardModal = async (categoryId, drawId = null) => {
   // Użyj przekazanego drawId lub pobierz z kategorii
   const activeDrawId = drawId || (category ? category.drawId : null);
 
-  console.log(`✅ Otwieranie modalu losowania z ID: ${activeDrawId}`);
+  console.log('🎰 openRewardModal - categoryId:', categoryId, 'drawId param:', drawId, 'activeDrawId:', activeDrawId);
+  console.log('🎰 Category object:', category);
 
   setPendingCategoryId(categoryId);
   setRewardFlowLock(false);
@@ -135,16 +136,20 @@ const unblockModalClosing = () => {
 
 // Konfiguracja obsługi skrzynek
 const setupChestHandlers = (chests, rewards, categoryId, drawId) => {
+  console.log('🎁 setupChestHandlers wywoła się dla categoryId:', categoryId, 'drawId:', drawId);
+
   // Pobierz nazwę kategorii
   const categories = getCategories();
   const category = categories.find(c => c.id === categoryId);
   const categoryName = category ? category.name : 'Nieznana kategoria';
 
+  console.log('📋 Znaleziona kategoria:', category ? category.name : 'BRAK', 'ID:', categoryId);
+
   chests.forEach((chest, index) => {
     const onPick = async () => {
       if (state.rewardFlowLock) return;
 
-      console.log(`🎯 Kliknięto skrzynkę #${index + 1}`);
+      console.log(`🎯 Kliknięto skrzynkę #${index + 1} dla kategorii:`, categoryId);
       setRewardFlowLock(true);
 
       // Zablokuj wszystkie skrzynki
@@ -227,6 +232,7 @@ const setupChestHandlers = (chests, rewards, categoryId, drawId) => {
 
             // Zamknij modal po 1.5s
             setTimeout(() => {
+              console.log('🚪 Zamykanie modala dla kategorii:', categoryId);
               closeRewardModal();
               setPendingCategoryId(null);
               selectedReward = null;
@@ -235,41 +241,54 @@ const setupChestHandlers = (chests, rewards, categoryId, drawId) => {
               // NATYCHMIAST zamień klasę reward-ready na reward-won
               // To zablokuje możliwość ponownego kliknięcia karty i otwarcia modala
               const card = document.querySelector(`[data-category-id="${categoryId}"]`);
+              console.log('🔍 Szukam karty z ID:', categoryId, 'Znaleziono:', card ? 'TAK' : 'NIE');
               if (card) {
                 card.classList.remove('reward-ready');
                 card.classList.add('reward-won');
                 console.log('✅ Karta oznaczona jako "reward-won" - zablokowano ponowne losowanie');
+              } else {
+                console.error('❌ Nie znaleziono karty z categoryId:', categoryId);
               }
 
               console.log('🕐 Karta zresetuje się za 5 sekund...');
 
               // PO zamknięciu modala: usuń drawId i zresetuj kartę po 5s z animacją
               setTimeout(async () => {
-                console.log('🎬 Rozpoczynam animację i reset karty');
+                console.log('🎬 Rozpoczynam animację i reset karty dla:', categoryId);
 
                 // Znajdź kartę w DOM
                 const card = document.querySelector(`[data-category-id="${categoryId}"]`);
+                console.log('🔍 Ponowne szukanie karty z ID:', categoryId, 'Znaleziono:', card ? 'TAK' : 'NIE');
+
                 if (card) {
                   // Dodaj animację shake + flash
                   card.classList.add('resetting-animation');
+                  console.log('✨ Dodano animację resetu do karty:', categoryId);
 
                   // Po zakończeniu animacji (1s): usuń drawId i zresetuj kartę
                   setTimeout(async () => {
+                    console.log('🔧 Usuwanie drawId i resetowanie kategorii:', categoryId);
                     const { removeDrawId, resetCategory } = await import('./database.js');
 
                     // Usuń drawId (zielony pasek zniknie)
-                    await removeDrawId(categoryId);
+                    const removeResult = await removeDrawId(categoryId);
+                    console.log('🗑️ Wynik removeDrawId:', removeResult, 'dla kategorii:', categoryId);
 
                     // Zresetuj kartę (zeruj kryształki, randomizuj kolory)
                     await resetCategory(categoryId);
+                    console.log('🔄 Wywołano resetCategory dla:', categoryId);
 
                     // Usuń klasę animacji
                     if (card) {
                       card.classList.remove('resetting-animation');
+                      console.log('✅ Usunięto animację resetu z karty:', categoryId);
                     }
 
-                    console.log('🔄 Karta zresetowana i odblokowana');
+                    console.log('🔄 Karta zresetowana i odblokowana:', categoryId);
                   }, 1000);
+                } else {
+                  console.error('❌ Nie znaleziono karty do zresetowania. categoryId:', categoryId);
+                  console.error('❌ Wszystkie karty w DOM:', Array.from(document.querySelectorAll('.category-card')).map(c => c.getAttribute('data-category-id')));
                 }
               }, 5000);
             }, 1500);

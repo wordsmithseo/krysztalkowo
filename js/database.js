@@ -297,11 +297,13 @@ export const addCrystal = async (categoryId) => {
 
 export const resetCategory = async (categoryId) => {
   const user = getCurrentUser();
-  
+
+  console.log('🔄 resetCategory - categoryId:', categoryId, 'user:', user);
+
   try {
     const { generateCategoryColors } = await import('./state.js');
     const colors = generateCategoryColors();
-    
+
     const updates = {};
     updates[`users/${user}/categories/${categoryId}/count`] = 0;
     updates[`users/${user}/categories/${categoryId}/pendingReset`] = null;
@@ -309,7 +311,11 @@ export const resetCategory = async (categoryId) => {
     updates[`users/${user}/categories/${categoryId}/lastAddTimestamp`] = null;
     updates[`users/${user}/categories/${categoryId}/color`] = colors.color;
     updates[`users/${user}/categories/${categoryId}/borderColor`] = colors.borderColor;
+
+    console.log('🔄 resetCategory - updates:', updates);
+
     await update(ref(db), updates);
+    console.log('🔄 resetCategory - sukces dla kategorii:', categoryId);
   } catch (error) {
     console.error('Błąd resetowania kategorii:', error);
   }
@@ -609,6 +615,8 @@ export const markCategoryPendingReset = async (categoryId) => {
 export const finalizeReward = async (categoryId, rewardName) => {
   const user = getCurrentUser();
 
+  console.log('🏁 finalizeReward - categoryId:', categoryId, 'user:', user, 'rewardName:', rewardName);
+
   try {
     const winsRef = ref(db, `users/${user}/categories/${categoryId}/wins/${user}`);
     const snapshot = await get(winsRef);
@@ -620,7 +628,10 @@ export const finalizeReward = async (categoryId, rewardName) => {
     updates[`users/${user}/categories/${categoryId}/pendingReset`] = true;
     // NIE usuwamy drawId tutaj - będzie usunięte później po zamknięciu modala
 
+    console.log('🏁 finalizeReward - updates:', updates);
+
     await update(ref(db), updates);
+    console.log('🏁 finalizeReward - sukces dla kategorii:', categoryId);
     return true;
   } catch (error) {
     console.error('Błąd finalizacji nagrody:', error);
