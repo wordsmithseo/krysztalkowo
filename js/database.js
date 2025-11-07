@@ -70,8 +70,24 @@ export const listenChildren = () => {
   });
 };
 
+// Przechowywanie aktywnych listenerów
+let activeListeners = [];
+
+// Czyszczenie wszystkich aktywnych listenerów
+const clearAllListeners = () => {
+  activeListeners.forEach(unsubscribe => {
+    if (typeof unsubscribe === 'function') {
+      unsubscribe();
+    }
+  });
+  activeListeners = [];
+};
+
 // Nasłuchiwanie zmian dla wszystkich dzieci (potrzebne do rankingu)
 export const listenAllChildrenData = async (childrenList) => {
+  // Wyczyść stare listenery przed utworzeniem nowych
+  clearAllListeners();
+
   // Najpierw pobierz wszystkie dane jednorazowo aby wypełnić cache
   const loadPromises = childrenList.map(async (child) => {
     // Pobierz kategorie
@@ -97,7 +113,7 @@ export const listenAllChildrenData = async (childrenList) => {
   childrenList.forEach(child => {
     // Nasłuchuj kategorii dla każdego dziecka
     const categoriesRef = ref(db, `users/${child.id}/categories`);
-    onValue(categoriesRef, (snapshot) => {
+    const categoriesUnsubscribe = onValue(categoriesRef, (snapshot) => {
       const data = snapshot.val();
       const arr = data ? Object.keys(data).map(id => ({ id, ...data[id] })) : [];
       arr.sort((a, b) => (a.order || 0) - (b.order || 0));
@@ -111,10 +127,11 @@ export const listenAllChildrenData = async (childrenList) => {
         requestAnimationFrame(() => renderCategories());
       }
     });
+    activeListeners.push(categoriesUnsubscribe);
 
     // Nasłuchuj nagród dla każdego dziecka
     const rewardsRef = ref(db, `users/${child.id}/rewards`);
-    onValue(rewardsRef, (snapshot) => {
+    const rewardsUnsubscribe = onValue(rewardsRef, (snapshot) => {
       const data = snapshot.val();
       const arr = data ? Object.keys(data).map(id => ({ id, ...data[id] })) : [];
 
@@ -126,6 +143,7 @@ export const listenAllChildrenData = async (childrenList) => {
         setRewards(arr);
       }
     });
+    activeListeners.push(rewardsUnsubscribe);
   });
 };
 
@@ -568,6 +586,12 @@ export const finalizeReward = async (categoryId, rewardName) => {
 // Dodawanie nagrody do zaległych
 export const addPendingReward = async (categoryId, categoryName, rewardName) => {
   const user = getCurrentUser();
+  const authUser = getCurrentAuthUser();
+
+  if (!authUser) {
+    console.error('Użytkownik nie jest zalogowany');
+    return false;
+  }
 
   try {
     const pendingRewardsRef = ref(db, 'pendingRewards');
@@ -578,6 +602,7 @@ export const addPendingReward = async (categoryId, categoryName, rewardName) => 
       categoryId,
       categoryName,
       rewardName,
+      userId: authUser.uid,
       timestamp: Date.now()
     });
 
@@ -610,24 +635,34 @@ export const addPendingReward = async (categoryId, categoryName, rewardName) => 
 
 // Pobieranie zaległych nagród
 export const getPendingRewards = async () => {
+  const authUser = getCurrentAuthUser();
+
+  if (!authUser) {
+    console.error('Użytkownik nie jest zalogowany');
+    return [];
+  }
+
   try {
     const pendingRewardsRef = ref(db, 'pendingRewards');
     const snapshot = await get(pendingRewardsRef);
-    
+
     if (!snapshot.exists()) {
       return [];
     }
-    
+
     const data = snapshot.val();
-    const rewards = Object.keys(data).map(id => ({
+    const allRewards = Object.keys(data).map(id => ({
       id,
       ...data[id]
     }));
-    
+
+    // Filtruj nagrody należące do tego użytkownika
+    const userRewards = allRewards.filter(reward => reward.userId === authUser.uid);
+
     // Sortuj od najstarszych
-    rewards.sort((a, b) => a.timestamp - b.timestamp);
-    
-    return rewards;
+    userRewards.sort((a, b) => a.timestamp - b.timestamp);
+
+    return userRewards;
   } catch (error) {
     console.error('Błąd pobierania zaległych nagród:', error);
     return [];

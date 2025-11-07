@@ -1,10 +1,13 @@
 # Instrukcja wdrożenia poprawionych reguł Firebase
 
-## Problem
-Reguły Firebase blokowały usuwanie dzieci, ponieważ przy operacji `remove()` warunek `newData.child('userId').val() === auth.uid` zawsze zwracał `false`.
+## Problemy
+1. Reguły Firebase blokowały usuwanie dzieci
+2. Brak reguł dla `pendingRewards` - błąd PERMISSION_DENIED
 
-## Rozwiązanie
-Poprawiono regułę w `database.rules.json:7`:
+## Rozwiązania
+
+### 1. Poprawiono regułę dla usuwania dzieci
+Reguła w `database.rules.json:7` blokowała usuwanie, ponieważ przy operacji `remove()` warunek `newData.child('userId').val() === auth.uid` zawsze zwracał `false`.
 
 **Przed:**
 ```json
@@ -20,6 +23,24 @@ Nowa reguła pozwala na:
 - **Tworzenie**: Tylko gdy `newData.userId === auth.uid`
 - **Usuwanie**: Tylko gdy `data.userId === auth.uid` (nie wymaga już `newData`)
 - **Aktualizacja**: Tylko gdy `data.userId === auth.uid` i `newData.userId === auth.uid`
+
+### 2. Dodano reguły dla pendingRewards
+Dodano nową sekcję w `database.rules.json` dla zaległych nagród:
+
+```json
+"pendingRewards": {
+  ".read": "auth != null",
+  "$rewardId": {
+    ".write": "auth != null && (!data.exists() || data.child('userId').val() === auth.uid) && (!newData.exists() || newData.child('userId').val() === auth.uid)",
+    ".validate": "newData.hasChildren(['childId', 'categoryId', 'userId']) && newData.child('userId').val() === auth.uid"
+  }
+}
+```
+
+Reguły zapewniają:
+- **Odczyt**: Wszyscy zalogowani użytkownicy (filtrowanie po stronie klienta)
+- **Zapis**: Tylko właściciel nagrody (na podstawie `userId`)
+- **Walidacja**: Wymagane pola `childId`, `categoryId`, `userId` i zgodność `userId` z `auth.uid`
 
 ## Wdrożenie
 

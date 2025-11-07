@@ -151,6 +151,7 @@
   font-size: 2.5rem;
   z-index: 2;
   transform: rotate(12deg);
+  transform-origin: top right;
 }
 
 .category-card.reward-ready.reward-crown::before,
@@ -161,11 +162,11 @@
 
 @keyframes crownPulse {
   0%, 100% {
-    transform: scale(1);
+    transform: rotate(12deg) scale(1);
     filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.6));
   }
   50% {
-    transform: scale(1.15);
+    transform: rotate(12deg) scale(1.15);
     filter: drop-shadow(0 0 15px rgba(255, 215, 0, 1));
   }
 }

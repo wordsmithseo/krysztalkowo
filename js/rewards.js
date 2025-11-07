@@ -1,5 +1,5 @@
 // ===== SYSTEM NAGRÓD =====
-import { getRewards, setRewardFlowLock, setPendingCategoryId, randInt, state, getCategories } from './state.js';
+import { getRewards, setRewardFlowLock, setPendingCategoryId, randInt, state, getCategories, getCurrentUser } from './state.js';
 import { finalizeReward, addPendingReward, markCategoryPendingReset } from './database.js';
 import { fireConfetti } from './ui.js';
 import { getRarityClass, getRarityName } from './admin.js';
@@ -13,12 +13,43 @@ const realizeLaterBtn = document.getElementById('realizeLaterBtn');
 
 let selectedReward = null;
 
+// Flaga czy modal o braku nagród został już wyświetlony dla danego dziecka w tej sesji
+const noRewardsShownForChild = new Set();
+
+// Funkcja pokazująca modal o braku nagród
+const showNoRewardsModal = (categoryId) => {
+  return new Promise((resolve) => {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+      <div class="modal-content" style="text-align: center; max-width: 400px;">
+        <h2>🎉 Brawo! Cel osiągnięty!</h2>
+        <p style="margin: 1.5rem 0;">Brak zdefiniowanych nagród dla tego profilu.</p>
+        <p style="margin: 1.5rem 0;">Ustawiam nagrodę „nieustawiona".</p>
+        <button id="noRewardsOkBtn" class="btn btn-primary" style="width: 100%; padding: 1rem; font-size: 1.1rem;">OK</button>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    document.getElementById('noRewardsOkBtn').addEventListener('click', () => {
+      modal.remove();
+      resolve();
+    });
+  });
+};
+
 // Otwieranie modala z nagrodami
 export const openRewardModal = async (categoryId) => {
   const rewards = getRewards();
+  const currentUser = getCurrentUser();
 
   if (!rewards.length) {
-    alert('Brawo! Cel osiągnięty. (Brak zdefiniowanych nagród dla tego profilu) – ustawiam nagrodę „nieustawiona".');
+    // Sprawdź czy modal został już wyświetlony dla tego dziecka
+    if (!noRewardsShownForChild.has(currentUser)) {
+      noRewardsShownForChild.add(currentUser);
+      await showNoRewardsModal(categoryId);
+    }
     finalizeReward(categoryId, 'Nagroda nieustawiona');
     return;
   }
