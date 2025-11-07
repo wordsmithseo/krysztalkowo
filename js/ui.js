@@ -1081,7 +1081,7 @@ export const showEmptyStateGuide = () => {
       <div class="empty-guide-content">
         <div class="empty-guide-icon">👶</div>
         <h3>Dodaj pierwsze dziecko!</h3>
-        <p>Kliknij przycisk "Panel admina" poniżej, aby dodać profil dziecka.</p>
+        <p>Kliknij przycisk "Panel admina" w menu, aby dodać profil dziecka.</p>
         <div class="empty-guide-arrow">
           <svg width="60" height="60" viewBox="0 0 60 60">
             <path d="M30 10 L30 40 M20 30 L30 40 L40 30" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
@@ -1089,17 +1089,22 @@ export const showEmptyStateGuide = () => {
         </div>
       </div>
     `;
-    
-    // Wstaw przed przyciskiem admina
-    if (adminBtn && adminBtn.parentElement) {
-      adminBtn.parentElement.insertBefore(guide, adminBtn.parentElement.firstChild);
+
+    // Wstaw w głównym kontenerze (zawsze widoczne)
+    const mainContent = document.querySelector('.main-content');
+    if (mainContent) {
+      mainContent.insertBefore(guide, mainContent.firstChild);
     }
-    
-    // Dodaj efekt pulsowania do przycisku
+
+    // Dodaj efekt pulsowania do przycisku (desktop i mobile)
     if (adminBtn) {
       adminBtn.classList.add('pulse-hint');
     }
-    
+    const adminBtnMobile = document.getElementById('adminBtnMobile');
+    if (adminBtnMobile) {
+      adminBtnMobile.classList.add('pulse-hint');
+    }
+
     return;
   }
   
@@ -1122,10 +1127,14 @@ export const showEmptyStateGuide = () => {
     `;
     
     container.appendChild(guide);
-    
-    // Dodaj efekt pulsowania do przycisku
+
+    // Dodaj efekt pulsowania do przycisku (desktop i mobile)
     if (adminBtn) {
       adminBtn.classList.add('pulse-hint');
+    }
+    const adminBtnMobile = document.getElementById('adminBtnMobile');
+    if (adminBtnMobile) {
+      adminBtnMobile.classList.add('pulse-hint');
     }
     
     return;
