@@ -735,8 +735,9 @@ export const handleSetAvatar = async () => {
   const input = document.getElementById('avatarFileInput');
   const file = input.files[0];
 
-  if (!file) {
-    alert('Wybierz plik obrazka!');
+  // Sprawdź czy wybrano plik lub obrazek z galerii
+  if (!file && !selectedAvatarFromGallery) {
+    alert('Wybierz plik obrazka lub obrazek z galerii!');
     return;
   }
 
@@ -753,28 +754,43 @@ export const handleSetAvatar = async () => {
   const setAvatarBtn = document.getElementById('setAvatarBtn');
   const originalText = setAvatarBtn.textContent;
   setAvatarBtn.disabled = true;
-  setAvatarBtn.textContent = 'Przesyłanie...';
+  setAvatarBtn.textContent = 'Ustawianie...';
 
   try {
-    // Skompresuj obrazek przed uploadem
-    const compressedFile = await compressImage(file);
-    const uploadResult = await uploadImage(compressedFile, 'avatar');
+    let avatarUrl;
 
-    if (!uploadResult.success) {
-      alert(`Błąd podczas przesyłania obrazka: ${uploadResult.error}`);
-      setAvatarBtn.disabled = false;
-      setAvatarBtn.textContent = originalText;
-      return;
+    if (selectedAvatarFromGallery) {
+      // Użyj obrazka z galerii
+      avatarUrl = selectedAvatarFromGallery;
+    } else {
+      // Upload nowego pliku
+      const compressedFile = await compressImage(file);
+      const uploadResult = await uploadImage(compressedFile, 'avatar');
+
+      if (!uploadResult.success) {
+        alert(`Błąd podczas przesyłania obrazka: ${uploadResult.error}`);
+        setAvatarBtn.disabled = false;
+        setAvatarBtn.textContent = originalText;
+        return;
+      }
+
+      avatarUrl = uploadResult.url;
     }
 
-    const success = await setAvatar(currentUserId, uploadResult.url);
+    const success = await setAvatar(currentUserId, avatarUrl);
 
     if (success) {
       input.value = '';
+      selectedAvatarFromGallery = null;
       alert(`Avatar dla ${currentChild.name} został zaktualizowany!`);
       // Odśwież przyciski użytkowników, aby pokazać nowy avatar
       if (window.updateUserButtons) {
         window.updateUserButtons();
+      }
+      // Wyczyść podgląd
+      const previewContainer = document.getElementById('avatarImagePreviews');
+      if (previewContainer) {
+        previewContainer.innerHTML = '';
       }
     }
   } catch (error) {
@@ -1151,23 +1167,73 @@ if (typeof window !== 'undefined') {
   // Podgląd awatara dziecka
   const avatarFileInput = document.getElementById('avatarFileInput');
   if (avatarFileInput) {
+    // Załaduj galerię przy pierwszym fokusie
+    avatarFileInput.addEventListener('focus', () => {
+      renderAvatarImagePreviews();
+    }, { once: true });
+
     avatarFileInput.addEventListener('change', (e) => {
       if (avatarFileInput.files.length > 0) {
+        selectedAvatarFromGallery = null;
+
         const file = e.target.files[0];
         const reader = new FileReader();
         reader.onload = (ev) => {
-          // Znajdź lub stwórz element podglądu
-          let preview = document.getElementById('avatarPreview');
-          if (!preview) {
-            preview = document.createElement('img');
-            preview.id = 'avatarPreview';
-            preview.style.cssText = 'width: 150px; height: 150px; object-fit: cover; border-radius: 50%; margin-top: 1rem; border: 3px solid #6a11cb;';
-            avatarFileInput.parentElement.appendChild(preview);
-          }
-          preview.src = ev.target.result;
+          renderAvatarImagePreviews(ev.target.result);
         };
         reader.readAsDataURL(file);
       }
     });
   }
 }
+
+// Zmienna dla wybranego awatara z galerii
+let selectedAvatarFromGallery = null;
+
+// Renderowanie podglądu obrazków dla awatara
+const renderAvatarImagePreviews = async (localPreview) => {
+  const previewContainer = document.getElementById('avatarImagePreviews');
+  if (!previewContainer) return;
+
+  // Pobierz wszystkie obrazki użytkownika z Firebase Storage
+  const result = await getAllUserImages();
+  const uploadedImages = result.success ? result.images.map(img => img.url) : [];
+
+  let html = '';
+
+  // Podgląd lokalnego pliku (jeśli wybrano)
+  if (localPreview) {
+    html += '<div class="image-section">';
+    html += '<div class="image-section-title">Podgląd wybranego pliku:</div>';
+    html += '<div class="image-previews">';
+    html += `<img src="${localPreview}" class="image-preview" alt="Preview" style="width: 150px; height: 150px; object-fit: cover; border-radius: 50%; border: 3px solid #6a11cb;">`;
+    html += '</div></div>';
+  }
+
+  // Jeśli są wgrane obrazki, pokaż je w galerii
+  if (uploadedImages.length > 0) {
+    html += '<div class="image-section">';
+    html += '<div class="image-section-title image-section-title-highlight">📷 Galeria wgranych obrazków:</div>';
+    html += '<div style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">Kliknij obrazek aby go użyć</div>';
+    html += '<div class="image-previews">';
+    html += uploadedImages.map(url =>
+      `<img src="${url}" class="image-preview ${url === selectedAvatarFromGallery ? 'selected' : ''}" onclick="window.selectAvatarHandler('${url}')" alt="Preview" style="cursor: pointer; width: 120px; height: 120px; object-fit: cover; border-radius: 50%;">`
+    ).join('');
+    html += '</div></div>';
+  }
+
+  previewContainer.innerHTML = html;
+};
+
+// Handler wyboru awatara z galerii
+const handleSelectAvatar = (url) => {
+  selectedAvatarFromGallery = url;
+  renderAvatarImagePreviews();
+};
+
+// Eksportuj handler i funkcję renderowania
+if (typeof window !== 'undefined') {
+  window.selectAvatarHandler = handleSelectAvatar;
+}
+
+export { renderAvatarImagePreviews };
