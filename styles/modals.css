@@ -32,7 +32,11 @@
 .auth-modal {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  background: linear-gradient(135deg, rgba(106, 17, 203, 0.2), rgba(138, 43, 226, 0.2));
+  background: linear-gradient(135deg,
+    rgba(180, 230, 180, 0.95),
+    rgba(150, 220, 170, 0.95),
+    rgba(130, 210, 160, 0.95)
+  );
   padding: 2rem;
   z-index: 1200;
   overflow-y: auto;

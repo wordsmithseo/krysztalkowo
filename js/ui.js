@@ -462,7 +462,15 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
   
   card.addEventListener('mousedown', startHold);
   card.addEventListener('mouseup', cancelHold);
-  card.addEventListener('mouseleave', cancelHold);
+
+  // Mouseleave tylko anuluje animację, jeśli nie jest w trakcie aktywnego trzymania
+  card.addEventListener('mouseleave', () => {
+    // Nie anuluj jeśli animacja już się zakończyła (holdTimer = null)
+    // lub jeśli timer jeszcze nie wygasł (użytkownik trzyma)
+    if (!isHolding) {
+      cancelHold();
+    }
+  });
   
   card.addEventListener('touchstart', (e) => {
     isTouchMoved = false;

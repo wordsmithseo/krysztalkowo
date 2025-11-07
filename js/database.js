@@ -1045,41 +1045,7 @@ export const cleanupDatabase = async () => {
 
     console.log(`👶 Znaleziono ${userChildIds.size} dzieci użytkownika`);
 
-    // 2. Sprawdź dane w users/ - usuń dane dla naszych dzieci które już nie istnieją
-    const usersRef = ref(db, 'users');
-    const usersSnapshot = await get(usersRef);
-    const usersData = usersSnapshot.val();
-
-    if (usersData) {
-      const deletePromises = [];
-
-      // Sprawdź każde dziecko które ma dane w users/
-      for (const childId in usersData) {
-        // Sprawdź czy to dziecko nadal istnieje w children/
-        if (childrenData && childrenData[childId]) {
-          // Dziecko istnieje - sprawdź czy należy do nas
-          if (childrenData[childId].userId === user.uid) {
-            // To nasze dziecko i ma dane - OK, nic nie rób
-            continue;
-          } else {
-            // To dziecko innego użytkownika - nie dotykaj
-            continue;
-          }
-        } else {
-          // Dziecko nie istnieje w children/, ale ma dane w users/
-          // BEZPIECZEŃSTWO: Nie możemy określić właściciela, więc nie usuwamy
-          // (mogły być stworzone przed wprowadzeniem userId)
-          console.log(`  ⚠️ Znaleziono dane osierocone dla ${childId}, ale nie można określić właściciela - pomijam`);
-          continue;
-        }
-      }
-
-      if (deletePromises.length > 0) {
-        await Promise.all(deletePromises);
-      }
-    }
-
-    // 3. Wyczyść osierocone pendingRewards (dla dzieci które nie istnieją lub nie są nasze)
+    // 2. Wyczyść osierocone pendingRewards (dla dzieci które nie istnieją lub nie są nasze)
     const pendingRewardsRef = ref(db, 'pendingRewards');
     const pendingRewardsSnapshot = await get(pendingRewardsRef);
     const pendingRewardsData = pendingRewardsSnapshot.val();

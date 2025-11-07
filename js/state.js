@@ -139,9 +139,9 @@ export const clearState = () => {
     userButtonsRow.innerHTML = '';
   }
 
-  // Ustaw neutralny kolor tła dla ekranu logowania
+  // Usuń klasy tła dzieci
   document.body.classList.remove('maks-bg', 'nina-bg');
-  document.body.style.backgroundColor = '#d4f1d4';
+  document.body.style.backgroundColor = '';
 
   // Wyczyść wszystkie cache
   clearImageCache();
