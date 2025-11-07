@@ -936,6 +936,8 @@ const isFirebaseStorageUrl = (url) => {
 export const getSuggestedCategories = async (currentChildId) => {
   try {
     const user = getCurrentAuthUser();
+    console.log('🔍 getSuggestedCategories - user:', user ? user.uid : 'brak', 'currentChildId:', currentChildId);
+
     if (!user) {
       console.error('Użytkownik nie jest zalogowany');
       return [];
@@ -945,13 +947,25 @@ export const getSuggestedCategories = async (currentChildId) => {
     const childrenSnapshot = await get(childrenRef);
     const childrenData = childrenSnapshot.val();
 
-    if (!childrenData) return [];
+    console.log('👶 Wszystkie dzieci w bazie:', childrenData);
+
+    if (!childrenData) {
+      console.log('⚠️ Brak dzieci w bazie');
+      return [];
+    }
 
     const suggestions = new Map(); // Używamy Map aby uniknąć duplikatów
 
     // Przeiteruj po wszystkich dzieciach TEGO użytkownika
     for (const childId in childrenData) {
       const child = childrenData[childId];
+
+      console.log(`🔍 Sprawdzam dziecko ${childId}:`, {
+        childUserId: child.userId,
+        currentUserId: user.uid,
+        isCurrentChild: childId === currentChildId,
+        shouldSkip: child.userId !== user.uid || childId === currentChildId
+      });
 
       // Pomiń dzieci innych użytkowników i aktualne dziecko
       if (child.userId !== user.uid || childId === currentChildId) continue;
@@ -961,19 +975,24 @@ export const getSuggestedCategories = async (currentChildId) => {
       const categoriesSnapshot = await get(categoriesRef);
       const categoriesData = categoriesSnapshot.val();
 
+      console.log(`📦 Kategorie dla dziecka ${childId}:`, categoriesData);
+
       if (categoriesData) {
         Object.values(categoriesData).forEach(cat => {
-          // Tylko kategorie z Firebase Storage
-          if (cat.name && !suggestions.has(cat.name) && isFirebaseStorageUrl(cat.image)) {
+          // Dodaj wszystkie unikalne kategorie z innych profili
+          if (cat.name && !suggestions.has(cat.name)) {
+            console.log(`✅ Dodaję sugestię kategorii:`, cat.name);
             suggestions.set(cat.name, {
               name: cat.name,
               goal: cat.goal || 10,
-              image: cat.image
+              image: cat.image || '' // Obrazek opcjonalny
             });
           }
         });
       }
     }
+
+    console.log('📋 Finalne sugestie kategorii:', Array.from(suggestions.values()));
 
     return Array.from(suggestions.values());
   } catch (error) {
@@ -1013,11 +1032,11 @@ export const getSuggestedRewards = async (currentChildId) => {
 
       if (rewardsData) {
         Object.values(rewardsData).forEach(reward => {
-          // Tylko nagrody z Firebase Storage
-          if (reward.name && !suggestions.has(reward.name) && isFirebaseStorageUrl(reward.image)) {
+          // Dodaj wszystkie unikalne nagrody z innych profili
+          if (reward.name && !suggestions.has(reward.name)) {
             suggestions.set(reward.name, {
               name: reward.name,
-              image: reward.image,
+              image: reward.image || '', // Obrazek opcjonalny
               probability: reward.probability || 50
             });
           }
@@ -1074,6 +1093,52 @@ export const getCategoryImagesFromOtherChildren = async (currentChildId) => {
     return Array.from(images);
   } catch (error) {
     console.error('Błąd pobierania obrazków z innych profili:', error);
+    return [];
+  }
+};
+
+// Pobierz obrazki nagród używane przez inne dzieci (tylko tego samego użytkownika, tylko Firebase Storage)
+export const getRewardImagesFromOtherChildren = async (currentChildId) => {
+  try {
+    const user = getCurrentAuthUser();
+    if (!user) {
+      console.error('Użytkownik nie jest zalogowany');
+      return [];
+    }
+
+    const childrenRef = ref(db, 'children');
+    const childrenSnapshot = await get(childrenRef);
+    const childrenData = childrenSnapshot.val();
+
+    if (!childrenData) return [];
+
+    const images = new Set(); // Używamy Set aby uniknąć duplikatów
+
+    // Przeiteruj po wszystkich dzieciach TEGO użytkownika
+    for (const childId in childrenData) {
+      const child = childrenData[childId];
+
+      // Pomiń dzieci innych użytkowników i aktualne dziecko
+      if (child.userId !== user.uid || childId === currentChildId) continue;
+
+      // Pobierz nagrody tego dziecka
+      const rewardsRef = ref(db, `users/${childId}/rewards`);
+      const rewardsSnapshot = await get(rewardsRef);
+      const rewardsData = rewardsSnapshot.val();
+
+      if (rewardsData) {
+        Object.values(rewardsData).forEach(reward => {
+          // Tylko obrazki z Firebase Storage
+          if (reward.image && reward.image.trim() && isFirebaseStorageUrl(reward.image)) {
+            images.add(reward.image.trim());
+          }
+        });
+      }
+    }
+
+    return Array.from(images);
+  } catch (error) {
+    console.error('Błąd pobierania obrazków nagród z innych profili:', error);
     return [];
   }
 };

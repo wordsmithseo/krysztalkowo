@@ -17,7 +17,9 @@ import {
   deleteChild,
   changeUserPassword,
   getSuggestedCategories,
-  getSuggestedRewards
+  getSuggestedRewards,
+  getCategoryImagesFromOtherChildren,
+  getRewardImagesFromOtherChildren
 } from './database.js';
 import { getCurrentAuthUser } from './auth.js';
 import { uploadImage, compressImage, getAllUserImages, deleteImageByUrl } from './storage.js';
@@ -419,6 +421,10 @@ const renderImagePreviews = async (currentImage) => {
   const result = await getAllUserImages();
   const uploadedImages = result.success ? result.images.map(img => img.url) : [];
 
+  // Pobierz obrazki z innych dzieci na tym koncie
+  const currentChildId = getCurrentUser();
+  const otherChildrenImages = await getCategoryImagesFromOtherChildren(currentChildId);
+
   let html = '';
 
   // Jeśli są wgrane obrazki, pokaż je w galerii
@@ -435,6 +441,18 @@ const renderImagePreviews = async (currentImage) => {
     html += '<div class="image-section">';
     html += '<div style="font-size: 0.9rem; color: #999; padding: 1rem; text-align: center;">Brak wgranych obrazków. Wgraj pierwszy obrazek używając pola powyżej.</div>';
     html += '</div>';
+  }
+
+  // Dodaj obrazki z innych dzieci na tym koncie
+  if (otherChildrenImages.length > 0) {
+    html += '<div class="image-section" style="margin-top: 1rem;">';
+    html += '<div class="image-section-title" style="color: #6a11cb;">💡 Obrazki z innych profili na tym koncie:</div>';
+    html += '<div style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">Kliknij obrazek aby go użyć</div>';
+    html += '<div class="image-previews">';
+    html += otherChildrenImages.map(url =>
+      `<img src="${url}" class="image-preview ${url === selectedImageFromGallery ? 'selected' : ''}" onclick="window.selectImageHandler('${url}')" alt="Preview z innych profili" style="cursor: pointer;">`
+    ).join('');
+    html += '</div></div>';
   }
 
   previewContainer.innerHTML = html;
@@ -458,6 +476,10 @@ const renderRewardImagePreviews = async () => {
   const result = await getAllUserImages();
   const uploadedImages = result.success ? result.images.map(img => img.url) : [];
 
+  // Pobierz obrazki nagród z innych dzieci na tym koncie
+  const currentChildId = getCurrentUser();
+  const otherChildrenImages = await getRewardImagesFromOtherChildren(currentChildId);
+
   let html = '';
 
   // Jeśli są wgrane obrazki, pokaż je w galerii
@@ -474,6 +496,18 @@ const renderRewardImagePreviews = async () => {
     html += '<div class="image-section">';
     html += '<div style="font-size: 0.9rem; color: #999; padding: 1rem; text-align: center;">Brak wgranych obrazków. Wgraj pierwszy obrazek używając pola powyżej.</div>';
     html += '</div>';
+  }
+
+  // Dodaj obrazki z innych dzieci na tym koncie
+  if (otherChildrenImages.length > 0) {
+    html += '<div class="image-section" style="margin-top: 1rem;">';
+    html += '<div class="image-section-title" style="color: #6a11cb;">💡 Obrazki z innych profili na tym koncie:</div>';
+    html += '<div style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">Kliknij obrazek aby go użyć</div>';
+    html += '<div class="image-previews">';
+    html += otherChildrenImages.map(url =>
+      `<img src="${url}" class="image-preview ${url === selectedRewardImageFromGallery ? 'selected' : ''}" onclick="window.selectRewardImageHandler('${url}')" alt="Preview z innych profili" style="cursor: pointer;">`
+    ).join('');
+    html += '</div></div>';
   }
 
   previewContainer.innerHTML = html;
@@ -1007,12 +1041,19 @@ export const renderCategorySuggestions = async () => {
   const currentChildId = getCurrentUser();
   const suggestionsContainer = document.getElementById('categorySuggestions');
 
-  if (!suggestionsContainer) return;
+  console.log('🔍 renderCategorySuggestions - currentChildId:', currentChildId);
+
+  if (!suggestionsContainer) {
+    console.log('❌ categorySuggestions container not found');
+    return;
+  }
 
   const suggestions = await getSuggestedCategories(currentChildId);
+  console.log('📋 Znalezione sugestie kategorii:', suggestions);
 
   if (suggestions.length === 0) {
     suggestionsContainer.innerHTML = '';
+    console.log('⚠️ Brak sugestii kategorii');
     return;
   }
 
