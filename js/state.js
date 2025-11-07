@@ -124,5 +124,18 @@ export const clearState = () => {
   state.rewardFlowLock = false;
   state.pendingCategoryId = null;
   state.cache = {};
-  console.log('✅ Stan wyczyszczony');
+
+  // Wyczyść UI - usuń wszystkie karty z kontenera
+  const container = document.getElementById('container');
+  if (container) {
+    container.innerHTML = '';
+  }
+
+  // Wyczyść przyciski użytkowników
+  const userButtonsRow = document.querySelector('.user-buttons-row');
+  if (userButtonsRow) {
+    userButtonsRow.innerHTML = '';
+  }
+
+  console.log('✅ Stan i UI wyczyszczone');
 };

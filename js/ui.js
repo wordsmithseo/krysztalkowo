@@ -360,8 +360,10 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
   let touchStartTime = 0;
   let isHolding = false;
   let touchDelayTimer = null;
+  let mouseDownTime = 0;
   const SCROLL_THRESHOLD = 10;
   const TOUCH_DELAY_MS = 500;
+  const CLICK_MAX_DURATION = 300; // Maksymalny czas dla kliknięcia (nie przytrzymania)
 
   const vibrate = (pattern) => {
     if ('vibrate' in navigator) {
@@ -371,6 +373,8 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
 
   const startHold = () => {
     if (isHolding) return;
+
+    mouseDownTime = Date.now();
 
     if (isReady && !pendingReset) {
       return;
@@ -423,6 +427,15 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
   };
   
   const cancelHold = () => {
+    const clickDuration = Date.now() - mouseDownTime;
+
+    // Sprawdź czy to było krótkie kliknięcie w kartę reward-ready
+    if (isReady && !pendingReset && !isHolding && clickDuration < CLICK_MAX_DURATION && !isTouchMoved) {
+      openRewardModal(categoryId);
+      mouseDownTime = 0;
+      return;
+    }
+
     if (!isHolding && !touchDelayTimer) return;
 
     clearTimeout(holdTimer);
@@ -431,6 +444,7 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
     touchDelayTimer = null;
     card.classList.remove('active-hold', 'filling', 'filling-complete', 'reset-filling');
     isHolding = false;
+    mouseDownTime = 0;
   };
   
   card.addEventListener('mousedown', startHold);

@@ -210,7 +210,13 @@ setupAuthListener((user) => {
     document.body.classList.remove('auth-modal-visible');
     document.querySelector('.crystal-app').style.display = 'flex';
     document.getElementById('userEmail').textContent = user.email;
-    
+
+    // WAŻNE: Wyczyść UI przed załadowaniem nowych danych
+    const container = document.getElementById('container');
+    if (container) {
+      container.innerHTML = '';
+    }
+
     // Inicjalizacja nasłuchiwania zmian
     listenChildren();
     
@@ -504,10 +510,17 @@ adminPasswordInput.addEventListener('keypress', (e) => {
 });
 
 logoutBtn.addEventListener('click', () => {
-  showLogoutConfirmModal(() => {
+  showLogoutConfirmModal(async () => {
+    // Wyloguj z panelu admina
     localStorage.removeItem(state.ADMIN_FLAG);
     setLoggedInUi(false);
     adminModal.style.display = 'none';
+
+    // Wyloguj z Firebase Auth
+    const result = await logoutUser();
+    if (!result.success) {
+      alert(result.error);
+    }
   });
 });
 
