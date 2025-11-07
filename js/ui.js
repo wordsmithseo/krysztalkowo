@@ -411,8 +411,8 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
         card.classList.remove('reward-won', 'reset-filling', 'filling-complete', 'active-hold');
       } else {
         const currentCard = card;
-        const crystalProgress = currentCard.querySelector('.crystal-progress');
-        const currentCountFromCard = crystalProgress ? parseInt(crystalProgress.textContent.split('/')[0]) || 0 : 0;
+        const crystalCount = currentCard.querySelector('.crystal-count');
+        const currentCountFromCard = crystalCount ? parseInt(crystalCount.textContent.split('/')[0]) || 0 : 0;
         const newCount = currentCountFromCard + 1;
         const willComplete = newCount >= goal;
 
