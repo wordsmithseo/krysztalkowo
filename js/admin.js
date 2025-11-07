@@ -245,8 +245,14 @@ export const handleAddCategory = async () => {
   const name = input.value.trim();
 
   // Sprawdź czy dziecko jest wybrane
+  const children = getChildren();
+  if (children.length === 0) {
+    alert('⚠️ Najpierw dodaj dziecko!\n\nAby dodać kategorię, musisz najpierw dodać profil dziecka.');
+    return;
+  }
+
   if (!getCurrentUser()) {
-    alert('⚠️ Najpierw wybierz dziecko!\n\nAby dodać kategorię, musisz najpierw dodać dziecko i wybrać jego profil.');
+    alert('⚠️ Najpierw wybierz dziecko!\n\nAby dodać kategorię, musisz najpierw wybrać profil dziecka z górnego menu.');
     return;
   }
 
@@ -858,6 +864,22 @@ export const handleSaveChild = async () => {
   if (success) {
     modal.style.display = 'none';
     renderChildrenList();
+
+    // Jeśli to było pierwsze dziecko, automatycznie wybierz je po krótkiej chwili
+    // (daj czas na aktualizację state.children przez listenChildren)
+    setTimeout(() => {
+      const children = getChildren();
+      if (children.length === 1 && !getCurrentUser()) {
+        const { setCurrentUser } = require('./state.js');
+        setCurrentUser(children[0].id);
+        console.log('✅ Automatycznie wybrano pierwsze dziecko:', children[0].name);
+
+        // Odśwież UI
+        if (window.updateUserButtons) {
+          window.updateUserButtons();
+        }
+      }
+    }, 300);
   }
 };
 

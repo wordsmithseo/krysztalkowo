@@ -1274,6 +1274,20 @@ body.auth-modal-visible {
   }
 }
 
+/* Niewybrane skrzynki - mniejsze i czarno-białe */
+.reward-chest.chest-unselected {
+  transform: scale(0.8);
+  filter: grayscale(100%);
+  opacity: 0.5;
+  transition: all 0.6s ease;
+}
+
+/* Wybrana skrzynka - powiększona */
+.reward-chest.chest-selected {
+  transform: scale(1.1);
+  transition: all 0.6s ease;
+}
+
 .reward-reveal {
   min-height: 10rem;
   display: flex;

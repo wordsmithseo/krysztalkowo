@@ -45,28 +45,6 @@ const showNoRewardsModal = (categoryId) => {
   });
 };
 
-const showNoDrawIdModal = (categoryName) => {
-  return new Promise((resolve) => {
-    const modal = document.createElement('div');
-    modal.className = 'modal';
-    modal.style.display = 'flex';
-    modal.innerHTML = `
-      <div class="modal-content" style="text-align: center; max-width: 450px;">
-        <h2>❌ Brak uprawnień do losowania</h2>
-        <p style="margin: 1.5rem 0; font-size: 1.05rem;">Karta <strong>"${categoryName}"</strong> nie ma wygenerowanego ID losowania.</p>
-        <p style="margin: 1rem 0; color: #666;">Karta musi najpierw osiągnąć cel, aby wygenerować ID losowania.</p>
-        <button id="noDrawIdOkBtn" class="btn btn-primary" style="width: 100%; padding: 1rem; font-size: 1.1rem;">Rozumiem</button>
-      </div>
-    `;
-    document.body.appendChild(modal);
-
-    document.getElementById('noDrawIdOkBtn').addEventListener('click', () => {
-      modal.remove();
-      resolve();
-    });
-  });
-};
-
 // Otwieranie modala z nagrodami
 export const openRewardModal = async (categoryId, drawId = null) => {
   const rewards = getRewards();
@@ -87,14 +65,6 @@ export const openRewardModal = async (categoryId, drawId = null) => {
 
   // Użyj przekazanego drawId lub pobierz z kategorii
   const activeDrawId = drawId || (category ? category.drawId : null);
-
-  // WALIDACJA: Sprawdź czy jest drawId (z parametru lub kategorii)
-  if (!activeDrawId) {
-    console.warn('⚠️ Próba otwarcia modalu losowania bez ID losowania!');
-    const categoryName = category ? category.name : 'Nieznana kategoria';
-    await showNoDrawIdModal(categoryName);
-    return;
-  }
 
   console.log(`✅ Otwieranie modalu losowania z ID: ${activeDrawId}`);
 
@@ -119,7 +89,7 @@ export const openRewardModal = async (categoryId, drawId = null) => {
   // Reset skrzynek
   const chests = rewardModal.querySelectorAll('#chestsRow .reward-chest');
   chests.forEach(chest => {
-    chest.classList.remove('opening', 'opened');
+    chest.classList.remove('opening', 'opened', 'chest-selected', 'chest-unselected');
     chest.style.pointerEvents = 'auto';
   });
 
@@ -184,15 +154,22 @@ const setupChestHandlers = (chests, rewards, categoryId, drawId) => {
 
       chest.classList.add('opening');
 
+      // Ustyl niewybrane skrzynki (mniejsze i czarno-białe)
+      chests.forEach(c => {
+        if (c !== chest) {
+          c.classList.add('chest-unselected');
+        }
+      });
+
       // Konfetti po 250ms
       setTimeout(() => {
         fireConfetti();
       }, 250);
 
-      // Otwarcie skrzynki po 600ms
+      // Otwarcie skrzynki po 600ms + powiększenie wybranej
       setTimeout(() => {
         chest.classList.remove('opening');
-        chest.classList.add('opened');
+        chest.classList.add('opened', 'chest-selected');
       }, 600);
 
       // Losowanie nagrody

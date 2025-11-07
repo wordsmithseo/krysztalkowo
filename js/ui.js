@@ -480,7 +480,11 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
 
     // Sprawdź czy to było krótkie kliknięcie w kartę reward-ready
     if (isCurrentlyReady && !isHolding && clickDuration < CLICK_MAX_DURATION && !isTouchMoved) {
-      openRewardModal(categoryId);
+      // Sprawdź czy modal nie jest już otwarty
+      const rewardModal = document.getElementById('rewardModal');
+      if (rewardModal && rewardModal.style.display !== 'flex') {
+        openRewardModal(categoryId);
+      }
       mouseDownTime = 0;
       return;
     }
