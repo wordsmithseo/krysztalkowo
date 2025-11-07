@@ -3,6 +3,7 @@ import { getCategories, getCurrentUser, getCachedData, getChildren } from './sta
 import { addCrystal, resetCategory, getPendingRewards, completePendingReward } from './database.js';
 import { openRewardModal } from './rewards.js';
 import { loginUser } from './auth.js';
+import { getRarityClass } from './admin.js';
 
 export const elements = {
   container: document.getElementById('container'),
@@ -868,12 +869,13 @@ export const displayPendingRewards = async () => {
     pendingRewards.forEach(reward => {
       const child = children.find(c => c.id === reward.childId);
       if (!child) return;
-      
+
       const genderIcon = child.gender === 'male' ? '👦' : '👧';
       const date = new Date(reward.timestamp).toLocaleDateString('pl-PL');
-      
+      const rarityClass = getRarityClass(reward.probability || 50);
+
       html += `
-        <li class="pending-reward-item" data-reward-id="${reward.id}">
+        <li class="pending-reward-item ${rarityClass}" data-reward-id="${reward.id}">
           <div class="pending-reward-header">
             <span class="pending-reward-child-icon">${genderIcon}</span>
             <span class="pending-reward-child-name">${child.name}</span>
