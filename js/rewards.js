@@ -87,12 +87,19 @@ export const openRewardModal = async (categoryId, drawId = null) => {
   // Blokada zamykania modala
   blockModalClosing();
 
-  // Reset skrzynek
+  // Reset skrzynek - USUŃ WSZYSTKIE event listenery
   const chests = rewardModal.querySelectorAll('#chestsRow .reward-chest');
   chests.forEach(chest => {
     chest.classList.remove('opening', 'opened', 'chest-selected', 'chest-unselected');
     chest.style.pointerEvents = 'auto';
+
+    // KLUCZOWE: Sklonuj element aby usunąć wszystkie event listenery
+    const newChest = chest.cloneNode(true);
+    chest.parentNode.replaceChild(newChest, chest);
   });
+
+  // Po sklonowaniu pobierz nowe referencje
+  const freshChests = rewardModal.querySelectorAll('#chestsRow .reward-chest');
 
   // Losowa kolejność skrzynek
   const order = [0, 1, 2].sort(() => Math.random() - 0.5);
@@ -100,8 +107,8 @@ export const openRewardModal = async (categoryId, drawId = null) => {
     chest.style.order = order[i];
   });
 
-  // Ustawienie obsługi kliknięć - przekaż activeDrawId
-  setupChestHandlers(chests, rewards, categoryId, activeDrawId);
+  // Ustawienie obsługi kliknięć - przekaż activeDrawId i ŚWIEŻE elementy
+  setupChestHandlers(freshChests, rewards, categoryId, activeDrawId);
 };
 
 // Blokada zamykania modala
@@ -309,7 +316,7 @@ const setupChestHandlers = (chests, rewards, categoryId, drawId) => {
       }, 420);
     };
 
-    chest.onclick = null;
+    // Dodaj event listenery do ŚWIEŻEGO elementu (bez starych listenerów)
     chest.addEventListener('click', onPick, { once: true });
     chest.addEventListener('keydown', (ev) => {
       if (ev.key === 'Enter' || ev.key === ' ') {
