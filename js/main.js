@@ -42,7 +42,7 @@ import {
   renderRewardSuggestions,
   openGalleryModal
 } from './admin.js';
-import { getAvatar, deleteAllUserData } from './database.js';
+import { getAvatar, deleteAllUserData, cleanupDatabase } from './database.js';
 import { setupAuthListener, loginUser, registerUser, logoutUser, getCurrentAuthUser, deleteUserAccount } from './auth.js';
 
 const passwordModal = document.getElementById('passwordModal');
@@ -210,10 +210,80 @@ setupAuthListener((user) => {
     document.body.classList.remove('auth-modal-visible');
     document.querySelector('.crystal-app').style.display = 'flex';
     document.getElementById('userEmail').textContent = user.email;
-    
+
+    // WAŻNE: Wyczyść UI przed załadowaniem nowych danych
+    const container = document.getElementById('container');
+    if (container) {
+      container.innerHTML = '';
+    }
+
     // Inicjalizacja nasłuchiwania zmian
     listenChildren();
-    
+
+    // Automatyczne czyszczenie bazy danych w tle (po 5 sekundach od zalogowania)
+    setTimeout(async () => {
+      // Pokaż toast informujący o czyszczeniu
+      const toast = document.createElement('div');
+      toast.className = 'cleanup-toast';
+      toast.innerHTML = `
+        <div class="toast-content">
+          <div class="toast-spinner"></div>
+          <div class="toast-text">Porządkowanie bazy danych...</div>
+        </div>
+      `;
+      document.body.appendChild(toast);
+
+      // Małe opóźnienie przed pokazaniem toasta
+      setTimeout(() => {
+        toast.classList.add('show');
+      }, 100);
+
+      try {
+        const result = await cleanupDatabase();
+
+        // Zmień treść toasta na wynik
+        if (result.success) {
+          if (result.report.totalCleaned > 0) {
+            toast.innerHTML = `
+              <div class="toast-content success">
+                <div class="toast-icon">✅</div>
+                <div class="toast-text">Wyczyszczono ${result.report.totalCleaned} osieroconych rekordów</div>
+              </div>
+            `;
+            console.log(`🧹 Automatycznie wyczyszczono ${result.report.totalCleaned} osieroconych rekordów`);
+          } else {
+            // Jeśli nic nie wyczyszczono, po prostu ukryj toast
+            toast.classList.remove('show');
+            setTimeout(() => {
+              if (toast.parentNode) toast.remove();
+            }, 300);
+            return;
+          }
+        } else {
+          toast.innerHTML = `
+            <div class="toast-content error">
+              <div class="toast-icon">⚠️</div>
+              <div class="toast-text">Błąd czyszczenia bazy danych</div>
+            </div>
+          `;
+        }
+
+        // Ukryj toast po 3 sekundach
+        setTimeout(() => {
+          toast.classList.remove('show');
+          setTimeout(() => {
+            if (toast.parentNode) toast.remove();
+          }, 300);
+        }, 3000);
+      } catch (error) {
+        console.error('Błąd automatycznego czyszczenia bazy:', error);
+        toast.classList.remove('show');
+        setTimeout(() => {
+          if (toast.parentNode) toast.remove();
+        }, 300);
+      }
+    }, 5000);
+
     // Poczekaj na załadowanie dzieci z małym opóźnieniem
     const waitForChildren = setInterval(() => {
       const children = state.children;
@@ -504,10 +574,17 @@ adminPasswordInput.addEventListener('keypress', (e) => {
 });
 
 logoutBtn.addEventListener('click', () => {
-  showLogoutConfirmModal(() => {
+  showLogoutConfirmModal(async () => {
+    // Wyloguj z panelu admina
     localStorage.removeItem(state.ADMIN_FLAG);
     setLoggedInUi(false);
     adminModal.style.display = 'none';
+
+    // Wyloguj z Firebase Auth
+    const result = await logoutUser();
+    if (!result.success) {
+      alert(result.error);
+    }
   });
 });
 

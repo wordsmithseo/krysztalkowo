@@ -75,98 +75,44 @@
   }
 }
 
-/* Złota karta - gdy cel osiągnięty, przed otwarciem modala */
+/* Złota karta - gdy cel osiągnięty (ma drawId, czeka na automatyczne otwarcie modalu) */
 .category-card.reward-ready {
   background: linear-gradient(135deg, #FFD700, #FFA500, #FFD700) !important;
-  border-color: #fff !important;
-  box-shadow: 
+  border: 3px solid #FFC107 !important;
+  border-bottom: 5px solid #00C853 !important; /* Zielona dolna krawędź oznaczająca ID losowania */
+  cursor: not-allowed;
+  pointer-events: none; /* ZABLOKOWANA - czeka na automatyczne otwarcie modalu */
+  will-change: transform, box-shadow;
+  animation: goldPulse 2s ease-in-out infinite;
+  box-shadow:
     0 0 30px rgba(255, 215, 0, 0.8),
     0 15px 40px rgba(255, 165, 0, 0.6) !important;
-  animation: goldShimmer 1.5s ease-in-out infinite;
-  pointer-events: none;
 }
 
-@keyframes goldShimmer {
-  0%, 100% {
-    box-shadow: 
-      0 0 30px rgba(255, 215, 0, 0.8),
-      0 15px 40px rgba(255, 165, 0, 0.6);
-  }
-  50% {
-    box-shadow: 
-      0 0 50px rgba(255, 215, 0, 1),
-      0 15px 50px rgba(255, 165, 0, 0.8);
-  }
-}
-
-.category-card.reward-ready::before {
-  content: '👑';
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  font-size: 3rem;
-  z-index: 10;
-  animation: crownBounce 0.8s ease-in-out infinite;
-}
-
-@keyframes crownBounce {
-  0%, 100% {
-    transform: translateY(0) rotate(0deg);
-  }
-  50% {
-    transform: translateY(-10px) rotate(15deg);
-  }
-}
-
-/* Nowa klasa dla wygranej karty (po wylosowaniu nagrody) - czeka na reset */
+/* Złota karta - po wylosowaniu nagrody (czeka na reset) */
 .category-card.reward-won {
   background: linear-gradient(135deg, #FFD700, #FFA500, #FFD700) !important;
-  border-color: #fff !important;
-  box-shadow: 
+  border: 3px solid #FFC107 !important;
+  cursor: pointer;
+  will-change: transform, box-shadow;
+  animation: goldPulse 2s ease-in-out infinite;
+  box-shadow:
     0 0 30px rgba(255, 215, 0, 0.8),
     0 15px 40px rgba(255, 165, 0, 0.6) !important;
-  animation: goldPulse 1.5s ease-in-out infinite;
 }
 
 @keyframes goldPulse {
   0%, 100% {
     transform: scale(1);
-    box-shadow: 
+    box-shadow:
       0 0 30px rgba(255, 215, 0, 0.8),
       0 15px 40px rgba(255, 165, 0, 0.6);
   }
   50% {
-    transform: scale(1.02);
-    box-shadow: 
+    transform: scale(1.03);
+    box-shadow:
       0 0 50px rgba(255, 215, 0, 1),
-      0 20px 50px rgba(255, 165, 0, 0.8);
-  }
-}
-
-.category-card.reward-won::before {
-  content: '👑';
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  font-size: 2.5rem;
-  z-index: 2;
-  transform: rotate(12deg);
-}
-
-.category-card.reward-ready.reward-crown::before,
-.category-card.reward-won.reward-crown::before {
-  font-size: 3rem;
-  animation: crownPulse 2s ease-in-out infinite;
-}
-
-@keyframes crownPulse {
-  0%, 100% {
-    transform: scale(1);
-    filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.6));
-  }
-  50% {
-    transform: scale(1.15);
-    filter: drop-shadow(0 0 15px rgba(255, 215, 0, 1));
+      0 20px 60px rgba(255, 165, 0, 0.9);
   }
 }
 
@@ -232,6 +178,45 @@
   }
 }
 
+/* ===== ANIMACJA RESETU KARTY ===== */
+.resetting-animation {
+  animation: cardShakeFlash 1s ease-in-out;
+}
+
+@keyframes cardShakeFlash {
+  0% {
+    transform: translateX(0);
+  }
+  10% {
+    transform: translateX(-10px) rotate(-2deg);
+  }
+  20% {
+    transform: translateX(10px) rotate(2deg);
+  }
+  30% {
+    transform: translateX(-10px) rotate(-2deg);
+  }
+  40% {
+    transform: translateX(10px) rotate(2deg);
+  }
+  50% {
+    transform: translateX(0) rotate(0deg);
+    box-shadow: 0 0 60px rgba(255, 255, 255, 1), 0 0 100px rgba(106, 17, 203, 0.8);
+  }
+  60% {
+    transform: scale(1.05);
+    box-shadow: 0 0 80px rgba(255, 255, 255, 1), 0 0 120px rgba(106, 17, 203, 1);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 60px rgba(255, 255, 255, 0.8), 0 0 100px rgba(106, 17, 203, 0.6);
+  }
+  100% {
+    transform: translateX(0) rotate(0deg) scale(1);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
+  }
+}
+
 /* ===== TEKST KARTY ===== */
 .category-name {
   font-family: 'Balsamiq Sans', cursive;
@@ -291,9 +276,28 @@
   }
 }
 
+/* ===== PASEK Z ID LOSOWANIA ===== */
+.draw-id-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #00C853;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-family: monospace;
+  padding: 0.4rem 0.5rem;
+  text-align: center;
+  border-radius: 0 0 1.5rem 1.5rem;
+  box-shadow: 0 -2px 8px rgba(0, 200, 83, 0.3);
+  z-index: 10;
+}
+
 /* ===== OSTATNIA NAGRODA ===== */
 .last-reward {
   margin-top: 0.4rem;
+  margin-bottom: 0.5rem;
   font-size: 0.9rem;
   font-weight: 700;
   color: #5b3b00;

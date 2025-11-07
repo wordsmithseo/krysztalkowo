@@ -1,4 +1,6 @@
 // ===== ZARZĄDZANIE STANEM APLIKACJI =====
+import { clearImageCache } from './ui.js';
+import { clearNoRewardsCache } from './rewards.js';
 
 // Stan globalny
 export const state = {
@@ -124,5 +126,26 @@ export const clearState = () => {
   state.rewardFlowLock = false;
   state.pendingCategoryId = null;
   state.cache = {};
-  console.log('✅ Stan wyczyszczony');
+
+  // Wyczyść UI - usuń wszystkie karty z kontenera
+  const container = document.getElementById('container');
+  if (container) {
+    container.innerHTML = '';
+  }
+
+  // Wyczyść przyciski użytkowników
+  const userButtonsRow = document.querySelector('.user-buttons-row');
+  if (userButtonsRow) {
+    userButtonsRow.innerHTML = '';
+  }
+
+  // Usuń klasy tła dzieci
+  document.body.classList.remove('maks-bg', 'nina-bg');
+  document.body.style.backgroundColor = '';
+
+  // Wyczyść wszystkie cache
+  clearImageCache();
+  clearNoRewardsCache();
+
+  console.log('✅ Stan, UI i cache wyczyszczone');
 };

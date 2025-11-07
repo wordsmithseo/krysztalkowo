@@ -30,9 +30,7 @@
 
 /* ===== MODAL UWIERZYTELNIANIA ===== */
 .auth-modal {
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  background: linear-gradient(135deg, rgba(106, 17, 203, 0.2), rgba(138, 43, 226, 0.2));
+  background: #fff; /* Solidne białe tło */
   padding: 2rem;
   z-index: 1200;
   overflow-y: auto;
@@ -66,24 +64,21 @@ body.auth-modal-visible {
 }
 
 .auth-welcome-title {
-  font-family: 'Balsamiq Sans', cursive;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   font-size: 3.5rem;
   margin: 0 0 0.5rem 0;
-  background: linear-gradient(135deg, #fff, #e0e0ff);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
+  color: #1a1a1a;
+  font-weight: 800;
+  letter-spacing: -0.03em;
   white-space: nowrap;
 }
 
 .auth-welcome-subtitle {
   font-size: 1.4rem;
   font-weight: 600;
-  color: #fff;
+  color: #555;
   margin: 0 0 2.5rem 0;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  letter-spacing: -0.01em;
 }
 
 .auth-features {
@@ -97,24 +92,22 @@ body.auth-modal-visible {
   align-items: flex-start;
   gap: 1.25rem;
   padding: 1.5rem;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: #f8f9fa;
   border-radius: 1.25rem;
-  border: 2px solid rgba(255, 255, 255, 0.25);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 2px solid #e0e0e0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
 }
 
 .auth-feature-item:hover {
   transform: translateX(8px);
-  background: rgba(255, 255, 255, 0.25);
-  border-color: rgba(255, 255, 255, 0.4);
+  background: #fff;
+  border-color: #6a11cb;
+  box-shadow: 0 4px 12px rgba(106, 17, 203, 0.1);
 }
 
 .auth-feature-icon {
   font-size: 2.5rem;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.2));
   flex-shrink: 0;
 }
 
@@ -122,16 +115,15 @@ body.auth-modal-visible {
   margin: 0 0 0.5rem 0;
   font-size: 1.25rem;
   font-weight: 700;
-  color: #fff !important;
-  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  color: #1a1a1a !important;
+  letter-spacing: -0.01em;
 }
 
 .auth-feature-text p {
   margin: 0;
-  font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.95) !important;
-  line-height: 1.5;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  font-size: 1rem;
+  color: #555 !important;
+  line-height: 1.6;
 }
 
 /* Sekcja formularza */
@@ -144,24 +136,26 @@ body.auth-modal-visible {
 .auth-modal-content {
   max-width: 28rem;
   width: 100%;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: #fff; /* Solidne białe tło */
   padding: 2rem 2rem 2.5rem;
+  border-radius: 1rem;
   box-shadow:
-    0 20px 60px rgba(0, 0, 0, 0.3),
-    0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+    0 20px 60px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(0, 0, 0, 0.05);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .auth-modal-content h2 {
-  color: #333 !important;
-  font-size: 1.5rem;
+  color: #1a1a1a !important;
+  font-size: 1.75rem;
   font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .auth-modal-content label {
-  color: #555 !important;
+  color: #333 !important;
   font-weight: 600;
+  font-size: 0.95rem;
   margin-top: 1rem;
   display: block;
 }
@@ -172,10 +166,12 @@ body.auth-modal-visible {
   margin: 0.3rem 0 0 0;
   border: 2px solid #e0e0e0;
   border-radius: 0.875rem;
-  font-size: 1rem;
+  font-size: 1.05rem;
   box-sizing: border-box;
   background: #fff;
+  color: #1a1a1a;
   transition: all 0.2s ease;
+  font-family: inherit;
 }
 
 .auth-modal-content input:focus {
@@ -1276,6 +1272,20 @@ body.auth-modal-visible {
   100% {
     transform: translate(-50%, -50%) scale(1) rotate(0deg);
   }
+}
+
+/* Niewybrane skrzynki - mniejsze i czarno-białe */
+.reward-chest.chest-unselected {
+  transform: scale(0.8);
+  filter: grayscale(100%);
+  opacity: 0.5;
+  transition: all 0.6s ease;
+}
+
+/* Wybrana skrzynka - powiększona */
+.reward-chest.chest-selected {
+  transform: scale(1.1);
+  transition: all 0.6s ease;
 }
 
 .reward-reveal {

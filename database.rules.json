@@ -4,7 +4,7 @@
       ".read": "auth != null",
       ".indexOn": ["userId"],
       "$childId": {
-        ".write": "auth != null && (!data.exists() || data.child('userId').val() === auth.uid) && newData.child('userId').val() === auth.uid",
+        ".write": "auth != null && (!data.exists() || data.child('userId').val() === auth.uid) && (!newData.exists() || newData.child('userId').val() === auth.uid)",
         ".validate": "newData.hasChildren(['name', 'userId']) && newData.child('userId').val() === auth.uid"
       }
     },
@@ -18,6 +18,14 @@
       "$userId": {
         ".read": "auth != null && auth.uid === $userId",
         ".write": "auth != null && auth.uid === $userId"
+      }
+    },
+    "pendingRewards": {
+      ".read": "auth != null",
+      ".indexOn": ["userId", "childId"],
+      "$rewardId": {
+        ".write": "auth != null && (!data.exists() || data.child('userId').val() === auth.uid) && (!newData.exists() || newData.child('userId').val() === auth.uid)",
+        ".validate": "newData.hasChildren(['childId', 'categoryId', 'userId']) && newData.child('userId').val() === auth.uid"
       }
     }
   }

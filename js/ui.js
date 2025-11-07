@@ -23,6 +23,12 @@ const activeCooldowns = new Map();
 // Cache dla obrazków
 const imageCache = new Map();
 
+// Funkcja czyszcząca cache obrazków
+export const clearImageCache = () => {
+  imageCache.clear();
+  console.log('🧹 Cache obrazków wyczyszczony');
+};
+
 // Funkcja do preloadowania obrazków z cache
 const preloadImage = (url) => {
   return new Promise((resolve, reject) => {
@@ -113,10 +119,10 @@ const animateCrystalAdd = (categoryId, newCount) => {
       }, 500);
     }
 
-    // Znajdź i animuj nowo dodany kryształek
-    const crystals = card.querySelectorAll('.crystal-item');
-    if (crystals && crystals[newCount - 1]) {
-      const newCrystal = crystals[newCount - 1];
+    // Znajdź i animuj nowo dodany kryształek (ostatni pełny)
+    const filledCrystals = card.querySelectorAll('.crystal-item:not(.missing-crystal)');
+    if (filledCrystals && filledCrystals.length > 0) {
+      const newCrystal = filledCrystals[filledCrystals.length - 1]; // Ostatni pełny kryształek
       newCrystal.classList.add('just-added');
 
       // Usuń klasę po zakończeniu animacji
@@ -214,14 +220,9 @@ export const renderCategories = () => {
     // Ukryj loader profilu po wyrenderowaniu
     hideProfileLoader();
 
-    // Przywróć modal nagród, jeśli kategoria ma pendingReset
-    const pendingCategory = categories.find(cat => cat.pendingReset === true);
-    if (pendingCategory) {
-      // Opóźnij otwarcie modalu, żeby UI się zdążyło załadować
-      setTimeout(() => {
-        openRewardModal(pendingCategory.id);
-      }, 500);
-    }
+    // USUNIĘTO: Automatyczne otwieranie modala dla kart z pendingReset
+    // W nowym systemie pendingReset oznacza że nagroda została już wylosowana
+    // i karta czeka na reset. Modal nie powinien się otwierać automatycznie.
   });
 };
 
@@ -235,19 +236,10 @@ const createCategoryCard = (cat, user) => {
   const isReady = count >= goal;
   const pendingReset = cat.pendingReset || false;
   
-  const wins = cat.wins?.[user] || 0;
-  const isCrown = wins >= 3;
-  
   if (isReady && !pendingReset) {
     card.classList.add('reward-ready');
-    if (isCrown) {
-      card.classList.add('reward-crown');
-    }
   } else if (pendingReset) {
     card.classList.add('reward-won');
-    if (isCrown) {
-      card.classList.add('reward-crown');
-    }
   } else {
     card.style.backgroundColor = cat.color || '#FFB6C1';
     card.style.borderColor = cat.borderColor || '#FF69B4';
@@ -271,16 +263,18 @@ const createCategoryCard = (cat, user) => {
       };
     }
     
-    img.alt = cat.name;
-    img.onerror = () => { 
-      img.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"%3E%3Crect width="200" height="200" fill="%23e0e5ec"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="80" fill="%23999"%3E' + encodeURIComponent(cat.name.charAt(0).toUpperCase()) + '%3C/text%3E%3C/svg%3E';
+    img.alt = cat.name || 'Kategoria';
+    img.onerror = () => {
+      const firstLetter = cat.name ? cat.name.charAt(0).toUpperCase() : '?';
+      img.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"%3E%3Crect width="200" height="200" fill="%23e0e5ec"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="80" fill="%23999"%3E' + encodeURIComponent(firstLetter) + '%3C/text%3E%3C/svg%3E';
       img.onerror = null;
     };
     imgWrap.appendChild(img);
   } else {
     const placeholder = document.createElement('div');
     placeholder.style.cssText = 'width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:4rem;font-weight:700;color:#999;background:#f0f0f0;';
-    placeholder.textContent = cat.name.charAt(0).toUpperCase();
+    const firstLetter = cat.name ? cat.name.charAt(0).toUpperCase() : '?';
+    placeholder.textContent = firstLetter;
     imgWrap.appendChild(placeholder);
   }
   
@@ -339,16 +333,24 @@ const createCategoryCard = (cat, user) => {
   }
   
   card.appendChild(crystalsDisplay);
-  
+
+  // Zielony pasek z ID losowania (jeśli karta ma drawId)
+  if (cat.drawId) {
+    const drawIdBar = document.createElement('div');
+    drawIdBar.className = 'draw-id-bar';
+    drawIdBar.textContent = cat.drawId;
+    card.appendChild(drawIdBar);
+  }
+
   if (pendingReset && cat.lastReward) {
     const lastReward = document.createElement('div');
     lastReward.className = 'last-reward';
     lastReward.textContent = `🎁 ${cat.lastReward}`;
     card.appendChild(lastReward);
   }
-  
+
   setupCardInteraction(card, cat.id, isReady, pendingReset, count, goal);
-  
+
   return card;
 };
 
@@ -360,8 +362,10 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
   let touchStartTime = 0;
   let isHolding = false;
   let touchDelayTimer = null;
+  let mouseDownTime = 0;
   const SCROLL_THRESHOLD = 10;
   const TOUCH_DELAY_MS = 500;
+  const CLICK_MAX_DURATION = 300;
 
   const vibrate = (pattern) => {
     if ('vibrate' in navigator) {
@@ -372,17 +376,27 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
   const startHold = () => {
     if (isHolding) return;
 
-    if (isReady && !pendingReset) {
+    mouseDownTime = Date.now();
+
+    // WAŻNE: Sprawdzaj aktualny stan karty dynamicznie z klas CSS
+    const isCurrentlyReady = card.classList.contains('reward-ready');
+    const isCurrentlyWon = card.classList.contains('reward-won');
+
+    // Jeśli karta jest reward-ready (złota przed wylosowaniem), nie pozwól na przytrzymanie
+    if (isCurrentlyReady) {
       return;
     }
 
+    // Jeśli karta nie jest ani ready ani won, można normalnie dodawać kryształki
+    if (!isCurrentlyReady && !isCurrentlyWon) {
+      // Normalne dodawanie kryształków
+    }
+
     isHolding = true;
-
     card.classList.add('active-hold');
-
     vibrate(50);
 
-    if (pendingReset) {
+    if (isCurrentlyWon) {
       card.classList.add('reset-filling');
     } else {
       card.classList.add('filling');
@@ -396,26 +410,65 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
     holdTimer = setTimeout(async () => {
       vibrate([100, 50, 100]);
 
-      if (pendingReset) {
+      if (isCurrentlyWon) {
+        // Sprawdź czy karta ma drawId (czeka na automatyczny reset)
+        const hasDrawId = card.querySelector('.draw-id-bar');
+        if (hasDrawId) {
+          console.log('⚠️ Karta czeka na automatyczny reset - ignoruję ręczny reset');
+          card.classList.remove('reset-filling', 'filling-complete', 'active-hold');
+          return;
+        }
+
+        // Karta nie ma drawId - można zresetować ręcznie
         await resetCategory(categoryId);
+        // Natychmiastowo usuń klasy aby karta wróciła do normalnego stanu
+        card.classList.remove('reward-won', 'reset-filling', 'filling-complete', 'active-hold');
       } else {
-        const newCount = currentCount + 1;
+        const currentCard = card;
+        const crystalCount = currentCard.querySelector('.crystal-count');
+        const currentCountFromCard = crystalCount ? parseInt(crystalCount.textContent.split('/')[0]) || 0 : 0;
+        const newCount = currentCountFromCard + 1;
         const willComplete = newCount >= goal;
+
+        console.log(`🔍 Dodawanie kryształka: count=${currentCountFromCard}, newCount=${newCount}, goal=${goal}, willComplete=${willComplete}`);
 
         const success = await addCrystal(categoryId);
 
         if (!success) {
+          console.log('❌ addCrystal zwrócił false');
           return;
         }
 
-        // Animacja dodawania kryształka
         animateCrystalAdd(categoryId, newCount);
 
         if (willComplete) {
+          console.log('🎉 Osiągnięto cel! Uruchamiam proces losowania...');
           vibrate([200, 100, 200, 100, 200]);
 
-          setTimeout(() => {
-            openRewardModal(categoryId);
+          setTimeout(async () => {
+            // Sprawdź czy są zdefiniowane nagrody
+            const { getRewards } = await import('./state.js');
+            const rewards = getRewards();
+
+            console.log(`🎁 Liczba nagród: ${rewards.length}`);
+
+            if (rewards.length > 0) {
+              // Są nagrody - wygeneruj ID losowania
+              const { createDrawId } = await import('./database.js');
+              const drawId = await createDrawId(categoryId);
+
+              if (drawId) {
+                console.log(`✨ ID losowania utworzone: ${drawId}, otwieranie modalu...`);
+                // Przekaż drawId bezpośrednio do modalu (nie czekaj na aktualizację stanu)
+                openRewardModal(categoryId, drawId);
+              } else {
+                console.error('❌ Nie udało się utworzyć ID losowania');
+              }
+            } else {
+              console.log('⚠️ Brak nagród - otwieranie modalu bez ID');
+              // Brak nagród - otwórz modal bez ID losowania
+              openRewardModal(categoryId);
+            }
           }, 1000);
         }
       }
@@ -423,6 +476,23 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
   };
   
   const cancelHold = () => {
+    const clickDuration = Date.now() - mouseDownTime;
+
+    // Sprawdź aktualny stan karty dynamicznie
+    const isCurrentlyReady = card.classList.contains('reward-ready');
+    const isCurrentlyWon = card.classList.contains('reward-won');
+
+    // Sprawdź czy to było krótkie kliknięcie w kartę reward-ready
+    if (isCurrentlyReady && !isHolding && clickDuration < CLICK_MAX_DURATION && !isTouchMoved) {
+      // Sprawdź czy modal nie jest już otwarty
+      const rewardModal = document.getElementById('rewardModal');
+      if (rewardModal && rewardModal.style.display !== 'flex') {
+        openRewardModal(categoryId);
+      }
+      mouseDownTime = 0;
+      return;
+    }
+
     if (!isHolding && !touchDelayTimer) return;
 
     clearTimeout(holdTimer);
@@ -431,11 +501,20 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
     touchDelayTimer = null;
     card.classList.remove('active-hold', 'filling', 'filling-complete', 'reset-filling');
     isHolding = false;
+    mouseDownTime = 0;
   };
   
   card.addEventListener('mousedown', startHold);
   card.addEventListener('mouseup', cancelHold);
-  card.addEventListener('mouseleave', cancelHold);
+
+  // Mouseleave tylko anuluje animację, jeśli nie jest w trakcie aktywnego trzymania
+  card.addEventListener('mouseleave', () => {
+    // Nie anuluj jeśli animacja już się zakończyła (holdTimer = null)
+    // lub jeśli timer jeszcze nie wygasł (użytkownik trzyma)
+    if (!isHolding) {
+      cancelHold();
+    }
+  });
   
   card.addEventListener('touchstart', (e) => {
     isTouchMoved = false;
@@ -500,30 +579,33 @@ export const fireConfetti = () => {
 export const switchUser = (user, setupRealtimeListener, listenRewardsForUser) => {
   const children = getChildren();
   const child = children.find(c => c.id === user);
-  
+
   if (!child) return;
-  
+
   // Pokaż loader profilu
   showProfileLoader(child.name);
-  
+
+  // WAŻNE: Wyczyść stare karty NATYCHMIAST aby nie pokazywać kart z poprzedniego konta
+  elements.container.innerHTML = '';
+
   // Zapisz wybór do localStorage
   localStorage.setItem('selectedChildId', user);
-  
+
   const bgClass = child.gender === 'male' ? 'maks-bg' : 'nina-bg';
   const otherBgClass = child.gender === 'male' ? 'nina-bg' : 'maks-bg';
-  
+
   document.body.classList.remove(otherBgClass);
   document.body.classList.add(bgClass);
-  
+
   document.querySelectorAll('.user-btn').forEach(btn => {
     btn.classList.remove('active-user');
   });
-  
+
   const activeBtn = document.getElementById(`user-${user}`);
   if (activeBtn) {
     activeBtn.classList.add('active-user');
   }
-  
+
   const cached = getCachedData(user);
   if (cached.categories) {
     import('./state.js').then(({ setCategories }) => {
@@ -536,7 +618,7 @@ export const switchUser = (user, setupRealtimeListener, listenRewardsForUser) =>
       setRewards(cached.rewards);
     });
   }
-  
+
   setupRealtimeListener(user);
   listenRewardsForUser(user);
 };
@@ -801,6 +883,7 @@ export const displayPendingRewards = async () => {
             <div>
               <div class="pending-reward-name">🎁 ${reward.rewardName}</div>
               <div class="pending-reward-date">${date}</div>
+              ${reward.drawId ? `<div class="pending-reward-draw-id" style="font-size: 0.75rem; color: #999; font-family: monospace; margin-top: 0.25rem;">ID: ${reward.drawId}</div>` : ''}
             </div>
             <button class="complete-reward-btn" onclick="window.completePendingRewardHandler('${reward.id}')">
               ✅ Zrealizuj
