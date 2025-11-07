@@ -1078,6 +1078,52 @@ export const getCategoryImagesFromOtherChildren = async (currentChildId) => {
   }
 };
 
+// Pobierz obrazki nagród używane przez inne dzieci (tylko tego samego użytkownika, tylko Firebase Storage)
+export const getRewardImagesFromOtherChildren = async (currentChildId) => {
+  try {
+    const user = getCurrentAuthUser();
+    if (!user) {
+      console.error('Użytkownik nie jest zalogowany');
+      return [];
+    }
+
+    const childrenRef = ref(db, 'children');
+    const childrenSnapshot = await get(childrenRef);
+    const childrenData = childrenSnapshot.val();
+
+    if (!childrenData) return [];
+
+    const images = new Set(); // Używamy Set aby uniknąć duplikatów
+
+    // Przeiteruj po wszystkich dzieciach TEGO użytkownika
+    for (const childId in childrenData) {
+      const child = childrenData[childId];
+
+      // Pomiń dzieci innych użytkowników i aktualne dziecko
+      if (child.userId !== user.uid || childId === currentChildId) continue;
+
+      // Pobierz nagrody tego dziecka
+      const rewardsRef = ref(db, `users/${childId}/rewards`);
+      const rewardsSnapshot = await get(rewardsRef);
+      const rewardsData = rewardsSnapshot.val();
+
+      if (rewardsData) {
+        Object.values(rewardsData).forEach(reward => {
+          // Tylko obrazki z Firebase Storage
+          if (reward.image && reward.image.trim() && isFirebaseStorageUrl(reward.image)) {
+            images.add(reward.image.trim());
+          }
+        });
+      }
+    }
+
+    return Array.from(images);
+  } catch (error) {
+    console.error('Błąd pobierania obrazków nagród z innych profili:', error);
+    return [];
+  }
+};
+
 // Usuń wszystkie dane użytkownika z bazy danych
 export const deleteAllUserData = async () => {
   try {
