@@ -628,24 +628,6 @@ export const finalizeReward = async (categoryId, rewardName) => {
   }
 };
 
-// Usuń ID losowania z karty (wywoływane po zamknięciu modala)
-export const removeDrawId = async (categoryId) => {
-  const user = getCurrentUser();
-
-  try {
-    const updates = {};
-    updates[`users/${user}/categories/${categoryId}/drawId`] = null;
-    updates[`users/${user}/categories/${categoryId}/drawCreatedAt`] = null;
-
-    await update(ref(db), updates);
-    console.log('🗑️ ID losowania usunięte z karty');
-    return true;
-  } catch (error) {
-    console.error('Błąd usuwania ID losowania:', error);
-    return false;
-  }
-};
-
 // Dodawanie nagrody do zaległych
 export const addPendingReward = async (categoryId, categoryName, rewardName, drawId = null) => {
   const user = getCurrentUser();
