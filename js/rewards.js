@@ -232,6 +232,15 @@ const setupChestHandlers = (chests, rewards, categoryId, drawId) => {
               selectedReward = null;
               setRewardFlowLock(false);
 
+              // NATYCHMIAST zamień klasę reward-ready na reward-won
+              // To zablokuje możliwość ponownego kliknięcia karty i otwarcia modala
+              const card = document.querySelector(`[data-category-id="${categoryId}"]`);
+              if (card) {
+                card.classList.remove('reward-ready');
+                card.classList.add('reward-won');
+                console.log('✅ Karta oznaczona jako "reward-won" - zablokowano ponowne losowanie');
+              }
+
               console.log('🕐 Karta zresetuje się za 5 sekund...');
 
               // PO zamknięciu modala: usuń drawId i zresetuj kartę po 5s z animacją
