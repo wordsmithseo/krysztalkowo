@@ -666,7 +666,7 @@ export const finalizeReward = async (categoryId, rewardName) => {
 };
 
 // Dodawanie nagrody do zaległych
-export const addPendingReward = async (categoryId, categoryName, rewardName, drawId = null) => {
+export const addPendingReward = async (categoryId, categoryName, rewardName, drawId = null, probability = 50) => {
   const user = getCurrentUser();
   const authUser = getCurrentAuthUser();
 
@@ -686,7 +686,8 @@ export const addPendingReward = async (categoryId, categoryName, rewardName, dra
       rewardName,
       userId: authUser.uid,
       timestamp: Date.now(),
-      drawId: drawId || null // Dodaj ID losowania
+      drawId: drawId || null, // Dodaj ID losowania
+      probability: probability || 50 // Dodaj prawdopodobieństwo nagrody
     });
 
     // Finalizuj nagrodę w kategorii i usuń pendingReset

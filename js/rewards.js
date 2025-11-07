@@ -218,7 +218,8 @@ const setupChestHandlers = (chests, rewards, categoryId, drawId) => {
             categoryId,
             categoryName,
             reward.name,
-            drawId
+            drawId,
+            reward.probability || 50
           );
 
           if (success) {
