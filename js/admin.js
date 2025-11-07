@@ -1116,20 +1116,57 @@ if (typeof window !== 'undefined') {
   // Event listener dla file input - wyczyść wybrany obrazek z galerii gdy wybrano nowy plik
   const categoryFileInput = document.getElementById('editCategoryImageFile');
   if (categoryFileInput) {
-    categoryFileInput.addEventListener('change', () => {
+    categoryFileInput.addEventListener('change', (e) => {
       if (categoryFileInput.files.length > 0) {
         selectedImageFromGallery = null;
-        renderImagePreviews();
+
+        // Pokazuj podgląd wybranego pliku
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          renderImagePreviews(ev.target.result);
+        };
+        reader.readAsDataURL(file);
       }
     });
   }
 
   const rewardFileInput = document.getElementById('editRewardImageFile');
   if (rewardFileInput) {
-    rewardFileInput.addEventListener('change', () => {
+    rewardFileInput.addEventListener('change', (e) => {
       if (rewardFileInput.files.length > 0) {
         selectedRewardImageFromGallery = null;
-        renderRewardImagePreviews();
+
+        // Pokazuj podgląd wybranego pliku
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          renderRewardImagePreviews(ev.target.result);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+
+  // Podgląd awatara dziecka
+  const avatarFileInput = document.getElementById('avatarFileInput');
+  if (avatarFileInput) {
+    avatarFileInput.addEventListener('change', (e) => {
+      if (avatarFileInput.files.length > 0) {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          // Znajdź lub stwórz element podglądu
+          let preview = document.getElementById('avatarPreview');
+          if (!preview) {
+            preview = document.createElement('img');
+            preview.id = 'avatarPreview';
+            preview.style.cssText = 'width: 150px; height: 150px; object-fit: cover; border-radius: 50%; margin-top: 1rem; border: 3px solid #6a11cb;';
+            avatarFileInput.parentElement.appendChild(preview);
+          }
+          preview.src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
       }
     });
   }

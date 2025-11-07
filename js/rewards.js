@@ -45,6 +45,28 @@ const showNoRewardsModal = (categoryId) => {
   });
 };
 
+const showNoDrawIdModal = (categoryName) => {
+  return new Promise((resolve) => {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+      <div class="modal-content" style="text-align: center; max-width: 450px;">
+        <h2>❌ Brak uprawnień do losowania</h2>
+        <p style="margin: 1.5rem 0; font-size: 1.05rem;">Karta <strong>"${categoryName}"</strong> nie ma wygenerowanego ID losowania.</p>
+        <p style="margin: 1rem 0; color: #666;">Karta musi najpierw osiągnąć cel, aby wygenerować ID losowania.</p>
+        <button id="noDrawIdOkBtn" class="btn btn-primary" style="width: 100%; padding: 1rem; font-size: 1.1rem;">Rozumiem</button>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    document.getElementById('noDrawIdOkBtn').addEventListener('click', () => {
+      modal.remove();
+      resolve();
+    });
+  });
+};
+
 // Otwieranie modala z nagrodami
 export const openRewardModal = async (categoryId, drawId = null) => {
   const rewards = getRewards();
@@ -69,7 +91,8 @@ export const openRewardModal = async (categoryId, drawId = null) => {
   // WALIDACJA: Sprawdź czy jest drawId (z parametru lub kategorii)
   if (!activeDrawId) {
     console.warn('⚠️ Próba otwarcia modalu losowania bez ID losowania!');
-    alert('❌ Brak uprawnień do losowania. Karta musi najpierw wygenerować ID losowania.');
+    const categoryName = category ? category.name : 'Nieznana kategoria';
+    await showNoDrawIdModal(categoryName);
     return;
   }
 
@@ -106,8 +129,8 @@ export const openRewardModal = async (categoryId, drawId = null) => {
     chest.style.order = order[i];
   });
 
-  // Ustawienie obsługi kliknięć
-  setupChestHandlers(chests, rewards, categoryId);
+  // Ustawienie obsługi kliknięć - przekaż activeDrawId
+  setupChestHandlers(chests, rewards, categoryId, activeDrawId);
 };
 
 // Blokada zamykania modala
@@ -141,16 +164,18 @@ const unblockModalClosing = () => {
 };
 
 // Konfiguracja obsługi skrzynek
-const setupChestHandlers = (chests, rewards, categoryId) => {
+const setupChestHandlers = (chests, rewards, categoryId, drawId) => {
   const onPick = async (e) => {
     if (state.rewardFlowLock) return;
 
     const chest = e.currentTarget;
     setRewardFlowLock(true);
 
-    // WAŻNE: Usuń ID losowania i ustaw pendingReset zaraz po wybraniu skrzynki
-    const { removeDrawId, markCategoryPendingReset } = await import('./database.js');
-    await removeDrawId(categoryId);
+    // Zachowaj drawId w zmiennej - będzie użyte przy zapisywaniu nagrody
+    state.currentDrawId = drawId;
+
+    // Ustaw pendingReset (ale NIE usuwaj jeszcze drawId - zostanie usunięte po zapisaniu nagrody)
+    const { markCategoryPendingReset } = await import('./database.js');
     await markCategoryPendingReset(categoryId);
 
     chest.classList.add('opening');
@@ -218,11 +243,11 @@ if (realizeLaterBtn) {
     realizeLaterBtn.disabled = true;
     realizeLaterBtn.textContent = 'Zapisywanie...';
     
-    // Pobierz nazwę kategorii i drawId
+    // Pobierz nazwę kategorii i drawId (z state - zapisane przed usunięciem)
     const categories = getCategories();
     const category = categories.find(c => c.id === state.pendingCategoryId);
     const categoryName = category ? category.name : 'Nieznana kategoria';
-    const drawId = category ? category.drawId : null;
+    const drawId = state.currentDrawId || null;
 
     const rewardName = selectedReward.name;
     const categoryId = state.pendingCategoryId;
