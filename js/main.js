@@ -42,7 +42,7 @@ import {
   renderRewardSuggestions,
   openGalleryModal
 } from './admin.js';
-import { getAvatar, deleteAllUserData } from './database.js';
+import { getAvatar, deleteAllUserData, cleanupDatabase } from './database.js';
 import { setupAuthListener, loginUser, registerUser, logoutUser, getCurrentAuthUser, deleteUserAccount } from './auth.js';
 
 const passwordModal = document.getElementById('passwordModal');
@@ -72,6 +72,7 @@ const addRewardBtn = document.getElementById('addRewardBtn');
 const setAvatarBtn = document.getElementById('setAvatarBtn');
 const openGalleryBtn = document.getElementById('openGalleryBtn');
 const resetRankingBtn = document.getElementById('resetRankingBtn');
+const cleanupDatabaseBtn = document.getElementById('cleanupDatabaseBtn');
 const addChildBtn = document.getElementById('addChildBtn');
 const saveChildBtn = document.getElementById('saveChildBtn');
 const pendingRewardsBtn = document.getElementById('pendingRewardsBtn');
@@ -660,6 +661,48 @@ if (openGalleryBtn) {
 
 if (resetRankingBtn) {
   resetRankingBtn.addEventListener('click', handleResetRanking);
+}
+
+if (cleanupDatabaseBtn) {
+  cleanupDatabaseBtn.addEventListener('click', async () => {
+    const confirm = window.confirm(
+      'Czy na pewno chcesz wyczyścić bazę danych?\n\n' +
+      'Zostaną usunięte:\n' +
+      '• Osierocone nagrody oczekujące (dla usuniętych dzieci)\n' +
+      '• Nieaktualne dane w bazie\n\n' +
+      'Ta operacja dotyczy tylko TWOICH danych.'
+    );
+
+    if (!confirm) {
+      return;
+    }
+
+    cleanupDatabaseBtn.disabled = true;
+    cleanupDatabaseBtn.textContent = 'Czyszczenie...';
+
+    try {
+      const result = await cleanupDatabase();
+
+      if (result.success) {
+        const { report } = result;
+        alert(
+          '✅ Baza danych została wyczyszczona!\n\n' +
+          `📊 Raport:\n` +
+          `• Osierocone dane użytkowników: ${report.orphanedUserData}\n` +
+          `• Osierocone nagrody oczekujące: ${report.orphanedPendingRewards}\n` +
+          `• Łącznie wyczyszczono: ${report.totalCleaned} rekordów`
+        );
+      } else {
+        alert('❌ ' + result.error);
+      }
+    } catch (error) {
+      console.error('Błąd podczas czyszczenia bazy danych:', error);
+      alert('❌ Wystąpił błąd podczas czyszczenia bazy danych!');
+    } finally {
+      cleanupDatabaseBtn.disabled = false;
+      cleanupDatabaseBtn.textContent = '🧹 Wyczyść bazę danych';
+    }
+  });
 }
 
 if (addChildBtn) {

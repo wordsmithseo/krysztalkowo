@@ -16,6 +16,12 @@ let selectedReward = null;
 // Flaga czy modal o braku nagród został już wyświetlony dla danego dziecka w tej sesji
 const noRewardsShownForChild = new Set();
 
+// Funkcja czyszcząca cache wyświetlonych modali o braku nagród
+export const clearNoRewardsCache = () => {
+  noRewardsShownForChild.clear();
+  console.log('🧹 Cache modali o braku nagród wyczyszczony');
+};
+
 // Funkcja pokazująca modal o braku nagród
 const showNoRewardsModal = (categoryId) => {
   return new Promise((resolve) => {

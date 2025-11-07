@@ -23,6 +23,12 @@ const activeCooldowns = new Map();
 // Cache dla obrazków
 const imageCache = new Map();
 
+// Funkcja czyszcząca cache obrazków
+export const clearImageCache = () => {
+  imageCache.clear();
+  console.log('🧹 Cache obrazków wyczyszczony');
+};
+
 // Funkcja do preloadowania obrazków z cache
 const preloadImage = (url) => {
   return new Promise((resolve, reject) => {
@@ -363,7 +369,7 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
   let mouseDownTime = 0;
   const SCROLL_THRESHOLD = 10;
   const TOUCH_DELAY_MS = 500;
-  const CLICK_MAX_DURATION = 300; // Maksymalny czas dla kliknięcia (nie przytrzymania)
+  const CLICK_MAX_DURATION = 300;
 
   const vibrate = (pattern) => {
     if ('vibrate' in navigator) {
@@ -376,17 +382,25 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
 
     mouseDownTime = Date.now();
 
-    if (isReady && !pendingReset) {
+    // WAŻNE: Sprawdzaj aktualny stan karty dynamicznie z klas CSS
+    const isCurrentlyReady = card.classList.contains('reward-ready');
+    const isCurrentlyWon = card.classList.contains('reward-won');
+
+    // Jeśli karta jest reward-ready (złota przed wylosowaniem), nie pozwól na przytrzymanie
+    if (isCurrentlyReady) {
       return;
     }
 
+    // Jeśli karta nie jest ani ready ani won, można normalnie dodawać kryształki
+    if (!isCurrentlyReady && !isCurrentlyWon) {
+      // Normalne dodawanie kryształków
+    }
+
     isHolding = true;
-
     card.classList.add('active-hold');
-
     vibrate(50);
 
-    if (pendingReset) {
+    if (isCurrentlyWon) {
       card.classList.add('reset-filling');
     } else {
       card.classList.add('filling');
@@ -400,10 +414,15 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
     holdTimer = setTimeout(async () => {
       vibrate([100, 50, 100]);
 
-      if (pendingReset) {
+      if (isCurrentlyWon) {
         await resetCategory(categoryId);
+        // Natychmiastowo usuń klasy aby karta wróciła do normalnego stanu
+        card.classList.remove('reward-won', 'reward-crown', 'reset-filling', 'filling-complete', 'active-hold');
       } else {
-        const newCount = currentCount + 1;
+        const currentCard = card;
+        const crystalProgress = currentCard.querySelector('.crystal-progress');
+        const currentCountFromCard = crystalProgress ? parseInt(crystalProgress.textContent.split('/')[0]) || 0 : 0;
+        const newCount = currentCountFromCard + 1;
         const willComplete = newCount >= goal;
 
         const success = await addCrystal(categoryId);
@@ -412,7 +431,6 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
           return;
         }
 
-        // Animacja dodawania kryształka
         animateCrystalAdd(categoryId, newCount);
 
         if (willComplete) {
@@ -429,8 +447,12 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
   const cancelHold = () => {
     const clickDuration = Date.now() - mouseDownTime;
 
+    // Sprawdź aktualny stan karty dynamicznie
+    const isCurrentlyReady = card.classList.contains('reward-ready');
+    const isCurrentlyWon = card.classList.contains('reward-won');
+
     // Sprawdź czy to było krótkie kliknięcie w kartę reward-ready
-    if (isReady && !pendingReset && !isHolding && clickDuration < CLICK_MAX_DURATION && !isTouchMoved) {
+    if (isCurrentlyReady && !isHolding && clickDuration < CLICK_MAX_DURATION && !isTouchMoved) {
       openRewardModal(categoryId);
       mouseDownTime = 0;
       return;

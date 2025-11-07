@@ -1,4 +1,6 @@
 // ===== ZARZĄDZANIE STANEM APLIKACJI =====
+import { clearImageCache } from './ui.js';
+import { clearNoRewardsCache } from './rewards.js';
 
 // Stan globalny
 export const state = {
@@ -137,5 +139,13 @@ export const clearState = () => {
     userButtonsRow.innerHTML = '';
   }
 
-  console.log('✅ Stan i UI wyczyszczone');
+  // Ustaw neutralny kolor tła dla ekranu logowania
+  document.body.classList.remove('maks-bg', 'nina-bg');
+  document.body.style.backgroundColor = '#d4f1d4';
+
+  // Wyczyść wszystkie cache
+  clearImageCache();
+  clearNoRewardsCache();
+
+  console.log('✅ Stan, UI i cache wyczyszczone');
 };

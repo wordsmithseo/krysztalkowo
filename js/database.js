@@ -959,30 +959,168 @@ export const deleteAllUserData = async () => {
       return false;
     }
 
-    // Pobierz wszystkie dzieci tego użytkownika
+    console.log('🗑️ Rozpoczynam usuwanie WSZYSTKICH danych użytkownika...');
+    const deletePromises = [];
+
+    // 1. Pobierz i usuń wszystkie dzieci tego użytkownika
     const childrenRef = ref(db, 'children');
     const childrenSnapshot = await get(childrenRef);
     const childrenData = childrenSnapshot.val();
 
     if (childrenData) {
-      // Usuń każde dziecko i jego dane
-      const deletePromises = [];
       for (const childId in childrenData) {
         const child = childrenData[childId];
         if (child.userId === user.uid) {
+          console.log(`  🗑️ Usuwam dziecko: ${child.name} (${childId})`);
           // Usuń dziecko z listy children
           deletePromises.push(remove(ref(db, `children/${childId}`)));
           // Usuń wszystkie dane dziecka (kategorie, nagrody, profil)
           deletePromises.push(remove(ref(db, `users/${childId}`)));
         }
       }
-      await Promise.all(deletePromises);
     }
+
+    // 2. Usuń wszystkie pendingRewards tego użytkownika
+    const pendingRewardsRef = ref(db, 'pendingRewards');
+    const pendingRewardsSnapshot = await get(pendingRewardsRef);
+    const pendingRewardsData = pendingRewardsSnapshot.val();
+
+    if (pendingRewardsData) {
+      for (const rewardId in pendingRewardsData) {
+        const reward = pendingRewardsData[rewardId];
+        if (reward.userId === user.uid) {
+          console.log(`  🗑️ Usuwam zaległą nagrodę: ${rewardId}`);
+          deletePromises.push(remove(ref(db, `pendingRewards/${rewardId}`)));
+        }
+      }
+    }
+
+    // 3. Usuń profil użytkownika
+    console.log(`  🗑️ Usuwam profil użytkownika: ${user.uid}`);
+    deletePromises.push(remove(ref(db, `userProfiles/${user.uid}`)));
+
+    // Wykonaj wszystkie operacje usuwania równolegle
+    await Promise.all(deletePromises);
+    console.log('✅ Wszystkie dane użytkownika zostały usunięte');
 
     return true;
   } catch (error) {
     console.error('Błąd usuwania danych użytkownika:', error);
     return false;
+  }
+};
+
+// ===== FUNKCJA CZYSZCZENIA I OPTYMALIZACJI BAZY DANYCH =====
+export const cleanupDatabase = async () => {
+  try {
+    const user = getCurrentAuthUser();
+    if (!user) {
+      console.error('Użytkownik nie jest zalogowany');
+      return {
+        success: false,
+        error: 'Musisz być zalogowany aby wyczyścić bazę danych'
+      };
+    }
+
+    console.log('🧹 === ROZPOCZYNAM CZYSZCZENIE BAZY DANYCH ===');
+    const report = {
+      orphanedUserData: 0,
+      orphanedPendingRewards: 0,
+      totalCleaned: 0
+    };
+
+    // 1. Pobierz wszystkie dzieci użytkownika
+    const childrenRef = ref(db, 'children');
+    const childrenSnapshot = await get(childrenRef);
+    const childrenData = childrenSnapshot.val();
+
+    const userChildIds = new Set();
+    if (childrenData) {
+      for (const childId in childrenData) {
+        if (childrenData[childId].userId === user.uid) {
+          userChildIds.add(childId);
+        }
+      }
+    }
+
+    console.log(`👶 Znaleziono ${userChildIds.size} dzieci użytkownika`);
+
+    // 2. Sprawdź dane w users/ - usuń dane dla naszych dzieci które już nie istnieją
+    const usersRef = ref(db, 'users');
+    const usersSnapshot = await get(usersRef);
+    const usersData = usersSnapshot.val();
+
+    if (usersData) {
+      const deletePromises = [];
+
+      // Sprawdź każde dziecko które ma dane w users/
+      for (const childId in usersData) {
+        // Sprawdź czy to dziecko nadal istnieje w children/
+        if (childrenData && childrenData[childId]) {
+          // Dziecko istnieje - sprawdź czy należy do nas
+          if (childrenData[childId].userId === user.uid) {
+            // To nasze dziecko i ma dane - OK, nic nie rób
+            continue;
+          } else {
+            // To dziecko innego użytkownika - nie dotykaj
+            continue;
+          }
+        } else {
+          // Dziecko nie istnieje w children/, ale ma dane w users/
+          // BEZPIECZEŃSTWO: Nie możemy określić właściciela, więc nie usuwamy
+          // (mogły być stworzone przed wprowadzeniem userId)
+          console.log(`  ⚠️ Znaleziono dane osierocone dla ${childId}, ale nie można określić właściciela - pomijam`);
+          continue;
+        }
+      }
+
+      if (deletePromises.length > 0) {
+        await Promise.all(deletePromises);
+      }
+    }
+
+    // 3. Wyczyść osierocone pendingRewards (dla dzieci które nie istnieją lub nie są nasze)
+    const pendingRewardsRef = ref(db, 'pendingRewards');
+    const pendingRewardsSnapshot = await get(pendingRewardsRef);
+    const pendingRewardsData = pendingRewardsSnapshot.val();
+
+    if (pendingRewardsData) {
+      const deletePromises = [];
+      for (const rewardId in pendingRewardsData) {
+        const reward = pendingRewardsData[rewardId];
+
+        // Usuń tylko nasze pendingRewards
+        if (reward.userId === user.uid) {
+          // Sprawdź czy dziecko dla tej nagrody nadal istnieje
+          if (!userChildIds.has(reward.childId)) {
+            console.log(`  🗑️ Usuwam osierocona nagrodę: ${rewardId} (dziecko ${reward.childId} nie istnieje)`);
+            deletePromises.push(remove(ref(db, `pendingRewards/${rewardId}`)));
+            report.orphanedPendingRewards++;
+          }
+        }
+      }
+
+      await Promise.all(deletePromises);
+    }
+
+    report.totalCleaned = report.orphanedUserData + report.orphanedPendingRewards;
+
+    console.log('✅ === CZYSZCZENIE ZAKOŃCZONE ===');
+    console.log(`📊 Raport:`);
+    console.log(`  - Osierocone dane użytkowników: ${report.orphanedUserData}`);
+    console.log(`  - Osierocone nagrody oczekujące: ${report.orphanedPendingRewards}`);
+    console.log(`  - Łącznie wyczyszczono: ${report.totalCleaned} rekordów`);
+
+    return {
+      success: true,
+      report
+    };
+  } catch (error) {
+    console.error('Błąd podczas czyszczenia bazy danych:', error);
+    return {
+      success: false,
+      error: error.message
+    };
   }
 };
 
