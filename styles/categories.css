@@ -237,9 +237,28 @@
   }
 }
 
+/* ===== PASEK Z ID LOSOWANIA ===== */
+.draw-id-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #00C853;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-family: monospace;
+  padding: 0.4rem 0.5rem;
+  text-align: center;
+  border-radius: 0 0 1.5rem 1.5rem;
+  box-shadow: 0 -2px 8px rgba(0, 200, 83, 0.3);
+  z-index: 10;
+}
+
 /* ===== OSTATNIA NAGRODA ===== */
 .last-reward {
   margin-top: 0.4rem;
+  margin-bottom: 0.5rem;
   font-size: 0.9rem;
   font-weight: 700;
   color: #5b3b00;

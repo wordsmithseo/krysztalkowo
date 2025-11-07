@@ -165,65 +165,122 @@ const unblockModalClosing = () => {
 
 // Konfiguracja obsługi skrzynek
 const setupChestHandlers = (chests, rewards, categoryId, drawId) => {
-  const onPick = async (e) => {
-    if (state.rewardFlowLock) return;
+  // Pobierz nazwę kategorii
+  const categories = getCategories();
+  const category = categories.find(c => c.id === categoryId);
+  const categoryName = category ? category.name : 'Nieznana kategoria';
 
-    const chest = e.currentTarget;
-    setRewardFlowLock(true);
+  chests.forEach((chest, index) => {
+    const onPick = async () => {
+      if (state.rewardFlowLock) return;
 
-    // Zachowaj drawId w zmiennej - będzie użyte przy zapisywaniu nagrody
-    state.currentDrawId = drawId;
+      console.log(`🎯 Kliknięto skrzynkę #${index + 1}`);
+      setRewardFlowLock(true);
 
-    // Ustaw pendingReset (ale NIE usuwaj jeszcze drawId - zostanie usunięte po zapisaniu nagrody)
-    const { markCategoryPendingReset } = await import('./database.js');
-    await markCategoryPendingReset(categoryId);
+      // Zablokuj wszystkie skrzynki
+      chests.forEach(c => {
+        c.style.pointerEvents = 'none';
+      });
 
-    chest.classList.add('opening');
-    chests.forEach(c => {
-      c.style.pointerEvents = 'none';
-    });
+      chest.classList.add('opening');
 
-    // Konfetti po 250ms
-    setTimeout(() => {
-      fireConfetti();
-    }, 250);
+      // Konfetti po 250ms
+      setTimeout(() => {
+        fireConfetti();
+      }, 250);
 
-    // Otwarcie skrzynki po 600ms
-    setTimeout(() => {
-      chest.classList.remove('opening');
-      chest.classList.add('opened');
-    }, 600);
+      // Otwarcie skrzynki po 600ms
+      setTimeout(() => {
+        chest.classList.remove('opening');
+        chest.classList.add('opened');
+      }, 600);
 
-    // Losowanie nagrody
-    const reward = rewards[randInt(0, rewards.length - 1)];
-    selectedReward = reward;
-    
-    // Wyświetlenie nagrody po 420ms
-    setTimeout(() => {
-      // Oblicz rzadkość nagrody
-      const rarityClass = getRarityClass(reward.probability);
-      const rarityName = getRarityName(reward.probability);
+      // Losowanie nagrody
+      const reward = rewards[randInt(0, rewards.length - 1)];
+      selectedReward = reward;
 
-      // Dodaj klasę rzadkości do kontenera
-      rewardReveal.className = `reward-reveal-content ${rarityClass}`;
+      // Wyświetlenie nagrody po 420ms
+      setTimeout(async () => {
+        const rarityClass = getRarityClass(reward.probability);
+        const rarityName = getRarityName(reward.probability);
 
-      let imageHtml = '';
-      if (reward.image) {
-        imageHtml = `<img src="${reward.image}" alt="Nagroda" style="max-width:12rem;max-height:12rem;border-radius:0.75rem;box-shadow:0 6px 12px rgba(0,0,0,0.15);" onerror="this.style.display='none'">`;
-      }
+        rewardReveal.className = `reward-reveal-content ${rarityClass}`;
 
-      rewardReveal.innerHTML = `
-        ${imageHtml}
-        <div style="font-size:1.1rem;font-weight:600;margin-top:1rem;opacity:0.9;">✨ ${rarityName}</div>
-        <div style="font-weight:800;font-size:1.5rem;margin-top:0.5rem">🎁 ${reward.name}</div>
-      `;
+        let imageHtml = '';
+        if (reward.image) {
+          imageHtml = `<img src="${reward.image}" alt="Nagroda" style="max-width:12rem;max-height:12rem;border-radius:0.75rem;box-shadow:0 6px 12px rgba(0,0,0,0.15);" onerror="this.style.display='none'">`;
+        }
 
-      // Pokaż przyciski akcji
-      rewardActions.style.display = 'flex';
-    }, 420);
-  };
-  
-  chests.forEach(chest => {
+        rewardReveal.innerHTML = `
+          ${imageHtml}
+          <div style="font-size:1.1rem;font-weight:600;margin-top:1rem;opacity:0.9;">✨ ${rarityName}</div>
+          <div style="font-weight:800;font-size:1.5rem;margin-top:0.5rem">🎁 ${reward.name}</div>
+          <div style="font-size:0.9rem;margin-top:1rem;opacity:0.7;">Zapisywanie nagrody...</div>
+        `;
+
+        // NIE pokazuj przycisków akcji - automatyczny zapis
+        rewardActions.style.display = 'none';
+
+        // Automatycznie zapisz nagrodę do pending rewards po 1.5s
+        setTimeout(async () => {
+          console.log('💾 Automatyczne zapisywanie nagrody:', { categoryName, rewardName: reward.name, drawId });
+
+          const success = await addPendingReward(
+            categoryId,
+            categoryName,
+            reward.name,
+            drawId
+          );
+
+          if (success) {
+            console.log('✅ Nagroda zapisana pomyślnie');
+
+            // Finalizuj nagrodę (zlicz wygraną, ustaw lastReward, usuń drawId)
+            await finalizeReward(categoryId, reward.name);
+
+            // Pokaż komunikat sukcesu
+            rewardReveal.innerHTML = `
+              <div style="font-size:2rem;margin-bottom:1rem;">✅</div>
+              <div style="font-weight:700;font-size:1.3rem;">Nagroda zapisana!</div>
+              <div style="font-size:1rem;margin-top:0.5rem;opacity:0.8;">Znajdziesz ją w "Zaległe nagrody"</div>
+              <div style="font-size:0.9rem;margin-top:1rem;opacity:0.7;">Resetowanie karty...</div>
+            `;
+
+            // Automatycznie zresetuj kartę po 1.5s
+            setTimeout(async () => {
+              const { resetCategory } = await import('./database.js');
+              await resetCategory(categoryId);
+
+              console.log('🔄 Karta zresetowana');
+
+              // Odblokuj zamykanie modala
+              unblockModalClosing();
+
+              // Zamknij modal po 1s
+              setTimeout(() => {
+                closeRewardModal();
+                setPendingCategoryId(null);
+                selectedReward = null;
+                setRewardFlowLock(false);
+              }, 1000);
+            }, 1500);
+          } else {
+            console.error('❌ Zapis nagrody nie powiódł się');
+            rewardReveal.innerHTML = `
+              <div style="font-size:2rem;margin-bottom:1rem;">❌</div>
+              <div style="font-weight:700;font-size:1.3rem;color:#e74c3c;">Błąd zapisu!</div>
+              <div style="font-size:1rem;margin-top:0.5rem;opacity:0.8;">Spróbuj ponownie później</div>
+            `;
+
+            setTimeout(() => {
+              closeRewardModal();
+              setRewardFlowLock(false);
+            }, 3000);
+          }
+        }, 1500);
+      }, 420);
+    };
+
     chest.onclick = null;
     chest.addEventListener('click', onPick, { once: true });
     chest.addEventListener('keydown', (ev) => {
@@ -235,73 +292,7 @@ const setupChestHandlers = (chests, rewards, categoryId, drawId) => {
   });
 };
 
-// Obsługa przycisku "Zrealizuj później"
-if (realizeLaterBtn) {
-  realizeLaterBtn.addEventListener('click', async () => {
-    console.log('🔘 Kliknięto "Zrealizuj później"');
-    console.log('📊 selectedReward:', selectedReward);
-    console.log('📊 state.pendingCategoryId:', state.pendingCategoryId);
-
-    if (!selectedReward || !state.pendingCategoryId) {
-      console.error('❌ Brak selectedReward lub pendingCategoryId - przerwano');
-      return;
-    }
-
-    realizeLaterBtn.disabled = true;
-    realizeLaterBtn.textContent = 'Zapisywanie...';
-
-    // Pobierz nazwę kategorii i drawId (z state - zapisane przed usunięciem)
-    const categories = getCategories();
-    const category = categories.find(c => c.id === state.pendingCategoryId);
-    const categoryName = category ? category.name : 'Nieznana kategoria';
-    const drawId = state.currentDrawId || null;
-
-    console.log('💾 Zapisuję nagrodę:', { categoryName, rewardName: selectedReward.name, drawId });
-
-    const rewardName = selectedReward.name;
-    const categoryId = state.pendingCategoryId;
-
-    const success = await addPendingReward(
-      categoryId,
-      categoryName,
-      rewardName,
-      drawId // Przekaż ID losowania
-    );
-
-    console.log('✅ Wynik zapisu:', success);
-
-    if (success) {
-      // Finalizuj nagrodę (zlicz wygraną, ustaw lastReward)
-      await finalizeReward(categoryId, rewardName);
-
-      setPendingCategoryId(null);
-      selectedReward = null;
-
-      // Odblokuj zamykanie modala
-      unblockModalClosing();
-
-      // Pokaż komunikat sukcesu
-      rewardReveal.innerHTML = `
-        <div style="font-size:2rem;margin-bottom:1rem;">✅</div>
-        <div style="font-weight:700;font-size:1.3rem;">Nagroda zapisana!</div>
-        <div style="font-size:1rem;margin-top:0.5rem;opacity:0.8;">Znajdziesz ją w "Zaległe nagrody"</div>
-      `;
-      rewardActions.style.display = 'none';
-
-      console.log('⏱️ Zamykanie modalu za 2 sekundy...');
-      // Automatycznie zamknij modal po 2 sekundach
-      setTimeout(() => {
-        console.log('🚪 Zamykam modal');
-        closeRewardModal();
-      }, 2000);
-    } else {
-      console.error('❌ Zapis nagrody nie powiódł się');
-      alert('❌ Błąd zapisywania nagrody!');
-      realizeLaterBtn.disabled = false;
-      realizeLaterBtn.textContent = '📋 Zrealizuj później';
-    }
-  });
-}
+// Przycisk "Zrealizuj później" został usunięty - teraz automatyczny zapis po otwarciu skrzynki
 
 // Zamykanie modala nagród
 export const closeRewardModal = () => {

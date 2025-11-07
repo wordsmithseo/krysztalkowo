@@ -336,16 +336,24 @@ const createCategoryCard = (cat, user) => {
   }
   
   card.appendChild(crystalsDisplay);
-  
+
+  // Zielony pasek z ID losowania (jeśli karta ma drawId)
+  if (cat.drawId) {
+    const drawIdBar = document.createElement('div');
+    drawIdBar.className = 'draw-id-bar';
+    drawIdBar.textContent = cat.drawId;
+    card.appendChild(drawIdBar);
+  }
+
   if (pendingReset && cat.lastReward) {
     const lastReward = document.createElement('div');
     lastReward.className = 'last-reward';
     lastReward.textContent = `🎁 ${cat.lastReward}`;
     card.appendChild(lastReward);
   }
-  
+
   setupCardInteraction(card, cat.id, isReady, pendingReset, count, goal);
-  
+
   return card;
 };
 
