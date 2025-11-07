@@ -1,5 +1,5 @@
 // ===== GŁÓWNY PLIK APLIKACJI =====
-import { state, setCurrentUser, getCachedData, setCategories, setRewards, clearState } from './state.js';
+import { state, setCurrentUser, getCachedData, setCategories, setRewards, clearState, onCurrentUserChange } from './state.js';
 import {
   setupRealtimeListener,
   listenRewardsForUser,
@@ -1002,6 +1002,11 @@ document.addEventListener('DOMContentLoaded', () => {
   if (localStorage.getItem(state.ADMIN_FLAG) === '1') {
     setLoggedInUi(true);
   }
+
+  // Zarejestruj callback dla zmian currentUser - aktualizuj pole "Edytujesz profil:"
+  onCurrentUserChange(() => {
+    updateAdminHeaderInfo();
+  });
 
   // Uruchom system blokowania scrollowania dla modali
   setupModalScrollLock();

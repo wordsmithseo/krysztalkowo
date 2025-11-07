@@ -890,15 +890,39 @@ export const handleSaveChild = async () => {
 export const handleDeleteChild = async (childId) => {
   const children = getChildren();
   const child = children.find(c => c.id === childId);
-  
+
   if (!child) return;
-  
+
   showConfirmModal(
     'Usuwanie dziecka',
     `Czy na pewno chcesz usunąć profil dziecka "${child.name}"?\n\nSpowoduje to usunięcie wszystkich kategorii i danych tego dziecka.\n\nTej operacji nie można cofnąć!`,
     async () => {
+      const currentUserId = getCurrentUser();
       const success = await deleteChild(childId);
+
       if (success) {
+        // Jeśli usunięte dziecko było aktualnie wybrane, wybierz następne
+        if (currentUserId === childId) {
+          setTimeout(() => {
+            const remainingChildren = getChildren();
+            if (remainingChildren.length > 0) {
+              // Wybierz pierwsze z pozostałych dzieci
+              setCurrentUser(remainingChildren[0].id);
+              console.log('✅ Automatycznie wybrano następne dziecko:', remainingChildren[0].name);
+            } else {
+              // Nie ma więcej dzieci
+              setCurrentUser(null);
+              console.log('ℹ️ Brak dzieci do wyboru');
+            }
+
+            // Odśwież UI
+            if (window.updateUserButtons) {
+              window.updateUserButtons();
+            }
+            updateAdminHeaderInfo();
+          }, 300);
+        }
+
         renderChildrenList();
         // Odśwież listę przycisków użytkowników
         if (window.updateUserButtons) {
