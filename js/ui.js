@@ -855,6 +855,7 @@ export const displayPendingRewards = async () => {
             <div>
               <div class="pending-reward-name">🎁 ${reward.rewardName}</div>
               <div class="pending-reward-date">${date}</div>
+              ${reward.drawId ? `<div class="pending-reward-draw-id" style="font-size: 0.75rem; color: #999; font-family: monospace; margin-top: 0.25rem;">ID: ${reward.drawId}</div>` : ''}
             </div>
             <button class="complete-reward-btn" onclick="window.completePendingRewardHandler('${reward.id}')">
               ✅ Zrealizuj

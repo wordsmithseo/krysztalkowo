@@ -215,18 +215,20 @@ if (realizeLaterBtn) {
     realizeLaterBtn.disabled = true;
     realizeLaterBtn.textContent = 'Zapisywanie...';
     
-    // Pobierz nazwę kategorii
+    // Pobierz nazwę kategorii i drawId
     const categories = getCategories();
     const category = categories.find(c => c.id === state.pendingCategoryId);
     const categoryName = category ? category.name : 'Nieznana kategoria';
-    
+    const drawId = category ? category.drawId : null;
+
     const rewardName = selectedReward.name;
     const categoryId = state.pendingCategoryId;
 
     const success = await addPendingReward(
       categoryId,
       categoryName,
-      rewardName
+      rewardName,
+      drawId // Przekaż ID losowania
     );
 
     if (success) {

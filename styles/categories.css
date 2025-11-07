@@ -75,68 +75,43 @@
   }
 }
 
-/* Złota karta z tęczowym tłem - gdy cel osiągnięty lub po wylosowaniu nagrody */
-.category-card.reward-ready,
+/* Złota karta - gdy cel osiągnięty (ma drawId, czeka na automatyczne otwarcie modalu) */
+.category-card.reward-ready {
+  background: linear-gradient(135deg, #FFD700, #FFA500, #FFD700) !important;
+  border: 3px solid #FFC107 !important;
+  cursor: not-allowed;
+  pointer-events: none; /* ZABLOKOWANA - czeka na automatyczne otwarcie modalu */
+  will-change: transform, box-shadow;
+  animation: goldPulse 2s ease-in-out infinite;
+  box-shadow:
+    0 0 30px rgba(255, 215, 0, 0.8),
+    0 15px 40px rgba(255, 165, 0, 0.6) !important;
+}
+
+/* Złota karta - po wylosowaniu nagrody (czeka na reset) */
 .category-card.reward-won {
   background: linear-gradient(135deg, #FFD700, #FFA500, #FFD700) !important;
-  border: 3px solid transparent !important;
-  background-clip: padding-box;
+  border: 3px solid #FFC107 !important;
   cursor: pointer;
   will-change: transform, box-shadow;
-  animation: rainbowGlow 3s ease-in-out infinite;
+  animation: goldPulse 2s ease-in-out infinite;
   box-shadow:
-    0 0 20px rgba(255, 215, 0, 0.6),
-    0 0 40px rgba(255, 255, 255, 0.4) !important;
+    0 0 30px rgba(255, 215, 0, 0.8),
+    0 15px 40px rgba(255, 165, 0, 0.6) !important;
 }
 
-/* Tęczowe obramowanie za kartą */
-.category-card.reward-ready::before,
-.category-card.reward-won::before {
-  content: '';
-  position: absolute;
-  top: -3px;
-  left: -3px;
-  right: -3px;
-  bottom: -3px;
-  background: linear-gradient(
-    45deg,
-    #ff0000,
-    #ff7f00,
-    #ffff00,
-    #00ff00,
-    #0000ff,
-    #4b0082,
-    #9400d3,
-    #ff0000
-  );
-  background-size: 400% 400%;
-  border-radius: 1.5rem;
-  z-index: -1;
-  animation: rainbowShift 4s ease-in-out infinite;
-  pointer-events: none;
-}
-
-@keyframes rainbowShift {
-  0%, 100% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-}
-
-@keyframes rainbowGlow {
+@keyframes goldPulse {
   0%, 100% {
     transform: scale(1);
     box-shadow:
-      0 0 20px rgba(255, 215, 0, 0.6),
-      0 0 40px rgba(255, 255, 255, 0.4);
+      0 0 30px rgba(255, 215, 0, 0.8),
+      0 15px 40px rgba(255, 165, 0, 0.6);
   }
   50% {
-    transform: scale(1.02);
+    transform: scale(1.03);
     box-shadow:
-      0 0 30px rgba(255, 215, 0, 0.8),
-      0 0 60px rgba(255, 255, 255, 0.6);
+      0 0 50px rgba(255, 215, 0, 1),
+      0 20px 60px rgba(255, 165, 0, 0.9);
   }
 }
 
