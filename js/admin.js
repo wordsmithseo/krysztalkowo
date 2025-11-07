@@ -1,5 +1,5 @@
 // ===== PANEL ADMINISTRACYJNY =====
-import { getCategories, getRewards, getChildren, setIsLoggedIn, state, getCurrentUser } from './state.js';
+import { getCategories, getRewards, getChildren, setIsLoggedIn, state, getCurrentUser, setCurrentUser } from './state.js';
 import {
   addCategory,
   deleteCategory,
@@ -850,53 +850,79 @@ export const handleSaveChild = async () => {
   const childId = modal.dataset.editingId;
   const name = document.getElementById('childName').value.trim();
   const gender = document.getElementById('childGenderMale').checked ? 'male' : 'female';
-  
+
   if (!name) {
     alert('Podaj imię dziecka!');
     return;
   }
-  
+
   let success;
+  let newChildId = null;
+
   if (childId) {
+    // Edycja istniejącego dziecka
     success = await updateChild(childId, { name, gender });
   } else {
-    success = await addChild(name, gender);
+    // Dodawanie nowego dziecka
+    newChildId = await addChild(name, gender);
+    success = newChildId !== null;
   }
-  
+
   if (success) {
     modal.style.display = 'none';
     renderChildrenList();
 
-    // Jeśli to było pierwsze dziecko, automatycznie wybierz je po krótkiej chwili
-    // (daj czas na aktualizację state.children przez listenChildren)
-    setTimeout(() => {
-      const children = getChildren();
-      if (children.length === 1 && !getCurrentUser()) {
-        const { setCurrentUser } = require('./state.js');
-        setCurrentUser(children[0].id);
-        console.log('✅ Automatycznie wybrano pierwsze dziecko:', children[0].name);
+    // Automatycznie wybierz nowo utworzone dziecko
+    if (newChildId) {
+      setTimeout(() => {
+        setCurrentUser(newChildId);
+        console.log('✅ Automatycznie wybrano nowo utworzone dziecko:', name);
 
         // Odśwież UI
         if (window.updateUserButtons) {
           window.updateUserButtons();
         }
-      }
-    }, 300);
+      }, 300);
+    }
   }
 };
 
 export const handleDeleteChild = async (childId) => {
   const children = getChildren();
   const child = children.find(c => c.id === childId);
-  
+
   if (!child) return;
-  
+
   showConfirmModal(
     'Usuwanie dziecka',
     `Czy na pewno chcesz usunąć profil dziecka "${child.name}"?\n\nSpowoduje to usunięcie wszystkich kategorii i danych tego dziecka.\n\nTej operacji nie można cofnąć!`,
     async () => {
+      const currentUserId = getCurrentUser();
       const success = await deleteChild(childId);
+
       if (success) {
+        // Jeśli usunięte dziecko było aktualnie wybrane, wybierz następne
+        if (currentUserId === childId) {
+          setTimeout(() => {
+            const remainingChildren = getChildren();
+            if (remainingChildren.length > 0) {
+              // Wybierz pierwsze z pozostałych dzieci
+              setCurrentUser(remainingChildren[0].id);
+              console.log('✅ Automatycznie wybrano następne dziecko:', remainingChildren[0].name);
+            } else {
+              // Nie ma więcej dzieci
+              setCurrentUser(null);
+              console.log('ℹ️ Brak dzieci do wyboru');
+            }
+
+            // Odśwież UI
+            if (window.updateUserButtons) {
+              window.updateUserButtons();
+            }
+            updateAdminHeaderInfo();
+          }, 300);
+        }
+
         renderChildrenList();
         // Odśwież listę przycisków użytkowników
         if (window.updateUserButtons) {

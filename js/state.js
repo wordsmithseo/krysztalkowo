@@ -16,6 +16,9 @@ export const state = {
   cache: {}
 };
 
+// Callbacki dla zmian stanu
+const currentUserCallbacks = [];
+
 // Gettery
 export const getCurrentUser = () => state.currentUser;
 export const getIsLoggedIn = () => state.isLoggedIn;
@@ -28,6 +31,13 @@ export const getPendingCategoryId = () => state.pendingCategoryId;
 // Settery
 export const setCurrentUser = (user) => {
   state.currentUser = user;
+  // Wywołaj wszystkie zarejestrowane callbacki
+  currentUserCallbacks.forEach(callback => callback(user));
+};
+
+// Funkcja do rejestrowania callbacków dla zmian currentUser
+export const onCurrentUserChange = (callback) => {
+  currentUserCallbacks.push(callback);
 };
 
 export const setIsLoggedIn = (value) => {
