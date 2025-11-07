@@ -416,21 +416,27 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
         const newCount = currentCountFromCard + 1;
         const willComplete = newCount >= goal;
 
+        console.log(`🔍 Dodawanie kryształka: count=${currentCountFromCard}, newCount=${newCount}, goal=${goal}, willComplete=${willComplete}`);
+
         const success = await addCrystal(categoryId);
 
         if (!success) {
+          console.log('❌ addCrystal zwrócił false');
           return;
         }
 
         animateCrystalAdd(categoryId, newCount);
 
         if (willComplete) {
+          console.log('🎉 Osiągnięto cel! Uruchamiam proces losowania...');
           vibrate([200, 100, 200, 100, 200]);
 
           setTimeout(async () => {
             // Sprawdź czy są zdefiniowane nagrody
             const { getRewards } = await import('./state.js');
             const rewards = getRewards();
+
+            console.log(`🎁 Liczba nagród: ${rewards.length}`);
 
             if (rewards.length > 0) {
               // Są nagrody - wygeneruj ID losowania
@@ -441,8 +447,11 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
                 console.log(`✨ ID losowania utworzone: ${drawId}, otwieranie modalu...`);
                 // Przekaż drawId bezpośrednio do modalu (nie czekaj na aktualizację stanu)
                 openRewardModal(categoryId, drawId);
+              } else {
+                console.error('❌ Nie udało się utworzyć ID losowania');
               }
             } else {
+              console.log('⚠️ Brak nagród - otwieranie modalu bez ID');
               // Brak nagród - otwórz modal bez ID losowania
               openRewardModal(categoryId);
             }

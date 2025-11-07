@@ -1025,7 +1025,13 @@ export const renderGallery = async () => {
   const imageCountEl = document.getElementById('imageCount');
   const storageBar = document.getElementById('storageBar');
 
-  galleryGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: #666;">Ładowanie...</div>';
+  // Animowany loader w stylistyce aplikacji
+  galleryGrid.innerHTML = `
+    <div style="grid-column: 1/-1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem; gap: 1rem;">
+      <div class="gallery-loader"></div>
+      <div style="color: #666; font-size: 1rem; font-weight: 500;">Ładowanie galerii...</div>
+    </div>
+  `;
 
   const result = await getAllUserImages();
 

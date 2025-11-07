@@ -994,3 +994,18 @@ body {
     font-size: 0.9rem;
   }
 }
+
+/* ===== GALLERY LOADER ===== */
+.gallery-loader {
+  width: 60px;
+  height: 60px;
+  border: 5px solid #e0e0e0;
+  border-top: 5px solid #6a11cb;
+  border-radius: 50%;
+  animation: gallerySpinLoader 1s linear infinite;
+}
+
+@keyframes gallerySpinLoader {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
