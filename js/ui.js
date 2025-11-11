@@ -252,7 +252,9 @@ const createCategoryCard = (cat, user) => {
   if (cat.image) {
     const img = document.createElement('img');
     img.className = 'cat-img';
-    
+    img.loading = 'lazy'; // Lazy loading dla lepszej wydajności
+    img.decoding = 'async'; // Async decoding
+
     // Użyj cache'owanego obrazka jeśli dostępny
     if (imageCache.has(cat.image)) {
       img.src = imageCache.get(cat.image);
@@ -263,7 +265,7 @@ const createCategoryCard = (cat, user) => {
         imageCache.set(cat.image, cat.image);
       };
     }
-    
+
     img.alt = cat.name || 'Kategoria';
     img.onerror = () => {
       const firstLetter = cat.name ? cat.name.charAt(0).toUpperCase() : '?';
@@ -627,6 +629,10 @@ export const switchUser = (user, setupRealtimeListener, listenRewardsForUser) =>
 export const loadAvatar = (user, imgElement, getAvatar) => {
   getAvatar(user, (url) => {
     if (imgElement) {
+      // Dodaj lazy loading i async decoding
+      imgElement.loading = 'lazy';
+      imgElement.decoding = 'async';
+
       if (url) {
         // Użyj cache dla avatarów
         if (imageCache.has(url)) {

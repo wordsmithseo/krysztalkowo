@@ -628,6 +628,7 @@ body.nina-bg {
   color: #fff;
   box-shadow: 0 4px 12px rgba(106, 17, 203, 0.3);
   transition: all 0.2s ease;
+  will-change: transform; /* Optymalizacja wydajności */
 }
 
 .submit-btn:hover,
@@ -649,6 +650,7 @@ body.nina-bg {
   color: #555;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   transition: all 0.2s ease;
+  will-change: transform; /* Optymalizacja wydajności */
 }
 
 .cancel-btn:hover {

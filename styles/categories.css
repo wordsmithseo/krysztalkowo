@@ -17,6 +17,9 @@
   border: 3px solid;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  /* Optymalizacje wydajności */
+  will-change: transform;
+  contain: layout style paint;
 }
 
 .category-card::before {

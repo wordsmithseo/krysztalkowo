@@ -31,10 +31,12 @@
 /* ===== MODAL UWIERZYTELNIANIA ===== */
 .auth-modal {
   background: #fff; /* Solidne białe tło */
-  padding: 2rem;
+  padding: 1rem;
   z-index: 1200;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden; /* Zablokuj scrollowanie */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Wyłącz scrollowanie na body gdy modal logowania jest widoczny */
@@ -47,8 +49,10 @@ body.auth-modal-visible {
   grid-template-columns: 1fr 1fr;
   gap: 2rem;
   max-width: 72rem;
+  max-height: 90vh; /* Ogranicz wysokość */
   width: 100%;
   align-items: center;
+  overflow: hidden; /* Zapobiegaj scrollowaniu */
 }
 
 /* Sekcja powitalna */
@@ -65,7 +69,7 @@ body.auth-modal-visible {
 
 .auth-welcome-title {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  font-size: 3.5rem;
+  font-size: 2.5rem; /* Zmniejszono z 3.5rem */
   margin: 0 0 0.5rem 0;
   color: #1a1a1a;
   font-weight: 800;
@@ -74,29 +78,32 @@ body.auth-modal-visible {
 }
 
 .auth-welcome-subtitle {
-  font-size: 1.4rem;
+  font-size: 1.1rem; /* Zmniejszono z 1.4rem */
   font-weight: 600;
   color: #555;
-  margin: 0 0 2.5rem 0;
+  margin: 0 0 1.5rem 0; /* Zmniejszono margin z 2.5rem */
   letter-spacing: -0.01em;
 }
 
 .auth-features {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem; /* Zmniejszono z 1.5rem */
+  max-height: 50vh; /* Ogranicz wysokość */
+  overflow-y: auto; /* Dodaj scroll tylko dla features jeśli potrzebny */
 }
 
 .auth-feature-item {
   display: flex;
   align-items: flex-start;
-  gap: 1.25rem;
-  padding: 1.5rem;
+  gap: 1rem; /* Zmniejszono z 1.25rem */
+  padding: 1rem; /* Zmniejszono z 1.5rem */
   background: #f8f9fa;
-  border-radius: 1.25rem;
+  border-radius: 1rem; /* Zmniejszono z 1.25rem */
   border: 2px solid #e0e0e0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
+  will-change: transform; /* Optymalizacja wydajności */
 }
 
 .auth-feature-item:hover {
@@ -889,6 +896,8 @@ body.auth-modal-visible {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  /* Optymalizacje wydajności */
+  contain: layout style paint;
 }
 
 #childrenList {
@@ -909,6 +918,9 @@ body.auth-modal-visible {
   padding: 0.85rem 1.1rem;
   transition: all 0.25s ease;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  /* Optymalizacje wydajności */
+  contain: layout style paint;
+  will-change: transform;
 }
 
 #categoryList li:hover,
@@ -982,6 +994,7 @@ body.auth-modal-visible {
   justify-content: center;
   transition: all 0.2s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  will-change: transform; /* Optymalizacja wydajności */
 }
 
 .crystal-controls button:hover {
@@ -1147,6 +1160,8 @@ body.auth-modal-visible {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  /* Optymalizacje wydajności */
+  contain: layout style paint;
 }
 
 #rewardList li {
@@ -1162,6 +1177,9 @@ body.auth-modal-visible {
   padding: 0.85rem 1.1rem;
   transition: all 0.25s ease;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  /* Optymalizacje wydajności */
+  contain: layout style paint;
+  will-change: transform;
 }
 
 #rewardList li:hover {
@@ -1342,16 +1360,17 @@ body.auth-modal-visible {
 .reward-modal .modal-content {
   background: linear-gradient(160deg, #2a1a5e 0%, #1a0f3e 50%, #0f0a2e 100%);
   border: none;
-  box-shadow: 
+  box-shadow:
     0 0 0 4px rgba(138, 43, 226, 0.4),
     0 0 40px rgba(138, 43, 226, 0.6),
     inset 0 0 60px rgba(106, 17, 203, 0.2);
   max-width: 50rem;
-  padding: 2.5rem 1.5rem;
-  border-radius: 2rem;
+  padding: 1.5rem 1rem; /* Zmniejszono z 2.5rem 1.5rem */
+  border-radius: 1.5rem; /* Zmniejszono z 2rem */
   text-align: center;
   position: relative;
   overflow: hidden;
+  max-height: 85vh; /* Ogranicz wysokość */
 }
 
 .reward-modal .modal-content::before {
@@ -1365,11 +1384,11 @@ body.auth-modal-visible {
 }
 
 .reward-modal h2 {
-  margin: 0 0 2.5rem 0;
-  font-size: 2.2rem;
+  margin: 0 0 1.25rem 0; /* Zmniejszono z 2.5rem */
+  font-size: 1.6rem; /* Zmniejszono z 2.2rem */
   font-family: 'Balsamiq Sans', cursive;
   color: #fff;
-  text-shadow: 
+  text-shadow:
     0 0 20px rgba(138, 43, 226, 0.8),
     0 0 40px rgba(255, 215, 0, 0.6);
   position: relative;
@@ -1379,8 +1398,8 @@ body.auth-modal-visible {
 .chests-row {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 2rem;
-  margin: 2rem auto;
+  gap: 1rem; /* Zmniejszono z 2rem */
+  margin: 1rem auto; /* Zmniejszono z 2rem */
   max-width: 48rem;
   position: relative;
   z-index: 1;
@@ -2928,5 +2947,53 @@ body.auth-modal-visible {
   /* Ukryj cursor help na mobile dla tooltipów */
   .last-add-time {
     cursor: default !important;
+  }
+
+  /* Zmniejsz rozmiar reward-modal na mobile */
+  .reward-modal .modal-content {
+    padding: 1rem 0.75rem;
+    max-height: 90vh;
+  }
+
+  .reward-modal h2 {
+    font-size: 1.3rem;
+    margin: 0 0 1rem 0;
+  }
+
+  .chests-row {
+    gap: 0.75rem;
+    margin: 0.75rem auto;
+  }
+
+  .reward-chest::before {
+    font-size: 3rem;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Jeszcze mniejszy reward-modal na małych telefonach */
+  .reward-modal .modal-content {
+    padding: 0.75rem 0.5rem;
+    max-height: 95vh;
+  }
+
+  .reward-modal h2 {
+    font-size: 1.1rem;
+    margin: 0 0 0.75rem 0;
+  }
+
+  .chests-row {
+    gap: 0.5rem;
+    margin: 0.5rem auto;
+  }
+
+  .reward-chest::before {
+    font-size: 2.5rem;
+  }
+
+  .reward-reveal {
+    min-height: 8rem;
+    padding: 1.5rem;
+    font-size: 1.3rem;
   }
 }
