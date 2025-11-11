@@ -75,8 +75,8 @@ export const deleteImage = async (imagePath) => {
   }
 };
 
-// Funkcja do kompresji obrazka przed uploadem (ZOPTYMALIZOWANA dla lepszej wydajności)
-export const compressImage = (file, maxWidth = 600, maxHeight = 600, quality = 0.7) => {
+// Funkcja do kompresji obrazka przed uploadem (ZOPTYMALIZOWANA - WebP)
+export const compressImage = (file, maxWidth = 600, maxHeight = 600, quality = 0.8) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
 
@@ -110,14 +110,22 @@ export const compressImage = (file, maxWidth = 600, maxHeight = 600, quality = 0
         ctx.imageSmoothingQuality = 'high';
         ctx.drawImage(img, 0, 0, width, height);
 
+        // Sprawdź czy przeglądarka obsługuje WebP
+        const supportsWebP = canvas.toDataURL('image/webp').indexOf('data:image/webp') === 0;
+        const outputFormat = supportsWebP ? 'image/webp' : 'image/jpeg';
+        const extension = supportsWebP ? '.webp' : '.jpg';
+
+        // Zmień rozszerzenie pliku
+        const newFileName = file.name.replace(/\.[^/.]+$/, extension);
+
         canvas.toBlob(
           (blob) => {
-            resolve(new File([blob], file.name, {
-              type: 'image/jpeg',
+            resolve(new File([blob], newFileName, {
+              type: outputFormat,
               lastModified: Date.now()
             }));
           },
-          'image/jpeg',
+          outputFormat,
           quality
         );
       };

@@ -486,5 +486,20 @@
       <p class="footer-rights">Wszelkie prawa zastrzeżone</p>
     </div>
   </footer>
+
+  <!-- Rejestracja Service Workera -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then((registration) => {
+            console.log('✅ Service Worker zarejestrowany:', registration.scope);
+          })
+          .catch((error) => {
+            console.error('❌ Błąd rejestracji Service Workera:', error);
+          });
+      });
+    }
+  </script>
 </body>
 </html>
