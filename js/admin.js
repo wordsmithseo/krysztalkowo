@@ -427,13 +427,22 @@ const renderImagePreviews = async (currentImage) => {
 
   let html = '';
 
+  // OPTYMALIZACJA: Ogranicz do 15 obrazków aby przyspieszyć rendering
+  const MAX_IMAGES = 15;
+
   // Jeśli są wgrane obrazki, pokaż je w galerii
   if (uploadedImages.length > 0) {
+    const imagesToShow = uploadedImages.slice(0, MAX_IMAGES);
+    const remainingCount = uploadedImages.length - MAX_IMAGES;
+
     html += '<div class="image-section">';
     html += '<div class="image-section-title image-section-title-highlight">📷 Galeria wgranych obrazków:</div>';
     html += '<div style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">Kliknij obrazek aby go użyć, lub wgraj nowy plik powyżej</div>';
+    if (remainingCount > 0) {
+      html += `<div style="font-size: 0.8rem; color: #999; margin-bottom: 0.5rem;">Pokazano ${MAX_IMAGES} z ${uploadedImages.length} obrazków (dla wydajności)</div>`;
+    }
     html += '<div class="image-previews">';
-    html += uploadedImages.map(url =>
+    html += imagesToShow.map(url =>
       `<img src="${url}" class="image-preview ${url === selectedImageFromGallery ? 'selected' : ''}" onclick="window.selectImageHandler('${url}')" alt="Preview" loading="lazy" decoding="async" style="cursor: pointer;">`
     ).join('');
     html += '</div></div>';
@@ -443,13 +452,19 @@ const renderImagePreviews = async (currentImage) => {
     html += '</div>';
   }
 
-  // Dodaj obrazki z innych dzieci na tym koncie
+  // Dodaj obrazki z innych dzieci na tym koncie (też ograniczone)
   if (otherChildrenImages.length > 0) {
+    const imagesToShow = otherChildrenImages.slice(0, MAX_IMAGES);
+    const remainingCount = otherChildrenImages.length - MAX_IMAGES;
+
     html += '<div class="image-section" style="margin-top: 1rem;">';
     html += '<div class="image-section-title" style="color: #6a11cb;">💡 Obrazki z innych profili na tym koncie:</div>';
     html += '<div style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">Kliknij obrazek aby go użyć</div>';
+    if (remainingCount > 0) {
+      html += `<div style="font-size: 0.8rem; color: #999; margin-bottom: 0.5rem;">Pokazano ${MAX_IMAGES} z ${otherChildrenImages.length} obrazków</div>`;
+    }
     html += '<div class="image-previews">';
-    html += otherChildrenImages.map(url =>
+    html += imagesToShow.map(url =>
       `<img src="${url}" class="image-preview ${url === selectedImageFromGallery ? 'selected' : ''}" onclick="window.selectImageHandler('${url}')" alt="Preview z innych profili" loading="lazy" decoding="async" style="cursor: pointer;">`
     ).join('');
     html += '</div></div>';
@@ -482,13 +497,22 @@ const renderRewardImagePreviews = async () => {
 
   let html = '';
 
+  // OPTYMALIZACJA: Ogranicz do 15 obrazków aby przyspieszyć rendering
+  const MAX_IMAGES = 15;
+
   // Jeśli są wgrane obrazki, pokaż je w galerii
   if (uploadedImages.length > 0) {
+    const imagesToShow = uploadedImages.slice(0, MAX_IMAGES);
+    const remainingCount = uploadedImages.length - MAX_IMAGES;
+
     html += '<div class="image-section">';
     html += '<div class="image-section-title image-section-title-highlight">📷 Galeria wgranych obrazków:</div>';
     html += '<div style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">Kliknij obrazek aby go użyć, lub wgraj nowy plik powyżej</div>';
+    if (remainingCount > 0) {
+      html += `<div style="font-size: 0.8rem; color: #999; margin-bottom: 0.5rem;">Pokazano ${MAX_IMAGES} z ${uploadedImages.length} obrazków (dla wydajności)</div>`;
+    }
     html += '<div class="image-previews">';
-    html += uploadedImages.map(url =>
+    html += imagesToShow.map(url =>
       `<img src="${url}" class="image-preview ${url === selectedRewardImageFromGallery ? 'selected' : ''}" onclick="window.selectRewardImageHandler('${url}')" alt="Preview" loading="lazy" decoding="async" style="cursor: pointer;">`
     ).join('');
     html += '</div></div>';
@@ -498,13 +522,19 @@ const renderRewardImagePreviews = async () => {
     html += '</div>';
   }
 
-  // Dodaj obrazki z innych dzieci na tym koncie
+  // Dodaj obrazki z innych dzieci na tym koncie (też ograniczone)
   if (otherChildrenImages.length > 0) {
+    const imagesToShow = otherChildrenImages.slice(0, MAX_IMAGES);
+    const remainingCount = otherChildrenImages.length - MAX_IMAGES;
+
     html += '<div class="image-section" style="margin-top: 1rem;">';
     html += '<div class="image-section-title" style="color: #6a11cb;">💡 Obrazki z innych profili na tym koncie:</div>';
     html += '<div style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">Kliknij obrazek aby go użyć</div>';
+    if (remainingCount > 0) {
+      html += `<div style="font-size: 0.8rem; color: #999; margin-bottom: 0.5rem;">Pokazano ${MAX_IMAGES} z ${otherChildrenImages.length} obrazków</div>`;
+    }
     html += '<div class="image-previews">';
-    html += otherChildrenImages.map(url =>
+    html += imagesToShow.map(url =>
       `<img src="${url}" class="image-preview ${url === selectedRewardImageFromGallery ? 'selected' : ''}" onclick="window.selectRewardImageHandler('${url}')" alt="Preview z innych profili" loading="lazy" decoding="async" style="cursor: pointer;">`
     ).join('');
     html += '</div></div>';
@@ -1332,34 +1362,49 @@ const renderAvatarImagePreviews = async (localPreview) => {
 
   let html = '';
 
+  // OPTYMALIZACJA: Ogranicz do 15 obrazków aby przyspieszyć rendering
+  const MAX_IMAGES = 15;
+
   // Podgląd lokalnego pliku (jeśli wybrano)
   if (localPreview) {
     html += '<div class="image-section">';
     html += '<div class="image-section-title">Podgląd wybranego pliku:</div>';
     html += '<div class="image-previews">';
-    html += `<img src="${localPreview}" class="image-preview" alt="Preview" style="width: 150px; height: 150px; object-fit: cover; border-radius: 50%; border: 3px solid #6a11cb;">`;
+    html += `<img src="${localPreview}" class="image-preview" alt="Preview" loading="lazy" decoding="async" style="width: 150px; height: 150px; object-fit: cover; border-radius: 50%; border: 3px solid #6a11cb;">`;
     html += '</div></div>';
   }
 
-  // Sekcja z wcześniej używanymi awatarami (PRIORYTET)
+  // Sekcja z wcześniej używanymi awatarami (PRIORYTET) - też ograniczone
   if (usedAvatars.length > 0) {
+    const avatarsToShow = usedAvatars.slice(0, MAX_IMAGES);
+    const remainingCount = usedAvatars.length - MAX_IMAGES;
+
     html += '<div class="image-section">';
     html += '<div class="image-section-title" style="color: #6a11cb; font-weight: 700;">✨ Wcześniej używane awatary:</div>';
     html += '<div style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">Kliknij awatar aby go użyć ponownie</div>';
+    if (remainingCount > 0) {
+      html += `<div style="font-size: 0.8rem; color: #999; margin-bottom: 0.5rem;">Pokazano ${MAX_IMAGES} z ${usedAvatars.length} awatarów</div>`;
+    }
     html += '<div class="image-previews">';
-    html += usedAvatars.map(url =>
+    html += avatarsToShow.map(url =>
       `<img src="${url}" class="image-preview ${url === selectedAvatarFromGallery ? 'selected' : ''}" onclick="window.selectAvatarHandler('${url}')" alt="Preview" loading="lazy" decoding="async" style="cursor: pointer; width: 120px; height: 120px; object-fit: cover; border-radius: 50%; ${url === selectedAvatarFromGallery ? 'border: 3px solid #6a11cb;' : ''}">`
     ).join('');
     html += '</div></div>';
   }
 
-  // Jeśli są wgrane obrazki, pokaż je w galerii
+  // Jeśli są wgrane obrazki, pokaż je w galerii (też ograniczone)
   if (uploadedImages.length > 0) {
+    const imagesToShow = uploadedImages.slice(0, MAX_IMAGES);
+    const remainingCount = uploadedImages.length - MAX_IMAGES;
+
     html += '<div class="image-section">';
     html += '<div class="image-section-title image-section-title-highlight">📷 Galeria wgranych obrazków:</div>';
     html += '<div style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">Kliknij obrazek aby go użyć</div>';
+    if (remainingCount > 0) {
+      html += `<div style="font-size: 0.8rem; color: #999; margin-bottom: 0.5rem;">Pokazano ${MAX_IMAGES} z ${uploadedImages.length} obrazków</div>`;
+    }
     html += '<div class="image-previews">';
-    html += uploadedImages.map(url =>
+    html += imagesToShow.map(url =>
       `<img src="${url}" class="image-preview ${url === selectedAvatarFromGallery ? 'selected' : ''}" onclick="window.selectAvatarHandler('${url}')" alt="Preview" loading="lazy" decoding="async" style="cursor: pointer; width: 120px; height: 120px; object-fit: cover; border-radius: 50%;">`
     ).join('');
     html += '</div></div>';
