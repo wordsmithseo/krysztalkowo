@@ -22,6 +22,54 @@ export const clearNoRewardsCache = () => {
   console.log('🧹 Cache modali o braku nagród wyczyszczony');
 };
 
+// Funkcja losowania ważonego - uwzględnia prawdopodobieństwo wylosowania nagród
+const weightedRandomReward = (rewards) => {
+  // Jeśli brak nagród, zwróć null
+  if (!rewards || rewards.length === 0) {
+    return null;
+  }
+
+  // Jeśli jest tylko jedna nagroda, zwróć ją
+  if (rewards.length === 1) {
+    return rewards[0];
+  }
+
+  // Oblicz sumę wszystkich prawdopodobieństw (wag)
+  const totalWeight = rewards.reduce((sum, reward) => {
+    const prob = reward.probability || 50; // Domyślnie 50%
+    return sum + prob;
+  }, 0);
+
+  // Jeśli suma wag wynosi 0, użyj równego prawdopodobieństwa
+  if (totalWeight === 0) {
+    return rewards[randInt(0, rewards.length - 1)];
+  }
+
+  // Wylosuj liczbę z zakresu [0, totalWeight)
+  let random = Math.random() * totalWeight;
+
+  console.log(`🎲 Losowanie ważone: totalWeight=${totalWeight.toFixed(2)}, random=${random.toFixed(2)}`);
+
+  // Przejdź przez nagrody i znajdź tę, która "zawiera" wylosowaną liczbę
+  for (let i = 0; i < rewards.length; i++) {
+    const reward = rewards[i];
+    const weight = reward.probability || 50;
+
+    console.log(`  🎁 Nagroda "${reward.name}": waga=${weight}%, pozostało=${random.toFixed(2)}`);
+
+    if (random < weight) {
+      console.log(`  ✅ Wybrano: "${reward.name}" (prawdopodobieństwo ${weight}%)`);
+      return reward;
+    }
+
+    random -= weight;
+  }
+
+  // Fallback (nie powinno się zdarzyć, ale dla bezpieczeństwa)
+  console.log('⚠️ Fallback: zwracam ostatnią nagrodę');
+  return rewards[rewards.length - 1];
+};
+
 // Funkcja pokazująca modal o braku nagród
 const showNoRewardsModal = (categoryId) => {
   return new Promise((resolve) => {
@@ -184,9 +232,16 @@ const setupChestHandlers = (chests, rewards, categoryId, drawId) => {
         chest.classList.add('opened', 'chest-selected');
       }, 600);
 
-      // Losowanie nagrody
-      const reward = rewards[randInt(0, rewards.length - 1)];
+      // Losowanie nagrody z uwzględnieniem prawdopodobieństwa
+      const reward = weightedRandomReward(rewards);
       selectedReward = reward;
+
+      // Sprawdź czy losowanie się powiodło
+      if (!reward) {
+        console.error('❌ Błąd losowania nagrody!');
+        setRewardFlowLock(false);
+        return;
+      }
 
       // Wyświetlenie nagrody po 420ms
       setTimeout(async () => {
