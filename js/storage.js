@@ -75,8 +75,8 @@ export const deleteImage = async (imagePath) => {
   }
 };
 
-// Funkcja do kompresji obrazka przed uploadem (opcjonalna)
-export const compressImage = (file, maxWidth = 800, maxHeight = 800, quality = 0.8) => {
+// Funkcja do kompresji obrazka przed uploadem (ZOPTYMALIZOWANA dla lepszej wydajności)
+export const compressImage = (file, maxWidth = 600, maxHeight = 600, quality = 0.7) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
 
@@ -105,6 +105,9 @@ export const compressImage = (file, maxWidth = 800, maxHeight = 800, quality = 0
         canvas.height = height;
 
         const ctx = canvas.getContext('2d');
+        // Włącz image smoothing dla lepszej jakości przy zmniejszaniu
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
         ctx.drawImage(img, 0, 0, width, height);
 
         canvas.toBlob(

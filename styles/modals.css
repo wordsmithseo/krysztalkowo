@@ -921,6 +921,7 @@ body.auth-modal-visible {
   /* Optymalizacje wydajności */
   contain: layout style paint;
   will-change: transform;
+  content-visibility: auto; /* Renderuj tylko widoczne elementy */
 }
 
 #categoryList li:hover,
@@ -1180,6 +1181,7 @@ body.auth-modal-visible {
   /* Optymalizacje wydajności */
   contain: layout style paint;
   will-change: transform;
+  content-visibility: auto; /* Renderuj tylko widoczne elementy */
 }
 
 #rewardList li:hover {
@@ -2995,5 +2997,49 @@ body.auth-modal-visible {
     min-height: 8rem;
     padding: 1.5rem;
     font-size: 1.3rem;
+  }
+
+  /* KRYTYCZNE OPTYMALIZACJE WYDAJNOŚCI NA MOBILE */
+
+  /* Wyłącz backdrop-filter - bardzo kosztowny na mobile */
+  #categoryList li,
+  #childrenList li,
+  #rewardList li,
+  .modal-content {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: rgba(255, 255, 255, 0.98) !important; /* Nieprzezroczyste tło */
+  }
+
+  /* Uprość cienie - kosztowne na mobile */
+  #categoryList li,
+  #childrenList li,
+  #rewardList li {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+  }
+
+  #categoryList li:hover,
+  #childrenList li:hover,
+  #rewardList li:hover {
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12) !important;
+  }
+
+  /* Wyłącz transformacje hover na mobile - niepotrzebne na touch */
+  #categoryList li:hover,
+  #childrenList li:hover,
+  #rewardList li:hover {
+    transform: none !important;
+  }
+
+  /* Uprość crystal-controls */
+  .crystal-controls {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06) !important;
+  }
+
+  .crystal-controls button {
+    box-shadow: none !important;
   }
 }
