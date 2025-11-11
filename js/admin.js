@@ -1166,11 +1166,15 @@ export const renderGallery = async () => {
   galleryGrid.innerHTML = `
     <div style="grid-column: 1/-1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem; gap: 1rem;">
       <div class="gallery-loader"></div>
-      <div style="color: #666; font-size: 1rem; font-weight: 500;">Ładowanie galerii...</div>
+      <div style="color: #666; font-size: 1rem; font-weight: 500;" id="galleryLoadingText">Ładowanie metadanych...</div>
+      <div style="width: 100%; max-width: 300px; height: 6px; background: #e0e0e0; border-radius: 3px; overflow: hidden; margin-top: 0.5rem;">
+        <div id="galleryLoadingBar" style="height: 100%; background: linear-gradient(90deg, #6a11cb, #8a2be2); width: 0%; transition: width 0.3s ease;"></div>
+      </div>
     </div>
   `;
 
   const result = await getAllUserImages();
+  const loadingText = document.getElementById('galleryLoadingText');
 
   if (!result.success) {
     galleryGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: #d32f2f;">Błąd ładowania obrazków</div>';
@@ -1195,13 +1199,56 @@ export const renderGallery = async () => {
   const percentage = Math.min((parseFloat(totalMB) / maxVisualization) * 100, 100);
   storageBar.style.width = `${percentage}%`;
 
-  // Renderuj obrazki z lazy loading
+  // Preloaduj obrazy z progress barem
+  if (loadingText) {
+    loadingText.textContent = `Ładowanie obrazów (0/${result.images.length})...`;
+  }
+
+  let loadedCount = 0;
+  const loadingBar = document.getElementById('galleryLoadingBar');
+
+  // Preloaduj wszystkie obrazy równolegle (z limitem 6 jednocześnie)
+  const preloadImage = (url) => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        loadedCount++;
+        if (loadingBar) {
+          loadingBar.style.width = `${(loadedCount / result.images.length) * 100}%`;
+        }
+        if (loadingText) {
+          loadingText.textContent = `Ładowanie obrazów (${loadedCount}/${result.images.length})...`;
+        }
+        resolve();
+      };
+      img.onerror = () => {
+        loadedCount++;
+        if (loadingBar) {
+          loadingBar.style.width = `${(loadedCount / result.images.length) * 100}%`;
+        }
+        if (loadingText) {
+          loadingText.textContent = `Ładowanie obrazów (${loadedCount}/${result.images.length})...`;
+        }
+        resolve();
+      };
+      img.src = url;
+    });
+  };
+
+  // Ładuj obrazy partiami po 6 dla lepszej wydajności
+  const batchSize = 6;
+  for (let i = 0; i < result.images.length; i += batchSize) {
+    const batch = result.images.slice(i, i + batchSize);
+    await Promise.all(batch.map(img => preloadImage(img.url)));
+  }
+
+  // Teraz renderuj wszystkie obrazy - będą ładowane z cache
   galleryGrid.innerHTML = result.images.map(img => `
     <div class="gallery-item" style="position: relative; border-radius: 0.5rem; overflow: hidden; border: 2px solid #e0e0e0; background: #f5f5f5;">
       <img
         src="${img.url}"
         alt="${img.name}"
-        loading="lazy"
+        loading="eager"
         decoding="async"
         style="width: 100%; height: 150px; object-fit: cover; display: block;"
       >
@@ -1229,6 +1276,10 @@ export const handleDeleteImage = async (imageUrl) => {
   const result = await deleteImageByUrl(imageUrl);
 
   if (result.success) {
+    // Wyczyść cache obrazów aby wymusić odświeżenie
+    const { clearImagesCache } = await import('./storage.js');
+    clearImagesCache();
+
     alert('Obrazek został usunięty');
     await renderGallery();
   } else {

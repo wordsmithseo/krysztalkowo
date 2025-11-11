@@ -139,14 +139,33 @@ export const compressImage = (file, maxWidth = 600, maxHeight = 600, quality = 0
   });
 };
 
+// Cache dla getAllUserImages (ważny przez 30 sekund)
+let imagesCache = null;
+let imagesCacheTimestamp = 0;
+const IMAGES_CACHE_TTL = 30000; // 30 sekund
+
+// Funkcja do czyszczenia cache obrazów
+export const clearImagesCache = () => {
+  imagesCache = null;
+  imagesCacheTimestamp = 0;
+  console.log('🧹 Cache obrazów wyczyszczony');
+};
+
 // Funkcja do pobierania wszystkich obrazków użytkownika
-export const getAllUserImages = async () => {
+export const getAllUserImages = async (forceRefresh = false) => {
   try {
     const user = getCurrentAuthUser();
     if (!user) {
       throw new Error('Użytkownik nie jest zalogowany');
     }
 
+    // Sprawdź cache jeśli nie force refresh
+    if (!forceRefresh && imagesCache && (Date.now() - imagesCacheTimestamp < IMAGES_CACHE_TTL)) {
+      console.log('📦 Zwracam obrazy z cache (wiek:', Math.round((Date.now() - imagesCacheTimestamp)/1000), 's)');
+      return imagesCache;
+    }
+
+    console.log('🔄 Pobieram świeże obrazy z Firebase...');
     const userFolderRef = ref(storage, `images/${user.uid}`);
     const result = await listAll(userFolderRef);
 
@@ -154,35 +173,60 @@ export const getAllUserImages = async () => {
     let totalSize = 0;
 
     // Przetwarzaj wszystkie pliki w folderze użytkownika (we wszystkich podfolderach)
-    for (const folderRef of result.prefixes) {
+    // Użyj Promise.all dla równoległego przetwarzania folderów
+    const folderPromises = result.prefixes.map(async (folderRef) => {
       const folderResult = await listAll(folderRef);
 
-      for (const itemRef of folderResult.items) {
+      // Równolegle pobierz metadane i URL dla wszystkich plików w folderze
+      const itemPromises = folderResult.items.map(async (itemRef) => {
         try {
-          const metadata = await getMetadata(itemRef);
-          const url = await getDownloadURL(itemRef);
+          // Pobierz metadata i URL równolegle
+          const [metadata, url] = await Promise.all([
+            getMetadata(itemRef),
+            getDownloadURL(itemRef)
+          ]);
 
-          images.push({
+          return {
             url,
             path: itemRef.fullPath,
             size: metadata.size,
             name: metadata.name,
             created: metadata.timeCreated
-          });
-
-          totalSize += metadata.size;
+          };
         } catch (error) {
           console.error('Błąd pobierania metadanych obrazka:', error);
+          return null;
         }
-      }
-    }
+      });
 
-    return {
+      return Promise.all(itemPromises);
+    });
+
+    // Poczekaj na wszystkie foldery
+    const folderResults = await Promise.all(folderPromises);
+
+    // Spłaszcz wyniki i usuń null
+    folderResults.forEach(folderImages => {
+      folderImages.forEach(img => {
+        if (img) {
+          images.push(img);
+          totalSize += img.size;
+        }
+      });
+    });
+
+    const resultData = {
       success: true,
       images,
       totalSize,
       count: images.length
     };
+
+    // Zapisz do cache
+    imagesCache = resultData;
+    imagesCacheTimestamp = Date.now();
+
+    return resultData;
   } catch (error) {
     console.error('Błąd podczas pobierania obrazków:', error);
     return {

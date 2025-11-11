@@ -1,6 +1,6 @@
 // Service Worker dla cache'owania obrazów
-const CACHE_NAME = 'krysztalkowo-images-v1';
-const RUNTIME_CACHE = 'krysztalkowo-runtime-v1';
+const CACHE_NAME = 'krysztalkowo-images-v2';
+const RUNTIME_CACHE = 'krysztalkowo-runtime-v2';
 
 // Czas życia cache (7 dni)
 const MAX_CACHE_AGE = 7 * 24 * 60 * 60 * 1000;
@@ -38,9 +38,10 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Cache tylko dla obrazów z Firebase Storage
-  if (url.hostname.includes('firebasestorage.googleapis.com') &&
-      request.destination === 'image') {
+  // Cache dla wszystkich requestów z Firebase Storage (obrazy, pliki)
+  // Usuń warunek destination === 'image' bo może nie działać dla wszystkich requestów
+  if (url.hostname.includes('firebasestorage.googleapis.com')) {
+    console.log('[SW] Przechwycono request do Firebase Storage:', url.href);
 
     event.respondWith(
       caches.open(CACHE_NAME).then((cache) => {
@@ -48,50 +49,61 @@ self.addEventListener('fetch', (event) => {
 
           // Sprawdź czy cache jest świeży
           if (cachedResponse) {
-            const cachedDate = new Date(cachedResponse.headers.get('sw-cached-date'));
-            const now = new Date();
+            const cachedDate = cachedResponse.headers.get('sw-cached-date');
 
-            if (now - cachedDate < MAX_CACHE_AGE) {
-              console.log('[SW] Zwracam z cache:', url.pathname);
-              return cachedResponse;
+            if (cachedDate) {
+              const cacheAge = Date.now() - new Date(cachedDate).getTime();
+
+              if (cacheAge < MAX_CACHE_AGE) {
+                console.log('[SW] ✅ Zwracam z cache (wiek:', Math.round(cacheAge/1000/60), 'min):', url.pathname);
+                return cachedResponse;
+              } else {
+                console.log('[SW] ⚠️ Cache wygasł (wiek:', Math.round(cacheAge/1000/60/60), 'godz), pobieram na nowo');
+              }
             } else {
-              console.log('[SW] Cache wygasł, pobieram na nowo:', url.pathname);
+              // Stary cache bez daty - użyj go ale spróbuj odświeżyć
+              console.log('[SW] ℹ️ Zwracam stary cache bez daty');
+              return cachedResponse;
             }
           }
 
           // Pobierz z sieci i zapisz do cache
           return fetch(request).then((response) => {
             // Sprawdź czy response jest OK
-            if (!response || response.status !== 200 || response.type !== 'basic' && response.type !== 'cors') {
+            if (!response || response.status !== 200) {
+              console.log('[SW] ❌ Response nie OK:', response.status);
               return response;
             }
 
             // Sklonuj response (można użyć tylko raz)
             const responseToCache = response.clone();
 
-            // Dodaj datę cache'owania do headera
+            // Dodaj datę cache'owania
             const headers = new Headers(responseToCache.headers);
             headers.append('sw-cached-date', new Date().toISOString());
 
             // Utwórz nową response z datą
-            const cachedResponse = new Response(responseToCache.body, {
-              status: responseToCache.status,
-              statusText: responseToCache.statusText,
-              headers: headers
+            responseToCache.blob().then((blob) => {
+              const cachedResponse = new Response(blob, {
+                status: responseToCache.status,
+                statusText: responseToCache.statusText,
+                headers: headers
+              });
+
+              cache.put(request, cachedResponse).then(() => {
+                console.log('[SW] 💾 Zapisano do cache:', url.pathname.substring(0, 50) + '...');
+              }).catch((err) => {
+                console.error('[SW] ❌ Błąd zapisu do cache:', err);
+              });
             });
 
-            cache.put(request, cachedResponse).catch((err) => {
-              console.error('[SW] Błąd cache:', err);
-            });
-
-            console.log('[SW] Zapisano do cache:', url.pathname);
             return response;
           }).catch((err) => {
-            console.error('[SW] Błąd pobierania:', err);
+            console.error('[SW] ❌ Błąd pobierania z sieci:', err);
 
             // Jeśli jest w cache, zwróć mimo że wygasł
             if (cachedResponse) {
-              console.log('[SW] Zwracam wygasły cache z powodu błędu sieci');
+              console.log('[SW] 🔄 Zwracam wygasły cache z powodu błędu sieci');
               return cachedResponse;
             }
 
@@ -101,7 +113,7 @@ self.addEventListener('fetch', (event) => {
       })
     );
   }
-  // Dla innych requestów - normalne zachowanie
+  // Dla innych requestów - normalne zachowanie (pass through)
 });
 
 // Obsługa wiadomości od klienta
