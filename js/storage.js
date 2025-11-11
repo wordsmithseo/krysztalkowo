@@ -115,11 +115,18 @@ export const compressImage = (file, maxWidth = 600, maxHeight = 600, quality = 0
         const outputFormat = supportsWebP ? 'image/webp' : 'image/jpeg';
         const extension = supportsWebP ? '.webp' : '.jpg';
 
+        console.log(`📸 Kompresja obrazu: ${file.name} → format: ${outputFormat.split('/')[1].toUpperCase()}, rozmiar: ${width}x${height}`);
+
         // Zmień rozszerzenie pliku
         const newFileName = file.name.replace(/\.[^/.]+$/, extension);
 
         canvas.toBlob(
           (blob) => {
+            const originalSizeKB = (file.size / 1024).toFixed(1);
+            const compressedSizeKB = (blob.size / 1024).toFixed(1);
+            const savedPercent = ((1 - blob.size / file.size) * 100).toFixed(1);
+            console.log(`✅ Kompresja zakończona: ${originalSizeKB}KB → ${compressedSizeKB}KB (oszczędność: ${savedPercent}%)`);
+
             resolve(new File([blob], newFileName, {
               type: outputFormat,
               lastModified: Date.now()

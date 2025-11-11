@@ -1,6 +1,6 @@
 // Service Worker dla cache'owania obrazów
-const CACHE_NAME = 'krysztalkowo-images-v2';
-const RUNTIME_CACHE = 'krysztalkowo-runtime-v2';
+const CACHE_NAME = 'krysztalkowo-images-v3';
+const RUNTIME_CACHE = 'krysztalkowo-runtime-v3';
 
 // Czas życia cache (7 dni)
 const MAX_CACHE_AGE = 7 * 24 * 60 * 60 * 1000;
@@ -43,9 +43,18 @@ self.addEventListener('fetch', (event) => {
   if (url.hostname.includes('firebasestorage.googleapis.com')) {
     console.log('[SW] Przechwycono request do Firebase Storage:', url.href);
 
+    // Utwórz cache key bez query stringów (token się zmienia)
+    const cacheKey = new Request(url.origin + url.pathname, {
+      method: request.method,
+      headers: request.headers,
+      mode: request.mode === 'navigate' ? 'same-origin' : request.mode,
+      credentials: request.credentials,
+      redirect: 'follow'
+    });
+
     event.respondWith(
       caches.open(CACHE_NAME).then((cache) => {
-        return cache.match(request).then((cachedResponse) => {
+        return cache.match(cacheKey, { ignoreSearch: true }).then((cachedResponse) => {
 
           // Sprawdź czy cache jest świeży
           if (cachedResponse) {
@@ -90,8 +99,8 @@ self.addEventListener('fetch', (event) => {
                 headers: headers
               });
 
-              cache.put(request, cachedResponse).then(() => {
-                console.log('[SW] 💾 Zapisano do cache:', url.pathname.substring(0, 50) + '...');
+              cache.put(cacheKey, cachedResponse).then(() => {
+                console.log('[SW] 💾 Zapisano do cache (bez query):', url.pathname.substring(0, 50) + '...');
               }).catch((err) => {
                 console.error('[SW] ❌ Błąd zapisu do cache:', err);
               });

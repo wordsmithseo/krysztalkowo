@@ -405,10 +405,13 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
       card.classList.add('filling');
     }
 
+    // Na desktopie wymagaj dłuższego trzymania (800ms) aby uniknąć przypadkowego dodania
+    const holdDuration = 800; // zwiększono z 500ms dla lepszej kontroli
+
     fillAnimTimeout = setTimeout(() => {
       card.classList.remove('filling', 'reset-filling');
       card.classList.add('filling-complete');
-    }, 500);
+    }, holdDuration - 300); // Zakończ animację 300ms przed wykonaniem akcji
 
     holdTimer = setTimeout(async () => {
       vibrate([100, 50, 100]);
@@ -475,7 +478,7 @@ const setupCardInteraction = (card, categoryId, isReady, pendingReset, currentCo
           }, 1000);
         }
       }
-    }, 500);
+    }, holdDuration);
   };
   
   const cancelHold = () => {

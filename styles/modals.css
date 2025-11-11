@@ -24,7 +24,7 @@
   text-align: left;
   max-width: 56rem;
   width: 100%;
-  max-height: 85vh;
+  max-height: 80vh; /* Zmniejszono z 85vh aby zostawić margines */
   overflow: auto;
 }
 
@@ -41,7 +41,10 @@
 
 /* Wyłącz scrollowanie na body gdy modal logowania jest widoczny */
 body.auth-modal-visible {
-  overflow: hidden;
+  overflow: hidden !important;
+  position: fixed;
+  width: 100%;
+  height: 100vh;
 }
 
 .auth-container {
@@ -49,7 +52,7 @@ body.auth-modal-visible {
   grid-template-columns: 1fr 1fr;
   gap: 2rem;
   max-width: 72rem;
-  max-height: 90vh; /* Ogranicz wysokość */
+  max-height: 85vh; /* Ogranicz wysokość aby zmieścić się w viewport */
   width: 100%;
   align-items: center;
   overflow: hidden; /* Zapobiegaj scrollowaniu */

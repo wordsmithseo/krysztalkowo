@@ -304,7 +304,7 @@ export const handleEditCategory = (categoryId) => {
       currentImagePreview.innerHTML = `
         <div style="padding: 0.75rem; background: #f5f5f5; border-radius: 0.5rem; border: 2px solid #ddd;">
           <div style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; color: #666;">Aktualny obrazek:</div>
-          <img src="${cat.image}" alt="Aktualny obrazek" style="max-width: 150px; max-height: 150px; border-radius: 0.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" onerror="this.parentElement.innerHTML='<div style=\\'color:#999;padding:1rem;\\'>Nie można załadować obrazka</div>'">
+          <img src="${cat.image}" alt="Aktualny obrazek" loading="lazy" decoding="async" style="max-width: 150px; max-height: 150px; border-radius: 0.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" onerror="this.parentElement.innerHTML='<div style=\\'color:#999;padding:1rem;\\'>Nie można załadować obrazka</div>'">
         </div>
       `;
     } else {
@@ -638,7 +638,7 @@ export const handleEditReward = (rewardId) => {
         <div style="padding: 0.75rem; background: #f5f5f5; border-radius: 0.5rem; border: 2px solid #ddd;">
           <div style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; color: #666;">Aktualny obrazek z obramówką rzadkości:</div>
           <div class="reward-preview-wrapper ${rarityClass}" id="rarityPreviewWrapper" style="display: inline-block;">
-            <img src="${reward.image}" class="reward-img" alt="Aktualny obrazek" style="max-width: 150px; max-height: 150px; border-radius: 0.5rem;" onerror="this.parentElement.innerHTML='<div style=\\'color:#999;padding:1rem;\\'>Nie można załadować obrazka</div>'">
+            <img src="${reward.image}" class="reward-img" alt="Aktualny obrazek" loading="lazy" decoding="async" style="max-width: 150px; max-height: 150px; border-radius: 0.5rem;" onerror="this.parentElement.innerHTML='<div style=\\'color:#999;padding:1rem;\\'>Nie można załadować obrazka</div>'">
           </div>
         </div>
       `;
