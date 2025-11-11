@@ -197,7 +197,7 @@ export const renderAdminRewards = () => {
     if (reward.image) {
       imageHtml = `
         <div class="reward-preview-wrapper ${rarityClass}">
-          <img src="${reward.image}" class="reward-img" alt="${reward.name}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22 viewBox=%220 0 40 40%22%3E%3Crect width=%2240%22 height=%2240%22 fill=%22%23f0f0f0%22 rx=%225%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2220%22%3E🎁%3C/text%3E%3C/svg%3E'; this.onerror=null;">
+          <img src="${reward.image}" class="reward-img" alt="${reward.name}" loading="lazy" decoding="async" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22 viewBox=%220 0 40 40%22%3E%3Crect width=%2240%22 height=%2240%22 fill=%22%23f0f0f0%22 rx=%225%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2220%22%3E🎁%3C/text%3E%3C/svg%3E'; this.onerror=null;">
         </div>
       `;
     } else {
@@ -434,7 +434,7 @@ const renderImagePreviews = async (currentImage) => {
     html += '<div style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">Kliknij obrazek aby go użyć, lub wgraj nowy plik powyżej</div>';
     html += '<div class="image-previews">';
     html += uploadedImages.map(url =>
-      `<img src="${url}" class="image-preview ${url === selectedImageFromGallery ? 'selected' : ''}" onclick="window.selectImageHandler('${url}')" alt="Preview" style="cursor: pointer;">`
+      `<img src="${url}" class="image-preview ${url === selectedImageFromGallery ? 'selected' : ''}" onclick="window.selectImageHandler('${url}')" alt="Preview" loading="lazy" decoding="async" style="cursor: pointer;">`
     ).join('');
     html += '</div></div>';
   } else {
@@ -450,7 +450,7 @@ const renderImagePreviews = async (currentImage) => {
     html += '<div style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">Kliknij obrazek aby go użyć</div>';
     html += '<div class="image-previews">';
     html += otherChildrenImages.map(url =>
-      `<img src="${url}" class="image-preview ${url === selectedImageFromGallery ? 'selected' : ''}" onclick="window.selectImageHandler('${url}')" alt="Preview z innych profili" style="cursor: pointer;">`
+      `<img src="${url}" class="image-preview ${url === selectedImageFromGallery ? 'selected' : ''}" onclick="window.selectImageHandler('${url}')" alt="Preview z innych profili" loading="lazy" decoding="async" style="cursor: pointer;">`
     ).join('');
     html += '</div></div>';
   }
@@ -489,7 +489,7 @@ const renderRewardImagePreviews = async () => {
     html += '<div style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">Kliknij obrazek aby go użyć, lub wgraj nowy plik powyżej</div>';
     html += '<div class="image-previews">';
     html += uploadedImages.map(url =>
-      `<img src="${url}" class="image-preview ${url === selectedRewardImageFromGallery ? 'selected' : ''}" onclick="window.selectRewardImageHandler('${url}')" alt="Preview" style="cursor: pointer;">`
+      `<img src="${url}" class="image-preview ${url === selectedRewardImageFromGallery ? 'selected' : ''}" onclick="window.selectRewardImageHandler('${url}')" alt="Preview" loading="lazy" decoding="async" style="cursor: pointer;">`
     ).join('');
     html += '</div></div>';
   } else {
@@ -505,7 +505,7 @@ const renderRewardImagePreviews = async () => {
     html += '<div style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">Kliknij obrazek aby go użyć</div>';
     html += '<div class="image-previews">';
     html += otherChildrenImages.map(url =>
-      `<img src="${url}" class="image-preview ${url === selectedRewardImageFromGallery ? 'selected' : ''}" onclick="window.selectRewardImageHandler('${url}')" alt="Preview z innych profili" style="cursor: pointer;">`
+      `<img src="${url}" class="image-preview ${url === selectedRewardImageFromGallery ? 'selected' : ''}" onclick="window.selectRewardImageHandler('${url}')" alt="Preview z innych profili" loading="lazy" decoding="async" style="cursor: pointer;">`
     ).join('');
     html += '</div></div>';
   }
@@ -1348,7 +1348,7 @@ const renderAvatarImagePreviews = async (localPreview) => {
     html += '<div style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">Kliknij awatar aby go użyć ponownie</div>';
     html += '<div class="image-previews">';
     html += usedAvatars.map(url =>
-      `<img src="${url}" class="image-preview ${url === selectedAvatarFromGallery ? 'selected' : ''}" onclick="window.selectAvatarHandler('${url}')" alt="Preview" style="cursor: pointer; width: 120px; height: 120px; object-fit: cover; border-radius: 50%; ${url === selectedAvatarFromGallery ? 'border: 3px solid #6a11cb;' : ''}">`
+      `<img src="${url}" class="image-preview ${url === selectedAvatarFromGallery ? 'selected' : ''}" onclick="window.selectAvatarHandler('${url}')" alt="Preview" loading="lazy" decoding="async" style="cursor: pointer; width: 120px; height: 120px; object-fit: cover; border-radius: 50%; ${url === selectedAvatarFromGallery ? 'border: 3px solid #6a11cb;' : ''}">`
     ).join('');
     html += '</div></div>';
   }
@@ -1360,7 +1360,7 @@ const renderAvatarImagePreviews = async (localPreview) => {
     html += '<div style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">Kliknij obrazek aby go użyć</div>';
     html += '<div class="image-previews">';
     html += uploadedImages.map(url =>
-      `<img src="${url}" class="image-preview ${url === selectedAvatarFromGallery ? 'selected' : ''}" onclick="window.selectAvatarHandler('${url}')" alt="Preview" style="cursor: pointer; width: 120px; height: 120px; object-fit: cover; border-radius: 50%;">`
+      `<img src="${url}" class="image-preview ${url === selectedAvatarFromGallery ? 'selected' : ''}" onclick="window.selectAvatarHandler('${url}')" alt="Preview" loading="lazy" decoding="async" style="cursor: pointer; width: 120px; height: 120px; object-fit: cover; border-radius: 50%;">`
     ).join('');
     html += '</div></div>';
   }
