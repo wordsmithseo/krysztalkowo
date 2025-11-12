@@ -2,12 +2,13 @@
 .modal {
   display: none;
   position: fixed;
-  z-index: 1000;
+  z-index: 1400; /* Wyższy niż stopka (1300) */
   inset: 0;
   background-color: rgba(0, 0, 0, 0.5);
   justify-content: center;
   align-items: center;
-  padding: 1rem;
+  padding: 2rem 1rem 6rem; /* Dodano padding-bottom dla stopki */
+  overflow-y: auto; /* Scroll na całym modale jeśli potrzebny */
 }
 
 .modal-content {
@@ -24,16 +25,17 @@
   text-align: left;
   max-width: 56rem;
   width: 100%;
-  max-height: 85vh;
-  overflow: auto;
+  max-height: calc(100vh - 10rem); /* Uwzględniamy stopkę i padding */
+  overflow-y: auto;
+  margin: auto; /* Wyśrodkowanie */
 }
 
 /* ===== MODAL UWIERZYTELNIANIA ===== */
 .auth-modal {
   background: #fff; /* Solidne białe tło */
   padding: 1rem;
-  z-index: 1200;
-  overflow: hidden; /* Zablokuj scrollowanie */
+  z-index: 1400; /* Wyższy niż stopka (1300) */
+  overflow-y: auto; /* Umożliw scrollowanie jeśli potrzebne */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -49,27 +51,29 @@ body.auth-modal-visible {
   grid-template-columns: 1fr 1fr;
   gap: 2rem;
   max-width: 72rem;
-  max-height: 90vh; /* Ogranicz wysokość */
+  max-height: calc(100vh - 2rem); /* Ogranicz wysokość z marginesem */
   width: 100%;
-  align-items: center;
-  overflow: hidden; /* Zapobiegaj scrollowaniu */
+  align-items: stretch; /* Rozciągnij elementy do pełnej wysokości */
+  overflow: hidden; /* Zapobiegaj scrollowaniu kontenera */
 }
 
 /* Sekcja powitalna */
 .auth-welcome-section {
   display: flex;
-  align-items: center;
+  align-items: flex-start; /* Wyrównaj do góry */
   justify-content: center;
   padding: 2rem;
+  overflow-y: auto; /* Scroll dla tej sekcji */
 }
 
 .auth-welcome-content {
   max-width: 34rem;
+  width: 100%;
 }
 
 .auth-welcome-title {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  font-size: 2.5rem; /* Zmniejszono z 3.5rem */
+  font-size: 2.25rem; /* Zmniejszono z 2.5rem */
   margin: 0 0 0.5rem 0;
   color: #1a1a1a;
   font-weight: 800;
@@ -78,19 +82,18 @@ body.auth-modal-visible {
 }
 
 .auth-welcome-subtitle {
-  font-size: 1.1rem; /* Zmniejszono z 1.4rem */
+  font-size: 1rem; /* Zmniejszono z 1.1rem */
   font-weight: 600;
   color: #555;
-  margin: 0 0 1.5rem 0; /* Zmniejszono margin z 2.5rem */
+  margin: 0 0 1.25rem 0; /* Zmniejszono margin */
   letter-spacing: -0.01em;
 }
 
 .auth-features {
   display: flex;
   flex-direction: column;
-  gap: 1rem; /* Zmniejszono z 1.5rem */
-  max-height: 50vh; /* Ogranicz wysokość */
-  overflow-y: auto; /* Dodaj scroll tylko dla features jeśli potrzebny */
+  gap: 0.875rem; /* Zmniejszono gap */
+  padding-bottom: 1rem; /* Dodano padding na dole */
 }
 
 .auth-feature-item {
@@ -516,6 +519,126 @@ body.auth-modal-visible {
   font-weight: 700;
   color: #6a11cb !important;
   flex: 1;
+}
+
+/* ===== KARTY ADMIN PANEL ===== */
+.admin-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  padding: 0.5rem;
+  background: rgba(106, 17, 203, 0.05);
+  border-radius: 1rem;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.admin-tabs::-webkit-scrollbar {
+  height: 6px;
+}
+
+.admin-tabs::-webkit-scrollbar-track {
+  background: rgba(106, 17, 203, 0.05);
+  border-radius: 3px;
+}
+
+.admin-tabs::-webkit-scrollbar-thumb {
+  background: rgba(106, 17, 203, 0.3);
+  border-radius: 3px;
+}
+
+.admin-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: transparent;
+  border: 2px solid transparent;
+  border-radius: 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.admin-tab:hover {
+  background: rgba(106, 17, 203, 0.08);
+  color: #6a11cb;
+}
+
+.admin-tab.active {
+  background: linear-gradient(135deg, #6a11cb, #8a2be2);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(106, 17, 203, 0.3);
+}
+
+.admin-tab-icon {
+  font-size: 1.25rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.admin-tab-label {
+  font-weight: 700;
+}
+
+.admin-tab-content {
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+
+.admin-tab-content.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsywność kart dla mobile */
+@media (max-width: 768px) {
+  .admin-tabs {
+    gap: 0.35rem;
+    padding: 0.35rem;
+  }
+
+  .admin-tab {
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+    gap: 0.4rem;
+  }
+
+  .admin-tab-icon {
+    font-size: 1.1rem;
+  }
+
+  .admin-tab-label {
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-tab {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .admin-tab-label {
+    display: none;
+  }
+
+  .admin-tab-icon {
+    font-size: 1.3rem;
+  }
 }
 
 /* ===== MODAL DZIECKA ===== */

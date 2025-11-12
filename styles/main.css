@@ -414,14 +414,19 @@ body.nina-bg {
   border: 2px solid rgba(106, 17, 203, 0.15);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   overflow: hidden;
-  max-height: 0;
+  transform: scaleY(0);
+  transform-origin: top;
   opacity: 0;
-  transition: max-height 0.3s ease, opacity 0.3s ease, margin-top 0.3s ease;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, opacity;
+  pointer-events: none;
 }
 
 .mobile-menu-dropdown.active {
-  max-height: 300px;
+  transform: scaleY(1);
   opacity: 1;
+  pointer-events: auto;
 }
 
 .mobile-menu-item {

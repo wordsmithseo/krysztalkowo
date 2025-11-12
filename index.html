@@ -215,7 +215,7 @@
     <div class="modal-content">
       <span class="close-btn">&times;</span>
       <button id="logoutBtn" class="admin-logout-btn">Wyloguj</button>
-      
+
       <div class="admin-header-info">
         <h2>Panel administracyjny</h2>
         <div class="admin-user-info">
@@ -230,79 +230,108 @@
         </div>
       </div>
 
-      <div id="adminChildrenSection" class="admin-section">
-        <h3>Zarządzaj dziećmi</h3>
-        <div class="form-grid">
-          <button id="addChildBtn" class="add-btn">+ Dodaj dziecko</button>
-        </div>
-        <ul id="childrenList"></ul>
+      <!-- Karty nawigacyjne -->
+      <div class="admin-tabs">
+        <button class="admin-tab active" data-tab="children">
+          <span class="admin-tab-icon">👶</span>
+          <span class="admin-tab-label">Dzieci</span>
+        </button>
+        <button class="admin-tab" data-tab="categories">
+          <span class="admin-tab-icon">📋</span>
+          <span class="admin-tab-label">Kategorie</span>
+        </button>
+        <button class="admin-tab" data-tab="rewards">
+          <span class="admin-tab-icon">🎁</span>
+          <span class="admin-tab-label">Nagrody</span>
+        </button>
+        <button class="admin-tab" data-tab="settings">
+          <span class="admin-tab-icon">⚙️</span>
+          <span class="admin-tab-label">Ustawienia</span>
+        </button>
       </div>
 
-      <div id="adminCategoriesSection" class="admin-section">
-        <h3>Dodaj kategorię</h3>
-        <div class="form-grid">
-          <input type="text" id="categoryNameInput" placeholder="Nazwa kategorii">
-          <button id="addCategoryBtn" class="add-btn">Dodaj</button>
-        </div>
-        <div id="categorySuggestions" class="suggestions-container"></div>
-      </div>
-
-      <div class="admin-section">
-        <h3>Zarządzaj kategoriami</h3>
-        <ul id="categoryList"></ul>
-      </div>
-
-      <div class="admin-section">
-        <h3>Zarządzaj nagrodami</h3>
-        <div class="form-grid">
-          <input type="text" id="rewardNameInput" placeholder="Nazwa nagrody">
-          <button id="addRewardBtn" class="add-btn">Dodaj</button>
-        </div>
-        <div id="rewardSuggestions" class="suggestions-container"></div>
-        <ul id="rewardList"></ul>
-      </div>
-
-      <div class="admin-section">
-        <h3>Zmień hasło admina</h3>
-        <div class="form-grid">
-          <input type="password" id="newPasswordInput" placeholder="Nowe hasło">
-          <button id="changePasswordBtn" class="change-btn">Zmień</button>
+      <!-- Zawartość kart -->
+      <div class="admin-tab-content active" data-content="children">
+        <div id="adminChildrenSection" class="admin-section">
+          <h3>Zarządzaj dziećmi</h3>
+          <div class="form-grid">
+            <button id="addChildBtn" class="add-btn">+ Dodaj dziecko</button>
+          </div>
+          <ul id="childrenList"></ul>
         </div>
       </div>
 
-      <div class="admin-section">
-        <h3>Zmień avatara</h3>
-        <p style="font-size:0.9rem;color:#666;margin:0 0 0.75rem 0;">Avatar zostanie ustawiony dla obecnie wybranego dziecka</p>
-        <div class="form-grid" style="grid-template-columns:1fr">
-          <input type="file" id="avatarFileInput" accept="image/*" style="font-size: 1.05rem; padding: 0.6rem 1rem;">
-          <button id="setAvatarBtn" class="set-avatar-btn">Ustaw avatar</button>
+      <div class="admin-tab-content" data-content="categories">
+        <div id="adminCategoriesSection" class="admin-section">
+          <h3>Dodaj kategorię</h3>
+          <div class="form-grid">
+            <input type="text" id="categoryNameInput" placeholder="Nazwa kategorii">
+            <button id="addCategoryBtn" class="add-btn">Dodaj</button>
+          </div>
+          <div id="categorySuggestions" class="suggestions-container"></div>
         </div>
-        <div id="avatarImagePreviews" style="margin-top: 1rem;"></div>
+
+        <div class="admin-section">
+          <h3>Zarządzaj kategoriami</h3>
+          <ul id="categoryList"></ul>
+        </div>
       </div>
 
-      <div class="admin-section">
-        <h3>📷 Galeria obrazków</h3>
-        <p style="font-size:0.9rem;color:#666;margin:0 0 0.75rem 0;">Zarządzaj wszystkimi wgranymi obrazkami</p>
-        <button id="openGalleryBtn" class="submit-btn" style="width:100%;">Otwórz galerię</button>
+      <div class="admin-tab-content" data-content="rewards">
+        <div class="admin-section">
+          <h3>Zarządzaj nagrodami</h3>
+          <div class="form-grid">
+            <input type="text" id="rewardNameInput" placeholder="Nazwa nagrody">
+            <button id="addRewardBtn" class="add-btn">Dodaj</button>
+          </div>
+          <div id="rewardSuggestions" class="suggestions-container"></div>
+          <ul id="rewardList"></ul>
+        </div>
       </div>
 
-      <div class="admin-section">
-        <h3>⚠️ Resetuj ranking</h3>
-        <p style="margin:0.5rem 0;font-size:0.9rem;color:#666;">Uwaga: Usunie wszystkie zwycięstwa wszystkich dzieci we wszystkich kategoriach!</p>
-        <button id="resetRankingBtn" class="cancel-btn" style="width:100%;background:#e74c3c;color:#fff;font-weight:700;">🗑️ Resetuj cały ranking</button>
-      </div>
+      <div class="admin-tab-content" data-content="settings">
+        <div class="admin-section">
+          <h3>Zmień hasło admina</h3>
+          <div class="form-grid">
+            <input type="password" id="newPasswordInput" placeholder="Nowe hasło">
+            <button id="changePasswordBtn" class="change-btn">Zmień</button>
+          </div>
+        </div>
 
-      <div class="admin-section">
-        <h3>🚨 Usuń konto</h3>
-        <p style="margin:0.5rem 0;font-size:0.9rem;color:#d32f2f;font-weight:600;">UWAGA: Ta operacja jest nieodwracalna!</p>
-        <p style="margin:0.5rem 0;font-size:0.9rem;color:#666;">Usunięcie konta spowoduje trwałe usunięcie:</p>
-        <ul style="margin:0.5rem 0;font-size:0.9rem;color:#666;padding-left:1.5rem;">
-          <li>Twojego konta użytkownika</li>
-          <li>Wszystkich profili dzieci</li>
-          <li>Wszystkich kategorii i nagród</li>
-          <li>Całej historii i statystyk</li>
-        </ul>
-        <button id="deleteAccountBtn" class="cancel-btn" style="width:100%;background:#b71c1c;color:#fff;font-weight:700;margin-top:1rem;">❌ Usuń konto permanentnie</button>
+        <div class="admin-section">
+          <h3>Zmień avatara</h3>
+          <p style="font-size:0.9rem;color:#666;margin:0 0 0.75rem 0;">Avatar zostanie ustawiony dla obecnie wybranego dziecka</p>
+          <div class="form-grid" style="grid-template-columns:1fr">
+            <input type="file" id="avatarFileInput" accept="image/*" style="font-size: 1.05rem; padding: 0.6rem 1rem;">
+            <button id="setAvatarBtn" class="set-avatar-btn">Ustaw avatar</button>
+          </div>
+          <div id="avatarImagePreviews" style="margin-top: 1rem;"></div>
+        </div>
+
+        <div class="admin-section">
+          <h3>📷 Galeria obrazków</h3>
+          <p style="font-size:0.9rem;color:#666;margin:0 0 0.75rem 0;">Zarządzaj wszystkimi wgranymi obrazkami</p>
+          <button id="openGalleryBtn" class="submit-btn" style="width:100%;">Otwórz galerię</button>
+        </div>
+
+        <div class="admin-section">
+          <h3>⚠️ Resetuj ranking</h3>
+          <p style="margin:0.5rem 0;font-size:0.9rem;color:#666;">Uwaga: Usunie wszystkie zwycięstwa wszystkich dzieci we wszystkich kategoriach!</p>
+          <button id="resetRankingBtn" class="cancel-btn" style="width:100%;background:#e74c3c;color:#fff;font-weight:700;">🗑️ Resetuj cały ranking</button>
+        </div>
+
+        <div class="admin-section">
+          <h3>🚨 Usuń konto</h3>
+          <p style="margin:0.5rem 0;font-size:0.9rem;color:#d32f2f;font-weight:600;">UWAGA: Ta operacja jest nieodwracalna!</p>
+          <p style="margin:0.5rem 0;font-size:0.9rem;color:#666;">Usunięcie konta spowoduje trwałe usunięcie:</p>
+          <ul style="margin:0.5rem 0;font-size:0.9rem;color:#666;padding-left:1.5rem;">
+            <li>Twojego konta użytkownika</li>
+            <li>Wszystkich profili dzieci</li>
+            <li>Wszystkich kategorii i nagród</li>
+            <li>Całej historii i statystyk</li>
+          </ul>
+          <button id="deleteAccountBtn" class="cancel-btn" style="width:100%;background:#b71c1c;color:#fff;font-weight:700;margin-top:1rem;">❌ Usuń konto permanentnie</button>
+        </div>
       </div>
     </div>
   </div>

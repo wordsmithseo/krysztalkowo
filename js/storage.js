@@ -2,6 +2,7 @@
 import { storage } from './config.js';
 import { ref, uploadBytes, getDownloadURL, deleteObject, listAll, getMetadata } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
 import { getCurrentAuthUser } from './auth.js';
+import { getImageCache, setImageCache, invalidateImageCache, isCacheValid } from './imageCache.js';
 
 // Funkcja do uploadowania obrazka
 export const uploadImage = async (file, type = 'category') => {
@@ -35,6 +36,9 @@ export const uploadImage = async (file, type = 'category') => {
     // Pobierz URL do obrazka
     const downloadURL = await getDownloadURL(snapshot.ref);
 
+    // Inwaliduj cache po dodaniu nowego obrazka
+    invalidateImageCache();
+
     return {
       success: true,
       url: downloadURL,
@@ -66,6 +70,9 @@ export const deleteImage = async (imagePath) => {
 
     const storageRef = ref(storage, `images/${path}`);
     await deleteObject(storageRef);
+
+    // Inwaliduj cache po usunięciu obrazka
+    invalidateImageCache();
 
     return { success: true };
   } catch (error) {
@@ -132,13 +139,27 @@ export const compressImage = (file, maxWidth = 600, maxHeight = 600, quality = 0
 };
 
 // Funkcja do pobierania wszystkich obrazków użytkownika
-export const getAllUserImages = async () => {
+export const getAllUserImages = async (forceRefresh = false) => {
   try {
     const user = getCurrentAuthUser();
     if (!user) {
       throw new Error('Użytkownik nie jest zalogowany');
     }
 
+    // Sprawdź cache jeśli nie wymuszono odświeżenia
+    if (!forceRefresh && isCacheValid()) {
+      const cache = getImageCache();
+      console.log('✅ Pobrano z cache:', cache.count, 'obrazków');
+      return {
+        success: true,
+        images: cache.images,
+        totalSize: cache.totalSize,
+        count: cache.count,
+        fromCache: true
+      };
+    }
+
+    console.log('🔄 Pobieranie z Firebase Storage...');
     const userFolderRef = ref(storage, `images/${user.uid}`);
     const result = await listAll(userFolderRef);
 
@@ -169,11 +190,15 @@ export const getAllUserImages = async () => {
       }
     }
 
+    // Zapisz do cache
+    setImageCache(images, totalSize, images.length);
+
     return {
       success: true,
       images,
       totalSize,
-      count: images.length
+      count: images.length,
+      fromCache: false
     };
   } catch (error) {
     console.error('Błąd podczas pobierania obrazków:', error);
@@ -203,6 +228,9 @@ export const deleteImageByUrl = async (imageUrl) => {
     const path = decodeURIComponent(matches[1]);
     const storageRef = ref(storage, `images/${path}`);
     await deleteObject(storageRef);
+
+    // Inwaliduj cache po usunięciu obrazka
+    invalidateImageCache();
 
     return { success: true };
   } catch (error) {

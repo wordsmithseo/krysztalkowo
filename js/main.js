@@ -1062,4 +1062,52 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Uruchom system blokowania scrollowania dla modali
   setupModalScrollLock();
+
+  // Inicjalizacja systemu kart w admin panelu
+  initializeAdminTabs();
 });
+
+// ===== SYSTEM KART W ADMIN PANELU =====
+function initializeAdminTabs() {
+  const tabs = document.querySelectorAll('.admin-tab');
+  const contents = document.querySelectorAll('.admin-tab-content');
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const targetTab = tab.dataset.tab;
+
+      // Usuń aktywne klasy ze wszystkich kart i contentu
+      tabs.forEach(t => t.classList.remove('active'));
+      contents.forEach(c => c.classList.remove('active'));
+
+      // Dodaj aktywną klasę do klikniętej karty
+      tab.classList.add('active');
+
+      // Pokaż odpowiedni content
+      const targetContent = document.querySelector(`.admin-tab-content[data-content="${targetTab}"]`);
+      if (targetContent) {
+        targetContent.classList.add('active');
+      }
+
+      // Zapisz wybraną kartę do localStorage
+      localStorage.setItem('krysztalkowo_active_admin_tab', targetTab);
+    });
+  });
+
+  // Przywróć ostatnio wybraną kartę
+  const lastActiveTab = localStorage.getItem('krysztalkowo_active_admin_tab');
+  if (lastActiveTab) {
+    const targetTab = document.querySelector(`.admin-tab[data-tab="${lastActiveTab}"]`);
+    const targetContent = document.querySelector(`.admin-tab-content[data-content="${lastActiveTab}"]`);
+
+    if (targetTab && targetContent) {
+      // Usuń aktywne klasy
+      tabs.forEach(t => t.classList.remove('active'));
+      contents.forEach(c => c.classList.remove('active'));
+
+      // Ustaw ostatnio wybraną kartę
+      targetTab.classList.add('active');
+      targetContent.classList.add('active');
+    }
+  }
+}
