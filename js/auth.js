@@ -1,6 +1,6 @@
 // ===== KONFIGURACJA FIREBASE =====
-import { db, auth } from './config.js';
-import { ref, set } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+import { db, auth, app } from './config.js';
+import { ref, set, get } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -9,6 +9,10 @@ import {
   deleteUser,
   sendEmailVerification
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js';
+
+// Inicjalizacja Functions
+const functions = getFunctions(app);
 
 // Funkcja logowania
 export const loginUser = async (email, password) => {

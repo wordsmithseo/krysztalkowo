@@ -795,7 +795,8 @@ body.nina-bg {
     display: block;
     width: 100%;
     max-width: 48rem;
-    margin: 0 0 2rem 0;
+    margin: 0;
+    position: relative;
   }
 
   .user-buttons-row {
